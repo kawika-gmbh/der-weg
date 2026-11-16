@@ -465,6 +465,13 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 .w-prompt{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(14,15,18,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--stroke);padding:8px 8px 8px 16px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap;animation:spIn .3s}
 .w-msg{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translate(-50%,-10px);opacity:0;background:rgba(14,15,18,.82);padding:10px 16px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
 .w-msg.show{opacity:1;transform:translate(-50%,0)}
+.w-dlg{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 16px);background:rgba(14,15,18,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--stroke);border-radius:22px;padding:14px 16px 16px;animation:spIn .3s;max-width:520px;margin:0 auto}
+.w-dlg-h{display:flex;justify-content:space-between;align-items:center}
+.w-dlg-h .icon{width:34px;height:34px}
+.w-dlg p{margin:6px 0 12px;font-size:15.5px;line-height:1.5}
+.w-dlg-b{display:flex;flex-wrap:wrap;gap:8px}
+.w-dlg-b button{border-radius:999px;padding:9px 14px;font-weight:600;font-size:13.5px;background:rgba(255,255,255,.08);border:1px solid var(--stroke)}
+.w-dlg-b button.pri{background:linear-gradient(180deg,#f6d77a,#d9a83a);color:#1a1205;border:0}
 /* Minispiel */
 #game{position:fixed;inset:0;z-index:45;background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
 #gc,#g3{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -604,6 +611,7 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
     <span class="lbl">Kapitel-Vorschau</span><div class="opts" id="pvCh"></div>
     <span class="lbl">Stufe</span><div class="opts" id="pvSt"></div>
     <span class="lbl">Jahreszeit</span><div class="opts" id="pvSe"></div>
+    <span class="lbl">Tageszeit (Welt)</span><div class="opts" id="pvTod"></div>
     <div class="btnrow" style="justify-content:flex-start"><button class="big-ghost" id="devChest" style="padding:9px 14px">Truhe geben</button><button class="big-ghost" id="dev100" style="padding:9px 14px">+100 Chi</button><button class="big-ghost" id="dev1000" style="padding:9px 14px">+1000 Chi</button><button class="big-ghost" id="devStage" style="padding:9px 14px">Nächste Stufe</button><button class="big-ghost" id="demoWeek" style="padding:9px 14px">Beispielwoche</button><button class="big-ghost" id="demoYear" style="padding:9px 14px">Prestige ansehen</button></div>
   </div>
   <button class="danger" id="stReset">Fortschritt zurücksetzen</button>
@@ -630,6 +638,7 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
   <div class="w-hint" id="wHint">Links ziehen zum Laufen · rechts wischen zum Umsehen</div>
   <div id="wPrompt" class="w-prompt" hidden><span id="wPromptT"></span><button class="act" id="wPromptB"></button></div>
   <div id="wMsg" class="w-msg"></div>
+  <div id="wDlg" class="w-dlg" hidden><div class="w-dlg-h"><span class="eyebrow" id="wDlgK">Meister Shen</span><button class="icon" id="wDlgX" aria-label="Gespräch beenden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><p id="wDlgT"></p><div class="w-dlg-b" id="wDlgB"></div></div>
 </div>
 <div id="game" hidden>
   <canvas id="g3"></canvas><canvas id="gc"></canvas>
@@ -648,6 +657,7 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 <script>
 (function(){
 'use strict';
@@ -789,7 +799,9 @@ const WISDOM=['Der Berg wird nicht kleiner. Deine Schritte werden sicherer.','We
 
 /* =================== ZUSTAND =================== */
 const KEY='derweg.v1';
-let S=null,pvCh=null,pvSt=null,pvSe=null,portraitURL=null;
+let S=null,pvCh=null,pvSt=null,pvSe=null,pvTod=null,portraitURL=null;
+const TODS=[['dawn','Morgen'],['day','Tag'],['dusk','Abend'],['night','Nacht']];
+function todNow(){if(pvTod)return pvTod;const h=new Date().getHours()+new Date().getMinutes()/60;return h<5||h>=21?'night':h<8?'dawn':h<17.5?'day':'dusk';}
 function lookOf(a){return[(ROBE[a.robe]||ROBE[0]).c,SKIN[a.skin]||SKIN[1],HAIRC[a.hairColor]||HAIRC[0]];}
 function applyLook(a){if(window.MonkKit)MonkKit.setLook(...lookOf(a||S.avatar));}
 function refreshPortrait(){if(!window.MonkKit||!MonkKit.gltf)return;applyLook(S.avatar);portraitURL=MonkKit.portrait(192);renderTop();if(typeof tab!=='undefined'&&tab==='op')renderOp();}
@@ -1331,6 +1343,13 @@ window.DW={
   season:()=>SEASONS[curSeason()],
   avatarGroup:()=>avatarGroup(),
   applyLook:()=>applyLook(S.avatar),
+  tod:()=>todNow(),
+  name:()=>S.name||'Novize',
+  day(k,v){const d=today();if(v!==undefined){d[k]=v;save();}return d[k];},
+  lesson:()=>{const L=LESSONS[lessonIdx()];return{t:L.t,m:L.m,cat:L.cat,done:!!lessonToday()};},
+  openLesson:()=>openLesson(),
+  wisdom:()=>WISDOM[(dayN()+S.cycle*3)%WISDOM.length],
+  questReward(chi,label){const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();addBonus('_q',chi);afterGain(before,pB,lvB,rB,seB,{kicker:'Meister Shen',title:label||'Auftrag erfüllt'});},
   photo:()=>{const p=viewProg();const a=PHOTO[p.ch];return a?a[p.st]:null;},
   robe:()=>(ROBE[S.avatar.robe]||ROBE[0]).c,
   energy:()=>S.energy||0,
@@ -1661,6 +1680,7 @@ function renderSettings(){
   const ch=pvCh!=null?pvCh:prog(totalChi()).ch;
   $('#pvSt').innerHTML=opt(pvSt==null,'Auto','data-pv="st" data-v=""')+STAGES[ch].map((s,i)=>opt(pvSt===i,i+' '+s,`data-pv="st" data-v="${i}"`)).join('');
   $('#pvSe').innerHTML=opt(!pvSe,'Live','data-pv="se" data-v=""')+Object.entries(SEASONS).map(([k,v])=>opt(pvSe===k,v.n,`data-pv="se" data-v="${k}"`)).join('');
+  $('#pvTod').innerHTML=opt(!pvTod,'Live','data-pv="tod" data-v=""')+TODS.map(([k,n])=>opt(pvTod===k,n,`data-pv="tod" data-v="${k}"`)).join('');
 }
 const ADMIN_CODE='dojo-kawika';
 $('#stAdmin').onclick=()=>{$('#dlIn').hidden=false;$('#dlIn').value='';$('#dlIn').placeholder='Admin-Code';ask('Admin-Zugang','Gib den Admin-Code ein. Danach siehst du Testmodus und Schnellvorlauf.',()=>{const v=($('#dlIn').value||'').trim().toLowerCase();$('#dlIn').hidden=true;if(v===ADMIN_CODE){S.admin=true;save();renderSettings();toast('Admin aktiv');}else toast('Code falsch');});setTimeout(()=>$('#dlIn').focus(),50);};
@@ -1679,8 +1699,9 @@ $('#stAv').onclick=()=>openCreator(false);
 $('#stEd').onclick=()=>openEditor(false);
 $('#stSound').onchange=e=>{S.sound=e.target.checked;save();if(S.sound)bell(.6);};
 $('#stHQ').onchange=e=>{S.hq=e.target.checked;save();if(G.ok){if(bloom)bloom.enabled=S.hq;buildWorld(true);}};
-$('#stTest').onchange=e=>{S.test=e.target.checked;if(!S.test){pvCh=pvSt=pvSe=null;buildWorld();}save();renderSettings();renderAll();};
+$('#stTest').onchange=e=>{S.test=e.target.checked;if(!S.test){pvCh=pvSt=pvSe=pvTod=null;buildWorld();}save();renderSettings();renderAll();};
 $('#testBox').addEventListener('click',e=>{const b=e.target.closest('[data-pv]');if(!b)return;const v=b.dataset.v;
+  if(b.dataset.pv==='tod'){pvTod=v||null;renderSettings();return;}
   if(b.dataset.pv==='ch'){pvCh=v===''?null:+v;pvSt=null;}else if(b.dataset.pv==='st')pvSt=v===''?null:+v;else pvSe=v||null;
   buildWorld();if(G.ok){const ch=viewProg().ch;G.ch=ch;}cam.pulse=.6;renderTop();renderSettings();});
 $('#demoWeek').onclick=()=>{const now=new Date(),sh=share();

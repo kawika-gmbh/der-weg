@@ -9,13 +9,14 @@ function prep(gl){
   const m=gl.scene;m.scale.setScalar(.92);
   const mask=new TH.TextureLoader().load('tex/monk_mask.png');mask.flipY=false;U.maskMap.value=mask;
   m.traverse(o=>{if(!(o.isMesh||o.isSkinnedMesh))return;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;const mt=o.material;if(!mt)return;mt.roughness=Math.max(.55,mt.roughness||0);
-    mt.onBeforeCompile=sh=>{Object.assign(sh.uniforms,{robeTint:U.robe,skinRatio:U.skin,hairTint:U.hair,maskMap:U.maskMap});
-      sh.fragmentShader='uniform vec3 robeTint;uniform vec3 skinRatio;uniform vec3 hairTint;uniform sampler2D maskMap;\n'+sh.fragmentShader.replace('#include <map_fragment>',
-      '#include <map_fragment>\n{vec3 c=diffuseColor.rgb;vec3 mk=texture2D(maskMap,vUv).rgb;float mx=max(c.r,max(c.g,c.b));float lum=dot(c,vec3(.299,.587,.114));'+
-      'c=mix(c,robeTint*clamp(lum/.62,.3,1.1),mk.r);c=mix(c,c*skinRatio,mk.g);c=mix(c,hairTint*(.55+lum*12.),mk.b*(1.-smoothstep(.06,.16,mx)));diffuseColor.rgb=c;}');};
+    mt.onBeforeCompile=obc(U);
     mt.needsUpdate=true;});
   return gl;
 }
+function obc(u){return sh=>{Object.assign(sh.uniforms,{robeTint:u.robe,skinRatio:u.skin,hairTint:u.hair,maskMap:U.maskMap});
+      sh.fragmentShader='uniform vec3 robeTint;uniform vec3 skinRatio;uniform vec3 hairTint;uniform sampler2D maskMap;\n'+sh.fragmentShader.replace('#include <map_fragment>',
+      '#include <map_fragment>\n{vec3 c=diffuseColor.rgb;vec3 mk=texture2D(maskMap,vUv).rgb;float mx=max(c.r,max(c.g,c.b));float lum=dot(c,vec3(.299,.587,.114));'+
+      'c=mix(c,robeTint*clamp(lum/.62,.3,1.1),mk.r);c=mix(c,c*skinRatio,mk.g);c=mix(c,hairTint*(.55+lum*12.),mk.b*(1.-smoothstep(.06,.16,mx)));diffuseColor.rgb=c;}');};}
 function load(cb){
   if(gltf){cb&&cb(gltf);return;}if(cb)waiters.push(cb);if(loading||!TH.GLTFLoader)return;loading=true;
   const L=new TH.GLTFLoader(),ok=gl=>{gltf=prep(gl);window.__monk=gltf;const w=waiters;waiters=[];w.forEach(f=>f(gltf));};
@@ -23,10 +24,13 @@ function load(cb){
     if(window.__monkB64)return parse();const sc=document.createElement('script');sc.src='monk.js';sc.onload=parse;sc.onerror=()=>{loading=false;};document.head.appendChild(sc);};
   L.load('monk.glb',ok,undefined,fromB64);
 }
-function setLook(robeHex,skinHex,hairHex){
-  U.robe.value.set(robeHex).convertSRGBToLinear();
-  const s=new TH.Color(skinHex).convertSRGBToLinear();U.skin.value.setRGB(s.r/BASE_SKIN.r,s.g/BASE_SKIN.g,s.b/BASE_SKIN.b);
-  U.hair.value.set(hairHex).convertSRGBToLinear();
+function fill(u,robeHex,skinHex,hairHex){u.robe.value.set(robeHex).convertSRGBToLinear();const s=new TH.Color(skinHex).convertSRGBToLinear();u.skin.value.setRGB(s.r/BASE_SKIN.r,s.g/BASE_SKIN.g,s.b/BASE_SKIN.b);u.hair.value.set(hairHex).convertSRGBToLinear();}
+function setLook(robeHex,skinHex,hairHex){fill(U,robeHex,skinHex,hairHex);}
+/* Eigenständige Kopie (NPC) mit eigenen Farben */
+function npc(robeHex,skinHex,hairHex){
+  if(!gltf||!TH.SkeletonUtils)return null;const o=TH.SkeletonUtils.clone(gltf.scene);const u={robe:{value:new TH.Color()},skin:{value:new TH.Color()},hair:{value:new TH.Color()}};fill(u,robeHex,skinHex,hairHex);
+  o.traverse(m=>{if(!(m.isMesh||m.isSkinnedMesh))return;m.material=m.material.clone();m.material.onBeforeCompile=obc(u);m.material.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;});
+  return o;
 }
 /* Gemeinsamer kleiner Renderer für Vorschau und Porträt */
 let R=null;
@@ -65,5 +69,5 @@ function preview(box){
     if(drag==null){vy*=.92;yaw+=vy+dt*.25;}gltf.scene.rotation.y=yaw;mx.update(dt);g.r.render(g.sc,g.cam);};loop();
 }
 function stopPreview(){if(!PV)return;cancelAnimationFrame(PV.raf);PV.off();PV.mx.stopAllAction();PV.mx.uncacheRoot(gltf.scene);giveBack(PV.st);if(R&&R.cv.parentNode)R.cv.parentNode.removeChild(R.cv);PV=null;}
-window.MonkKit={load,setLook,portrait,preview,stopPreview,get gltf(){return gltf;}};
+window.MonkKit={load,setLook,npc,portrait,preview,stopPreview,get gltf(){return gltf;}};
 })();

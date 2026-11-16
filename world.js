@@ -22,7 +22,7 @@ function mats(){
     roof:S({map:T.roofD,normalMap:T.roofN,roughness:.7,color:'#5a5e66',side:TH.DoubleSide}),
     red:S({map:T.woodD,roughness:.5,color:'#d0402c'}),
     wood:S({map:T.woodD,roughness:.8,color:'#7a5038'}),
-    plaster:S({color:'#b9ab92',roughness:.95,normalMap:T.stoneN,normalScale:new TH.Vector2(.25,.25)}),
+    plaster:S({map:shoji(),color:'#ffffff',roughness:.9,emissive:new TH.Color('#ffb46a'),emissiveIntensity:0}),
     gold:S({color:'#d4a94e',metalness:.8,roughness:.3}),
     glow:new TH.MeshBasicMaterial({color:new TH.Color(2.2,1.1,.45)}),
     paper:new TH.MeshStandardMaterial({color:'#f2dcb0',emissive:new TH.Color('#ff9a40'),emissiveIntensity:1.6,roughness:.9}),
@@ -32,6 +32,15 @@ function mats(){
     fir:S({map:T.fir,alphaTest:.45,side:TH.DoubleSide,roughness:.9,color:'#9aa890'}),
     grass:new TH.MeshLambertMaterial({map:T.grass,alphaTest:.5,side:TH.DoubleSide,color:'#b8a77e'}),
   };
+}
+function shoji(){
+  const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,512);g.addColorStop(0,'#e6d9bf');g.addColorStop(1,'#d8c8a8');x.fillStyle=g;x.fillRect(0,0,512,512);
+  const im=x.getImageData(0,0,512,512),d=im.data;for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*14;d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}x.putImageData(im,0,0);
+  x.strokeStyle='rgba(120,90,60,.12)';x.lineWidth=1;for(let i=0;i<60;i++){x.beginPath();const y=Math.random()*512;x.moveTo(0,y);x.bezierCurveTo(170,y+8,340,y-8,512,y+3);x.stroke();}
+  x.fillStyle='#3b2416';for(let i=0;i<=4;i++){x.fillRect(i*128-5,0,10,512);}for(let j=0;j<=4;j++){x.fillRect(0,j*128-5,512,10);}
+  x.fillStyle='#2a180e';x.fillRect(0,0,512,14);x.fillRect(0,498,512,14);x.fillRect(0,0,14,512);x.fillRect(498,0,14,512);
+  const t=new TH.CanvasTexture(c);t.wrapS=t.wrapT=TH.RepeatWrapping;t.encoding=TH.sRGBEncoding;t.anisotropy=8;return t;
 }
 function uvBox(geo,w,h,d,ts){const uv=geo.attributes.uv;const dims=[[d,h],[d,h],[w,d],[w,d],[w,h],[w,h]];for(let f=0;f<6;f++)for(let k=0;k<4;k++){const i=f*4+k;uv.setXY(i,uv.getX(i)*dims[f][0]/ts,uv.getY(i)*dims[f][1]/ts);}uv.needsUpdate=true;return geo;}
 function add(m,p){m.castShadow=true;m.receiveShadow=true;(p||W.root).add(m);return m;}
@@ -62,7 +71,7 @@ const IMP={maple:[512,320],fir_a:[256,736],fir_b:[256,592],fir_c:[256,584]};
 function impTex(k){W.impT=W.impT||{};if(!W.impT[k]){const t=new TH.TextureLoader().load('tex/imp_'+k+'.webp',()=>{if(!W)return;W.imps.forEach(it=>{if(it.k===k){it.t.image=t.image;it.t.needsUpdate=true;}});});t.encoding=TH.sRGBEncoding;t.anisotropy=4;W.impT[k]=t;}return W.impT[k];}
 function imp(k,x,z,h,seed,solidR){
   const [tw,th]=IMP[k],w=h*tw/th,base=impTex(k),t=base.clone();t.needsUpdate=true;t.repeat.set(.25,.5);
-  const tint=new TH.Color(W.se.light).lerp(new TH.Color('#ffffff'),.45).multiplyScalar(.82);
+  const tint=new TH.Color(W.se.light).lerp(new TH.Color('#ffffff'),.45).multiplyScalar(.82*W.tod.imp);if(W.tod.night)tint.lerp(new TH.Color('#6f86c8'),.35).multiplyScalar(.9);
   const m=new TH.Mesh(new TH.PlaneGeometry(w,h),new TH.MeshBasicMaterial({map:t,alphaTest:.45,side:TH.DoubleSide,color:tint,toneMapped:false}));
   m.geometry.translate(0,h/2,0);m.position.set(x,groundH(x,z)-.05,z);m.castShadow=true;
   m.customDepthMaterial=new TH.MeshDepthMaterial({depthPacking:TH.RGBADepthPacking,map:t,alphaTest:.45});
@@ -72,11 +81,17 @@ function maple(x,z,s,seed){imp('maple',x,z,5.6*s,seed,.45*s);}
 function pine(x,z,s,seed){const r=Math.floor(seed*97)%3;imp(['fir_a','fir_b','fir_c'][r],x,z,(r===0?16:12.5)*s,seed,.4*s);}
 function impUpdate(){const c=W.cam.position;for(const it of W.imps){const dx=c.x-it.x,dz=c.z-it.z;it.m.rotation.y=Math.atan2(dx,dz);let i=(Math.round(Math.atan2(dx,dz)/(Math.PI/4))+it.off)%8;if(i<0)i+=8;if(i!==it.cur){it.cur=i;it.t.offset.set((i%4)*.25,i<4?.5:0);}}}
 function grassField(){
-  const g1=new TH.PlaneGeometry(.9,.7);g1.translate(0,.35,0);const g2=g1.clone();g2.rotateY(Math.PI/2);
-  const merged=mergeGeos([g1,g2]);const N=2600,inst=new TH.InstancedMesh(merged,W.M.grass,N);const r=rng(4),m=new TH.Matrix4(),q=new TH.Quaternion(),sc=new TH.Vector3(),p=new TH.Vector3();let c=0;
-  for(let i=0;i<N*3&&c<N;i++){const a=r()*6.28,d=8+r()*32,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<2.2&&z>4)continue;if(Math.abs(x)<7&&Math.abs(z)<6)continue;if(Math.hypot(x-9,z-7)<3)continue;
-    const s=.7+r()*.9;p.set(x,groundH(x,z),z);q.setFromAxisAngle(new TH.Vector3(0,1,0),r()*6.28);sc.set(s,s*(.8+r()*.5),s);m.compose(p,q,sc);inst.setMatrixAt(c++,m);}
-  inst.count=c;inst.receiveShadow=true;W.root.add(inst);
+  const base=new TH.TextureLoader().load('tex/imp_grass.webp',()=>{if(!W)return;(W.grassT||[]).forEach(t=>{t.image=base.image;t.needsUpdate=true;});});base.encoding=TH.sRGBEncoding;W.grassT=[];W.impT=W.impT||{};W.impT.grass=base;
+  const tint=new TH.Color(W.se.light).lerp(new TH.Color('#ffffff'),.5).multiplyScalar(.8*W.tod.imp);if(W.tod.night)tint.lerp(new TH.Color('#6f86c8'),.35);
+  const g1=new TH.PlaneGeometry(.9,.675);g1.translate(0,.3,0);const g2=g1.clone();g2.rotateY(Math.PI/2);const geo=mergeGeos([g1,g2]);
+  const r=rng(4),m=new TH.Matrix4(),q=new TH.Quaternion(),sc=new TH.Vector3(),p=new TH.Vector3(),Y=new TH.Vector3(0,1,0);
+  for(let k=0;k<3;k++){const t=base.clone();t.repeat.set(1/3,1);t.offset.set(k/3,0);W.grassT.push(t);
+    const mat=new TH.MeshBasicMaterial({map:t,alphaTest:.5,side:TH.DoubleSide,color:tint,toneMapped:false});
+    const N=900,inst=new TH.InstancedMesh(geo,mat,N);let c=0;
+    for(let i=0;i<N*4&&c<N;i++){const a=r()*6.28,d=6.5+Math.pow(r(),1.3)*30,x=Math.cos(a)*d,z=Math.sin(a)*d;
+      if(Math.abs(x)<1.6&&z>4)continue;if(Math.abs(x)<6.5&&Math.abs(z)<5.5)continue;if(Math.hypot(x-9,z-7)<2.8)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<s[2]+.2))continue;
+      const sz=1.1+r()*1.1;p.set(x,groundH(x,z)-.03,z);q.setFromAxisAngle(Y,r()*6.28);sc.set(sz,sz*(.85+r()*.35),sz);m.compose(p,q,sc);inst.setMatrixAt(c++,m);}
+    inst.count=c;W.root.add(inst);}
 }
 function mergeGeos(gs){const pos=[],uv=[],nrm=[],idx=[];let o=0;gs.forEach(g=>{const P=g.attributes.position,U=g.attributes.uv,Nn=g.attributes.normal;for(let i=0;i<P.count;i++){pos.push(P.getX(i),P.getY(i),P.getZ(i));uv.push(U.getX(i),U.getY(i));nrm.push(Nn.getX(i),Nn.getY(i),Nn.getZ(i));}const I=g.index.array;for(let i=0;i<I.length;i++)idx.push(I[i]+o);o+=P.count;});const g=new TH.BufferGeometry();g.setAttribute('position',new TH.Float32BufferAttribute(pos,3));g.setAttribute('uv',new TH.Float32BufferAttribute(uv,2));g.setAttribute('normal',new TH.Float32BufferAttribute(nrm,3));g.setIndex(idx);return g;}
 
@@ -93,7 +108,8 @@ function temple(st){
   xs.forEach(x=>[-2.8,2.8].forEach(z=>{cyl(.22,ph,M.red,x,b,z,16);W.solids.push([x,z,.35]);}));
   [-2.8,2.8].forEach(z=>box(9.2,.35,.4,M.wood,0,b+ph,z,1.8));[-4.2,4.2].forEach(x=>box(.4,.35,6,M.wood,x,b+ph,0,1.8));
   if(st===2){[[-5,3.4],[5,3.4],[-5,-3.4],[5,-3.4]].forEach(([x,z])=>cyl(.07,5.2,M.wood,x,b,z,6));return;}
-  box(8.4,ph,.25,M.plaster,0,b,-2.6);box(.25,ph,5,M.plaster,-4.1,b,0);box(.25,ph,5,M.plaster,4.1,b,0);
+  box(8.4,ph,.25,M.plaster,0,b,-2.6,1.7);box(.25,ph,5,M.plaster,-4.1,b,0,1.7);box(.25,ph,5,M.plaster,4.1,b,0,1.7);
+  box(8.5,.7,.3,M.wood,0,b,-2.62,1.4);box(.3,.7,5.1,M.wood,-4.12,b,0,1.4);box(.3,.7,5.1,M.wood,4.12,b,0,1.4);
   if(st>=5){const L=new TH.PointLight(0xffa860,1.4,12,2);L.position.set(0,2.4,0);W.root.add(L);const a=new TH.Mesh(new TH.PlaneGeometry(2.2,2.4),M.glow);a.position.set(0,b+1.4,-2.44);W.root.add(a);}
   roof(13.4,10.4,2.5,0,b+ph+.3,0);
   // Innenraum: Altar, Buddha, Kerzen, Matten
@@ -105,7 +121,7 @@ function temple(st){
     const f=new TH.Mesh(new TH.SphereGeometry(.03,8,6),M.glow);f.position.set(x,b+1.2,-1.75);f.scale.y=1.8;W.root.add(f);W.flames=(W.flames||[]).concat(f);});
   {const L=new TH.PointLight(0xffb066,1.6,7,2);L.position.set(0,b+1.5,-1.3);W.root.add(L);W.flick.push(L);}
   [-1.6,0,1.6].forEach(x=>{const m=new TH.Mesh(new TH.CylinderGeometry(.32,.32,.06,20),new TH.MeshStandardMaterial({color:'#6e2a1c',roughness:1}));m.position.set(x,b+.03,0);m.receiveShadow=true;W.root.add(m);});
-  W.inter.push({x:0,z:-.6,r:1.3,label:'Vor dem Altar',btn:'Verneigen',act:()=>{pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);msg('Ein Moment der Stille.');}});
+  W.inter.push({x:0,z:-.6,r:1.3,label:'Vor dem Altar',btn:'Verneigen',act:()=>{pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);msg('Ein Moment der Stille.');}});
   if(st<4)return;
   const y2=b+ph+.3+1.25;box(6,1.8,4.4,M.plaster,0,y2,0);[-2.9,-1,1,2.9].forEach(x=>cyl(.1,1.8,M.red,x,y2,2.25,8));
   roof(9,7.4,2.1,0,y2+1.8,0);const ft=y2+3.9;cyl(.06,1.2,M.gold,0,ft-.1,0,6);[0,1,2].forEach(i=>{const s=new TH.Mesh(new TH.SphereGeometry(.2-i*.04,12,10),M.gold);s.position.set(0,ft+.2+i*.3,0);add(s);});
@@ -121,6 +137,26 @@ function poles(){
 }
 function path(){const r=rng(3);let z=5.8;while(z<26){const w=1.5+r()*.6,d=.8+r()*.4;const s=box(w,.16,d,W.M.stone,(r()-.5)*.4,groundH(0,z)-.06,z,1.5);s.rotation.y=(r()-.5)*.3;z+=d+.3+r()*.3;}}
 
+/* ---------- Tageszeit ---------- */
+const TOD={
+  dawn:{sky:[1.08,.92,1.0],sun:1.7,sunC:'#ffc49a',hemi:.7,fog:'#7b6670',exp:1.0,imp:.92,elev:.22,night:0},
+  day:{sky:[1.18,1.16,1.14],sun:2.7,sunC:'#fff0dc',hemi:.95,fog:'#8d8378',exp:1.1,imp:.92,elev:.62,night:0},
+  dusk:{sky:[1,1,1],sun:2.3,sunC:'#ffb27a',hemi:.75,fog:'#5e4840',exp:1.05,imp:1,elev:.34,night:0},
+  night:{sky:[.1,.13,.26],sun:.35,sunC:'#8fa8ff',hemi:.22,fog:'#0b0f1b',exp:.95,imp:.3,elev:.55,night:1}};
+function applyTod(){
+  const c=W.tod;W.R.toneMappingExposure=c.exp;W.dir.color.set(c.sunC);W.dir.intensity=c.sun;W.hemi.intensity=c.hemi;W.scene.fog.color.set(c.fog);
+  const e=c.elev;W.SUN.set(-.93*Math.cos(Math.asin(e))/.97,e,-.15).normalize();
+  if(W.sky&&W.sky.material.color)W.sky.material.color.setRGB(c.sky[0],c.sky[1],c.sky[2]);
+  W.M.plaster.emissiveIntensity=c.night?.42:0;W.M.paper.emissiveIntensity=c.night?2.6:1.6;
+  if(c.night){
+    const n=900,pp=new Float32Array(n*3);for(let i=0;i<n;i++){const a=Math.random()*6.28,el=Math.asin(.08+Math.random()*.92),r=350;pp[i*3]=Math.cos(a)*Math.cos(el)*r;pp[i*3+1]=Math.sin(el)*r;pp[i*3+2]=Math.sin(a)*Math.cos(el)*r;}
+    const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pp,3));W.stars=new TH.Points(g,new TH.PointsMaterial({color:0xdfe6ff,size:1.4,sizeAttenuation:false,fog:false,transparent:true,opacity:.85}));W.scene.add(W.stars);
+    const moon=new TH.Mesh(new TH.SphereGeometry(7,24,16),new TH.MeshBasicMaterial({color:0xf2f0e6,fog:false}));moon.position.copy(W.SUN).multiplyScalar(330);W.scene.add(moon);
+    if(W.platform)[[-4.2,6.2],[4.2,6.2]].forEach(([x,z])=>{const L=new TH.PointLight(0xffa050,1.5,9,2);L.position.set(x,1.25,z);W.root.add(L);W.flick.push(L);const gl=new TH.Mesh(new TH.BoxGeometry(.32,.32,.32),W.M.glow);gl.position.set(x,1.07,z);W.root.add(gl);});
+    const L=new TH.PointLight(0xffb070,1.2,10,2);L.position.set(0,2,1.5);W.root.add(L);
+  }
+}
+
 /* ---------- Himmel, Licht, Boden ---------- */
 function env(se){
   const sc=W.scene;sc.fog=new TH.FogExp2(new TH.Color(se.fog),.014);
@@ -129,9 +165,9 @@ function env(se){
     vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
     fragmentShader:'uniform vec3 top;uniform vec3 hor;uniform vec3 bot;uniform vec3 sunCol;uniform vec3 sunDir;varying vec3 vW;void main(){vec3 d=normalize(vW);float h=d.y;vec3 c=h>0.?mix(hor,top,pow(h,.5)):mix(hor,bot,pow(-h,.35));float s=max(dot(d,sunDir),0.);c+=sunCol*(pow(s,5.)*.5+pow(s,60.)*1.5);gl_FragColor=vec4(c,1.);}'}));
   sc.add(sky);W.sky=sky;
-  new TH.TextureLoader().load('tex/sky_k1.jpg',t=>{if(!W)return;t.encoding=TH.sRGBEncoding;const m=new TH.Mesh(new TH.SphereGeometry(400,64,32),new TH.MeshBasicMaterial({map:t,side:TH.BackSide,depthWrite:false,fog:false,toneMapped:false}));m.scale.x=-1;m.rotation.y=-1.379;m.renderOrder=-1;sc.add(m);sc.remove(sky);W.sky=m;W.tex.sky=t;});
+  new TH.TextureLoader().load('tex/sky_k1.jpg',t=>{if(!W)return;t.encoding=TH.sRGBEncoding;const m=new TH.Mesh(new TH.SphereGeometry(400,64,32),new TH.MeshBasicMaterial({map:t,side:TH.BackSide,depthWrite:false,fog:false,toneMapped:false}));m.scale.x=-1;m.rotation.y=-1.379;m.renderOrder=-1;const k=W.tod.sky;m.material.color.setRGB(k[0],k[1],k[2]);sc.add(m);sc.remove(sky);W.sky=m;W.tex.sky=t;});
   sc.fog.color.set('#5e4840');
-  sc.add(new TH.HemisphereLight(new TH.Color(se.hs),new TH.Color(se.hg),.75));
+  W.hemi=new TH.HemisphereLight(new TH.Color(se.hs),new TH.Color(se.hg),.75);sc.add(W.hemi);
   const d=new TH.DirectionalLight(new TH.Color(se.light),2.4);d.castShadow=true;d.shadow.mapSize.set(2048,2048);const c=d.shadow.camera;c.left=-22;c.right=22;c.top=22;c.bottom=-22;c.near=1;c.far=120;d.shadow.bias=-.0005;d.shadow.normalBias=.03;sc.add(d,d.target);W.dir=d;
   const f=new TH.DirectionalLight(0x8090b0,.35);f.position.set(10,14,30);sc.add(f);
   // Boden
@@ -159,10 +195,47 @@ function avatar(){
 }
 function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(on){a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();}else a.fadeOut(.3);}
 
+/* ---------- Meister Shen ---------- */
+const QUESTS=[
+  {id:'scroll',t:'Im Garten liegt heute eine Schriftrolle verborgen. Finde sie und bring mir Bescheid.',ok:()=>DW.scrollFound(),need:0},
+  {id:'poles',t:'Geh zu den Pflaumenblüten-Pfählen und schaffe mindestens fünf Pfähle.',ok:()=>(DW.day('_qp')||0)>=5,need:0},
+  {id:'bow',t:'Tritt vor den Altar und verneige dich. Ein Moment der Stille reicht.',ok:()=>!!DW.day('_qa'),need:3},
+  {id:'bell',t:'Schlage die Tempelglocke dreimal. Lass den Klang ausklingen, bevor du wieder schlägst.',ok:()=>(DW.day('_qb')||0)>=3,need:4},
+];
+function questToday(st){const av=QUESTS.filter(q=>st>=q.need);const d=new Date();return av[(d.getDate()*7+d.getMonth()*3)%av.length];}
+function meister(st){
+  if(!window.MonkKit)return;
+  MonkKit.load(()=>{if(!W)return;const o=MonkKit.npc('#3a3633','#d6a37c','#c9c4bb');if(!o)return;
+    const inside=st>=3,p=inside?[-1.7,.7,-.9]:[-3.4,0,2.6];o.position.set(p[0],p[1],p[2]);o.rotation.y=inside?.35:.6;W.root.add(o);W.npc=o;
+    const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));if(A.Idle){A.Idle.play();A.Idle.time=1.3;}W.npcMix=mx;W.npcA=A;
+    W.solids.push([p[0],p[2],.45]);
+    W.inter.push({x:p[0],z:p[2],r:2.3,label:'Meister Shen',btn:'Sprechen',act:()=>talk(st)});
+    const L=new TH.PointLight(0xffc890,.6,4,2);L.position.set(p[0],p[1]+2.2,p[2]+.8);W.root.add(L);});
+}
+function greet(st){
+  const n=DW.name(),t=DW.tod();
+  const a={dawn:`Du bist früh wach, ${n}. Gut so. Der Morgen gehört denen, die ihn sich holen.`,day:`Willkommen, ${n}. Der Tag ist lang, aber nicht endlos. Was hast du heute schon getan?`,dusk:`Die Sonne geht, ${n}. Schau zurück auf den Tag, aber ohne zu richten.`,night:`So spät noch hier, ${n}? Ruhe ist auch Training. Vergiss das nicht.`}[t];
+  const b=st===0?' Diese Ruinen waren einmal ein Tempel. Jedes Ritual, das du lebst, setzt einen Stein zurück.':st<3?' Die Mauern wachsen. Langsam, aber sie wachsen.':st<5?' Sieh dich um. Das hast du mit deinen Ritualen gebaut.':' Der Tempel steht. Jetzt geht es darum, ihn zu halten.';
+  return a+b;
+}
+function dlg(text,btns){const d=$('#wDlg');$('#wDlgT').textContent=text;const B=$('#wDlgB');B.innerHTML='';btns.forEach(([l,f,pri])=>{const b=document.createElement('button');b.textContent=l;if(pri)b.className='pri';b.onclick=()=>{DW.tick();f();};B.appendChild(b);});d.hidden=false;$('#wPrompt').hidden=true;W.talking=true;}
+function endTalk(){$('#wDlg').hidden=true;if(W){W.talking=false;W.near=null;}}
+function talk(st){
+  const q=questToday(st),qs=DW.day('_qs')||0;// 0 offen, 1 angenommen, 2 erledigt
+  const L=DW.lesson();
+  const menu=(text)=>{const btns=[];
+    if(qs===0)btns.push(['Gib mir einen Auftrag',()=>{DW.day('_qs',1);DW.day('_qid',q.id);dlg(q.t,[['Ich mache es',()=>{endTalk();msg('Auftrag angenommen');}],['Zurück',()=>menu(greet(st))]]);},1]);
+    else if(qs===1){const ok=q.ok();btns.push([ok?'Auftrag erfüllt':'Mein Auftrag?',()=>{if(ok){DW.day('_qs',2);endTalk();DW.questReward(8,'Auftrag erfüllt');pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1500);}else dlg('Noch nicht. '+q.t,[['Verstanden',()=>endTalk()]]);},ok]);}
+    btns.push([L.done?'Merksatz des Tages':'Lektion des Tages',()=>{if(L.done)dlg(`«${L.m}»`,[['Danke, Meister',()=>endTalk()]]);else{endTalk();DW.openLesson();}}]);
+    btns.push(['Weisheit',()=>dlg(DW.wisdom(),[['Danke',()=>endTalk()],['Zurück',()=>menu(greet(st))]])]);
+    dlg(text,btns);};
+  if(qs===2)menu('Dein Auftrag für heute ist erfüllt. '+greet(st));else menu(greet(st));
+}
+
 /* ---------- Interaktion ---------- */
 function interactables(st){
   W.inter=(W.inter||[]).concat([{x:9,z:7,r:3.2,label:'Pflaumenblüten-Pfähle',btn:'Spielen · 1 Energie',act:()=>startPoles()}]);
-  if(st>=4)W.inter.push({x:0,z:5.6,r:1.8,label:'Tempelglocke',btn:'Schlagen',act:()=>{DW.bell(1.4);W.shake=.6;pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1600);if(W.bell)W.bellSwing=1;}});
+  if(st>=4)W.inter.push({x:0,z:5.6,r:1.8,label:'Tempelglocke',btn:'Schlagen',act:()=>{DW.bell(1.4);W.shake=.6;DW.day('_qb',(DW.day('_qb')||0)+1);pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1600);if(W.bell)W.bellSwing=1;}});
   // Schriftrolle des Tages
   if(!DW.scrollFound()){const d=new Date();const r=rng(d.getFullYear()*400+d.getMonth()*31+d.getDate());const spots=[[-12,-6],[14,-4],[-8,14],[16,12],[-18,4],[6,-12],[-4,-14],[12,18]];const s=spots[Math.floor(r()*spots.length)];
     const g=new TH.Group();g.position.set(s[0],groundH(s[0],s[1])+.9,s[1]);W.root.add(g);
@@ -229,8 +302,10 @@ function loop(){
   if(W.pts&&!RM){const a=W.pts.geometry.attributes.position.array;for(let i=0;i<a.length;i+=3){a[i+1]-=dt*.9;a[i]+=Math.sin(t+i)*.01;if(a[i+1]<0){a[i+1]=14;a[i]=av.position.x+(Math.random()-.5)*60;a[i+2]=av.position.z+(Math.random()-.5)*60;}}W.pts.geometry.attributes.position.needsUpdate=true;}
   // Interaktion
   let near=null;for(const it of W.inter){if(Math.hypot(av.position.x-it.x,av.position.z-it.z)<it.r){if(it.auto){it.act();W.inter=W.inter.filter(x=>x!==it);break;}near=it;}}
-  if(near!==W.near){W.near=near;const p=$('#wPrompt');if(near){$('#wPromptT').textContent=near.label;$('#wPromptB').textContent=near.btn;p.hidden=false;}else p.hidden=true;}
+  if(W.talking)near=W.near;if(near!==W.near){W.near=near;const p=$('#wPrompt');if(near){$('#wPromptT').textContent=near.label;$('#wPromptB').textContent=near.btn;p.hidden=false;}else p.hidden=true;}
   $('#wEn').textContent=DW.energy();
+  if(W.npcMix){W.npcMix.update(dt);const o=W.npc,dx=av.position.x-o.position.x,dz=av.position.z-o.position.z;if(Math.hypot(dx,dz)<5){let d=Math.atan2(dx,dz)-o.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;o.rotation.y+=d*Math.min(1,dt*3);}}
+  if(W.talking&&Math.hypot(av.position.x-W.npc.position.x,av.position.z-W.npc.position.z)>3.2)endTalk();
   impUpdate();W.R.render(W.scene,W.cam);
 }
 
@@ -242,11 +317,13 @@ function open(){
   const R=new TH.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});R.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));R.setSize(window.innerWidth,window.innerHeight,false);
   R.shadowMap.enabled=true;R.shadowMap.type=TH.PCFSoftShadowMap;R.outputEncoding=TH.sRGBEncoding;R.toneMapping=TH.ACESFilmicToneMapping;R.toneMappingExposure=1.05;W.R=R;
   W.scene=new TH.Scene();W.cam=new TH.PerspectiveCamera(window.innerWidth<window.innerHeight?62:50,window.innerWidth/window.innerHeight,.1,700);W.root=new TH.Group();W.scene.add(W.root);
-  W.M=mats();const se=DW.season();W.se=se;env(se);
+  W.tod=TOD[DW.tod()]||TOD.dusk;W.M=mats();const se=DW.season();W.se=se;env(se);
   const st=DW.stage();temple(st);poles();path();
   const r=rng(21);let c=0,tries=0;while(c<14&&tries<500){tries++;const a=r()*6.28,d=11+r()*20,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<3.2&&z>3)continue;if(Math.hypot(x-9,z-7)<8)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<4))continue;maple(x,z,.8+r()*.5,r()*6);c++;}
   c=0;tries=0;while(c<30&&tries<800){tries++;const a=r()*6.28,d=24+r()*24,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<4&&z>3)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<3.5))continue;pine(x,z,.8+r()*.5,r()*6);c++;}
-  avatar();interactables(st);controls();
+  grassField();
+  applyTod();avatar();interactables(st);meister(st);controls();
+  $('#wDlgX').onclick=()=>endTalk();
   W.cam.position.set(0,6,22);W.yaw=0;
   W.onResize=()=>{R.setSize(window.innerWidth,window.innerHeight,false);W.cam.aspect=window.innerWidth/window.innerHeight;W.cam.fov=window.innerWidth<window.innerHeight?62:50;W.cam.updateProjectionMatrix();};window.addEventListener('resize',W.onResize);
   $('#wHint').classList.remove('gone');msg(st===0?'Die Ruinen deines Tempels. Baue sie mit deinen Ritualen auf.':'Willkommen in deiner Welt');
@@ -257,7 +334,7 @@ function close(){
   if(W.mixer&&W.model){W.mixer.stopAllAction();W.mixer.uncacheRoot(W.model);}
   if(W.av)W.scene.remove(W.av);
   W.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});Object.values(W.tex||{}).forEach(t=>t.dispose());Object.values(W.impT||{}).forEach(t=>t.dispose());W.R.dispose();
-  W=null;$('#world').hidden=true;$('#wPrompt').hidden=true;document.body.classList.remove('inworld');DW.refresh();
+  W=null;$('#world').hidden=true;$('#wPrompt').hidden=true;$('#wDlg').hidden=true;document.body.classList.remove('inworld');DW.refresh();
 }
 
 /* =================== MINISPIEL: PFLAUMENBLÜTEN-PFÄHLE =================== */
@@ -351,7 +428,7 @@ function drawG(){
   if(G.state==='ready'){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,h*.45,w,70);x.fillStyle='#fff';x.font='800 22px Rubik,system-ui,sans-serif';x.fillText('Tippen zum Starten',cx,h*.45+44);}
 }
 function endPoles(win){
-  const reached=win?G.N:G.i;const chi=reached*2+(win?10:0);const best=Math.max(G.best||0,reached);DW.setBest('poles',best);
+  const reached=win?G.N:G.i;DW.day('_qp',Math.max(DW.day('_qp')||0,reached));const chi=reached*2+(win?10:0);const best=Math.max(G.best||0,reached);DW.setBest('poles',best);
   $('#gEnd').hidden=false;$('#gEndT').textContent=win?'Gemeistert':'Gefallen';$('#gEndS').textContent=`${reached} von ${G.N} Pfählen · Bestwert ${best}`;$('#gEndC').textContent=`+${chi} Chi`;
   G.reward=chi;if(win)DW.bell(1.3);
 }
