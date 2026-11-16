@@ -9,7 +9,7 @@ let W=null;
 function sst(a,b,x){const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);}
 function nz(x,z){return Math.sin(x*.11+1.3)*Math.cos(z*.09+.7)*.6+Math.sin(x*.23+z*.17+2)*.3+Math.sin(x*.51-z*.43)*.12;}
 function rng(seed){seed=Math.floor(Math.abs(seed))%2147483646+1;return()=>(seed=(seed*16807)%2147483647)/2147483647;}
-function groundH(x,z){const r=Math.hypot(x,z);return sst(24,60,r)*(nz(x,z)+1.2)*1.6-sst(60,110,r)*2+(r>24?0:nz(x*3,z*3)*.04);}
+function groundH(x,z){const r=Math.hypot(x,z);return -sst(27,38,z)*28+sst(24,60,r)*(nz(x,z)+1.2)*1.6-sst(60,110,r)*2+(r>24?0:nz(x*3,z*3)*.04);}
 
 /* ---------- Texturen & Materialien ---------- */
 function loadTex(name,srgb,rep){const t=new TH.TextureLoader().load('tex/'+name);t.wrapS=t.wrapT=TH.RepeatWrapping;if(srgb)t.encoding=TH.sRGBEncoding;t.anisotropy=8;if(rep)t.repeat.set(rep,rep);return t;}
@@ -121,7 +121,7 @@ function temple(st){
     const f=new TH.Mesh(new TH.SphereGeometry(.03,8,6),M.glow);f.position.set(x,b+1.2,-1.75);f.scale.y=1.8;W.root.add(f);W.flames=(W.flames||[]).concat(f);});
   {const L=new TH.PointLight(0xffb066,1.6,7,2);L.position.set(0,b+1.5,-1.3);W.root.add(L);W.flick.push(L);}
   [-1.6,0,1.6].forEach(x=>{const m=new TH.Mesh(new TH.CylinderGeometry(.32,.32,.06,20),new TH.MeshStandardMaterial({color:'#6e2a1c',roughness:1}));m.position.set(x,b+.03,0);m.receiveShadow=true;W.root.add(m);});
-  W.inter.push({x:0,z:-.6,r:1.3,label:'Vor dem Altar',btn:'Verneigen',act:()=>{pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}});
+  W.inter.push({x:0,z:-.6,r:1.3,label:'Meditationshalle',btn:'Betreten',act:()=>roomDialog('halle')});
   if(st<4)return;
   const y2=b+ph+.3+1.25;box(6,1.8,4.4,M.plaster,0,y2,0);[-2.9,-1,1,2.9].forEach(x=>cyl(.1,1.8,M.red,x,y2,2.25,8));
   roof(9,7.4,2.1,0,y2+1.8,0);const ft=y2+3.9;cyl(.06,1.2,M.gold,0,ft-.1,0,6);[0,1,2].forEach(i=>{const s=new TH.Mesh(new TH.SphereGeometry(.2-i*.04,12,10),M.gold);s.position.set(0,ft+.2+i*.3,0);add(s);});
@@ -250,6 +250,90 @@ function summit(st){
 }
 const BUILD=[null,monastery,waterfallScene,summit];
 
+/* ---------- Das Kloster: Räume, Türen, Dorf ---------- */
+const RPOS={zelle:{c:[-12,0],f:[1,0]},kueche:{c:[12,0],f:[-1,0]},bibliothek:{c:[-12,-10],f:[1,0]},bad:{c:[12,-10],f:[-1,0]},garten:{c:[-11,12],f:[1,0]},hof:{c:[14,10],f:[-1,0]},tor:{c:[0,25.5],f:[0,-1]},halle:{c:[0,-.6],f:[0,1]}};
+function spotOf(id){const p=RPOS[id];if(id==='halle')return[0,.7,.4];if(id==='tor')return[0,0,23];return[p.c[0]+p.f[0]*4.4,0,p.c[1]+p.f[1]*4.4];}
+function hut(id,open,label){
+  const M=W.M,P=RPOS[id],[cx,cz]=P.c,[fx,fz]=P.f,ew=fx?5.2:6.4,ed=fx?6.4:5.2;
+  box(ew+.6,.35,ed+.6,M.stone,cx,0,cz,2);
+  // Wände ohne Vorderseite, Vorderseite mit Türöffnung
+  const h=2.8,y=.35;
+  if(fx){box(.25,h,ed,M.plaster,cx-fx*ew/2,y,cz,1.7);box(ew,h,.25,M.plaster,cx,y,cz-ed/2,1.7);box(ew,h,.25,M.plaster,cx,y,cz+ed/2,1.7);box(.25,h,ed/2-.8,M.plaster,cx+fx*ew/2,y,cz-ed/4-.4,1.7);box(.25,h,ed/2-.8,M.plaster,cx+fx*ew/2,y,cz+ed/4+.4,1.7);box(.25,.6,1.6,M.plaster,cx+fx*ew/2,y+2.2,cz,1.7);}
+  else{box(ew,h,.25,M.plaster,cx,y,cz-fz*ed/2,1.7);box(.25,h,ed,M.plaster,cx-ew/2,y,cz,1.7);box(.25,h,ed,M.plaster,cx+ew/2,y,cz,1.7);box(ew/2-.8,h,.25,M.plaster,cx-ew/4-.4,y,cz+fz*ed/2,1.7);box(ew/2-.8,h,.25,M.plaster,cx+ew/4+.4,y,cz+fz*ed/2,1.7);box(1.6,.6,.25,M.plaster,cx,y+2.2,cz+fz*ed/2,1.7);}
+  box(fx?.3:ew+.3,.5,fx?ed+.3:.3,M.wood,cx,y,cz+(fz?fz*ed/2:0),1.4);
+  const dx=cx+fx*(ew/2+.05),dz=cz+fz*(ed/2+.05);
+  [[-.85,0],[.85,0]].forEach(([o])=>cyl(.1,2.25,M.red,dx+(fz?o:0),y,dz+(fx?o:0),8));
+  roof(ew+2.2,ed+2.2,1.5,cx,y+h+.15,cz);
+  // Tür
+  const door=new TH.Mesh(new TH.BoxGeometry(fx?.08:1.55,2.1,fx?1.55:.08),M.wood);door.castShadow=true;
+  if(open){door.position.set(dx+fx*.05+(fz?-.75:0)+(fx? .6*fx:0),y+1.05,dz+(fx?-.75:0)+(fz?.6*fz:0));door.rotation.y=Math.PI/2.3*(fx?1:1);
+    const L=new TH.PointLight(0xffb070,1.1,6,2);L.position.set(cx,y+1.8,cz);W.root.add(L);
+    const glowIn=new TH.Mesh(new TH.PlaneGeometry(1.5,2),new TH.MeshBasicMaterial({color:0x6a4320}));glowIn.position.set(dx-fx*.2,y+1.05,dz-fz*.2);glowIn.rotation.y=fx?Math.PI/2:0;W.root.add(glowIn);}
+  else{door.position.set(dx,y+1.05,dz);const lock=new TH.Mesh(new TH.BoxGeometry(.22,.26,.12),M.gold);lock.position.set(dx+fx*.1,y+1.0,dz+fz*.1);W.root.add(lock);
+    const bar=new TH.Mesh(new TH.BoxGeometry(fx?.06:1.7,.07,fx?1.7:.06),new TH.MeshStandardMaterial({color:'#3a3a3e',metalness:.8,roughness:.4}));bar.position.set(dx+fx*.08,y+1.1,dz+fz*.08);W.root.add(bar);}
+  W.root.add(door);
+  // Schild
+  const cv=document.createElement('canvas');cv.width=256;cv.height=64;const x=cv.getContext('2d');x.fillStyle='#2a1810';x.fillRect(0,0,256,64);x.fillStyle=open?'#f2d48a':'#9a9088';x.font='600 30px Rubik, sans-serif';x.textAlign='center';x.fillText(label,128,42);
+  const sg=new TH.Mesh(new TH.PlaneGeometry(1.6,.4),new TH.MeshBasicMaterial({map:new TH.CanvasTexture(cv)}));sg.position.set(dx+fx*.16,y+2.55,dz+fz*.16);sg.rotation.y=fx>0?Math.PI/2:fx<0?-Math.PI/2:fz<0?Math.PI:0;W.root.add(sg);
+  // Kollision: Rechteck aus Kreisen
+  const x0=cx-ew/2,x1=cx+ew/2,z0=cz-ed/2,z1=cz+ed/2;wallLine(x0,z0,x1,z0,.4);wallLine(x0,z1,x1,z1,.4);wallLine(x0,z0,x0,z1,.4);wallLine(x1,z0,x1,z1,.4);noGo(cx,cz,4.5);
+}
+function gardenArea(open){const M=W.M,[cx,cz]=RPOS.garten.c;for(let i=0;i<14;i++){const a=i/14*6.28;if(Math.cos(a)>.9)continue;cyl(.06,1,M.wood,cx+Math.cos(a)*4.2,0,cz+Math.sin(a)*4.2,6);}
+  const pond=new TH.Mesh(new TH.CircleGeometry(1.6,24),new TH.MeshPhongMaterial({color:'#0d2226',shininess:60}));pond.rotation.x=-Math.PI/2;pond.position.set(cx-1,.03,cz);W.root.add(pond);
+  box(1.8,.45,.5,M.wood,cx+1.4,0,cz+1.6,1);noGo(cx,cz,4.6);
+  for(let i=0;i<14;i++){const a=i/14*6.28;if(Math.cos(a)>.9)continue;W.solids.push([cx+Math.cos(a)*4.2,cz+Math.sin(a)*4.2,.3]);}
+  const gx=cx+4.2,gz=cz;cyl(.12,2.2,M.red,gx,0,gz-1,8);cyl(.12,2.2,M.red,gx,0,gz+1,8);box(.3,.3,2.6,M.red,gx,2.1,gz,1);
+  if(!open){const gate=box(.08,1.2,1.9,M.wood,gx,0,gz,1);const lock=new TH.Mesh(new TH.BoxGeometry(.12,.24,.22),M.gold);lock.position.set(gx+.06,.7,gz);W.root.add(lock);W.solids.push([gx,gz,1]);}}
+function hofArea(open){const M=W.M,[cx,cz]=RPOS.hof.c;box(1.6,.45,.45,M.wood,cx,0,cz,1);[-.6,.6].forEach(o=>{cyl(.04,.9,M.wood,cx+o,.45,cz-.35,6);});
+  const bar=cyl(.03,1.6,new TH.MeshStandardMaterial({color:'#555',metalness:.8,roughness:.4}),cx,1.3,cz-.35,8);bar.rotation.z=Math.PI/2;bar.position.set(cx,1.35,cz-.35);
+  [-.8,.8].forEach(o=>{const w=cyl(.22,.08,new TH.MeshStandardMaterial({color:'#222',roughness:.6}),cx+o,1.35,cz-.35,16);w.rotation.z=Math.PI/2;w.position.set(cx+o,1.35,cz-.35);});
+  W.solids.push([cx,cz,1]);if(!open){[[-2,-2],[2,-2],[2,2],[-2,2]].forEach(([a,b])=>cyl(.07,1,M.wood,cx+a,0,cz+b,6));const r=new TH.Mesh(new TH.BoxGeometry(4,.04,.04),new TH.MeshStandardMaterial({color:'#7a5a3a'}));r.position.set(cx,.85,cz-2);W.root.add(r);}}
+function gate(open){const M=W.M,z=25.5;[-2.4,2.4].forEach(x=>{cyl(.3,4.2,M.red,x,0,z,12);W.solids.push([x,z,.5]);});box(6.4,.5,.7,M.red,0,4.2,z,1.5);box(5.6,.3,.5,M.red,0,3.6,z,1.5);roof(7.6,2.2,.8,0,4.7,z);
+  if(!open){const d=box(4.4,3.4,.12,M.wood,0,0,z,1);const lock=new TH.Mesh(new TH.BoxGeometry(.3,.34,.16),M.gold);lock.position.set(0,1.6,z-.1);W.root.add(lock);}
+  wallLine(-14,z,-2.6,z,.5);wallLine(2.6,z,14,z,.5);for(let x=-14;x<=14;x+=1.2){if(Math.abs(x)<2.6)continue;box(1.2,1.1,.4,M.stone,x,0,z,1);}}
+function village(){
+  const v=DW.village(),lvl=v.lvl,n=[4,9,15,24][lvl],r=rng(77),M=W.M,base=-27;
+  const g=new TH.Group();W.root.add(g);
+  const lamp=lvl>=3;
+  for(let i=0;i<n;i++){const a=r()*6.28,d=3+r()*(6+lvl*3),x=Math.cos(a)*d,z=60+Math.sin(a)*d*.7,s=.8+r()*.6;
+    const hm=new TH.Mesh(new TH.BoxGeometry(2.2*s,1.6*s,1.8*s),M.plaster);hm.position.set(x,base+.8*s,z);g.add(hm);
+    const rf=new TH.Mesh(new TH.ConeGeometry(1.8*s,1.1*s,4),M.roof);rf.position.set(x,base+1.6*s+.5*s,z);rf.rotation.y=Math.PI/4;g.add(rf);
+    if(W.tod.night||lamp){const l=new TH.Mesh(new TH.BoxGeometry(.3,.3,.05),M.glow);l.position.set(x,base+.8*s,z+.92*s);g.add(l);}}
+  if(lvl>=1){const w=new TH.Mesh(new TH.CylinderGeometry(.8,.8,.6,12),M.stone);w.position.set(0,base+.3,60);g.add(w);for(let i=0;i<5;i++){const f=new TH.Mesh(new TH.PlaneGeometry(6,3),new TH.MeshStandardMaterial({color:i%2?'#8a8a3a':'#6f7a2e'}));f.rotation.x=-Math.PI/2;f.position.set(-16+i*6.5,base+.05,74);g.add(f);}}
+  if(lvl>=2){const b=new TH.Mesh(new TH.BoxGeometry(8,.3,1.5),M.red);b.position.set(12,base+.6,58);g.add(b);const m=new TH.Mesh(new TH.BoxGeometry(4,2.4,3),M.plaster);m.position.set(-4,base+1.2,56);g.add(m);}
+  if(lvl>=3)for(let i=0;i<12;i++){const l=new TH.Mesh(new TH.SphereGeometry(.25,8,6),M.paper);l.position.set(-12+i*2,base+4+Math.sin(i)*.5,62);g.add(l);}
+  const smoke=new TH.Mesh(new TH.PlaneGeometry(70,30),new TH.MeshBasicMaterial({color:0xcfd6dc,transparent:true,opacity:.18,depthWrite:false}));smoke.position.set(0,base+6,48);g.add(smoke);
+}
+function kloster(){
+  const rs=DW.rooms(),R={};rs.forEach(r=>R[r.id]=r);
+  ['zelle','kueche','bibliothek','bad'].forEach(id=>hut(id,R[id].open,R[id].n));
+  gardenArea(R.garten.open);hofArea(R.hof.open);gate(R.tor.open);village();
+  // Hof-Pflaster
+  const pv=new TH.Mesh(new TH.PlaneGeometry(30,26),new TH.MeshStandardMaterial({map:W.tex.stoneD,normalMap:W.tex.stoneN,color:'#a49c90',roughness:.95}));pv.rotation.x=-Math.PI/2;pv.position.set(0,.02,1);pv.receiveShadow=true;W.root.add(pv);
+  noGo(0,1,15);
+  Object.keys(RPOS).forEach(id=>{const sp=spotOf(id),r=R[id];if(id==='halle')return;
+    W.inter.push({x:sp[0],z:sp[2],r:1.8,label:r.n+(r.open?'':' · verschlossen'),btn:r.open?'Betreten':'Ansehen',act:()=>roomDialog(id)});});
+}
+function roomDialog(id){
+  const r=DW.rooms().find(x=>x.id===id);$('#wDlgK').textContent=r.n;
+  if(!r.open){dlgK(r.n,`Diese Tür ist verschlossen. Hier lernst du: ${r.d}. Mit jedem neuen Rang darfst du eine Tür öffnen. Sprich mit Meister Shen, wenn du bereit bist.`,[['Verstanden',()=>endTalk(),1]]);return;}
+  const btns=[];let text=r.d+'.';
+  if(!r.rit.length)text+=' Hier hast du noch keine Routine.';
+  r.rit.forEach(x=>{const st=x.done?'✓ erledigt':!x.due?'heute nicht fällig':x.sub;text+=`\n${x.done?'✓':'○'} ${x.name} · ${st}`;
+    if(!x.done&&x.due)btns.push([x.label+': '+x.name,()=>{endTalk();DW.doRitual(x.id);setTimeout(refreshRoom,400);},1]);});
+  r.rit.forEach(x=>{if(x.editable)btns.push(['Bearbeiten: '+x.name,()=>{endTalk();DW.editRitual(x.id);}]);});
+  if(DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
+  r.arch.forEach(x=>{if(DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
+  if(id==='halle')btns.push(['Verneigen',()=>{endTalk();pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
+  if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
+    if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);}}]);}
+  btns.push(['Gehen',()=>endTalk()]);
+  dlgK(r.n,text,btns);
+}
+function dlgK(k,text,btns){dlg(text,btns);$('#wDlgK').textContent=k;}
+function refreshRoom(){if(W)ptsHud();}
+function ptsHud(){let el=$('#wPts');if(!el){el=document.createElement('div');el.id='wPts';el.className='w-pts';$('#world').appendChild(el);}el.innerHTML=DW.pts().map(p=>`<span><i style="background:${p.c}"></i><b>${p.v}</b></span>`).join('');}
+
 /* ---------- Tageszeit ---------- */
 const TOD={
   dawn:{sky:[1.08,.92,1.0],sun:1.7,sunC:'#ffc49a',hemi:.7,fog:'#7b6670',exp:1.0,imp:.92,elev:.22,night:0},
@@ -298,7 +382,7 @@ function env(se){
 
 /* ---------- Avatar ---------- */
 function avatar(){
-  const g=new TH.Group();W.scene.add(g);W.av=g;g.position.set(W.ch===2?3.6:0,0,12);g.rotation.y=Math.PI;
+  const g=new TH.Group();W.scene.add(g);W.av=g;{const sp=W.spawnAt;if(sp){g.position.set(sp[0],sp[1],sp[2]);g.rotation.y=Math.atan2(sp[3],sp[4]);W.yaw=g.rotation.y+Math.PI;}else{g.position.set(0,0,12);g.rotation.y=Math.PI;}}
   const fb=DW.avatarGroup();fb.traverse(o=>{if(o.isMesh)o.castShadow=true;});g.add(fb);
   if(!window.MonkKit)return;DW.applyLook();
   MonkKit.load(gl=>{if(!W||W.av!==g)return;g.remove(fb);const m=gl.scene;m.position.set(0,0,0);m.rotation.set(0,0,0);g.add(m);W.model=m;
@@ -345,6 +429,13 @@ function talk(st){
     else if(qs===1){const ok=both();btns.push([ok?'Auftrag erfüllt':'Mein Auftrag',()=>{if(ok){DW.day('_qs',2);endTalk();DW.questReward(12,'Auftrag erfüllt');pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1500);}else dlg('Noch nicht vollständig.\n'+qline(q.a)+'\n'+qline(q.b),[['Verstanden',()=>endTalk()]]);},ok]);}
     if(!W.scrollEarned&&!DW.scrollTried()&&DW.scrollAvailable())btns.push(['Die Schriftrolle?',()=>dlg('Die Rolle zeigt sich nur denen, die heute schon etwas getan haben. Erledige die Hälfte deiner Rituale, dann such im Garten. Sie leuchtet nicht. Schau genau.',[['Verstanden',()=>endTalk()]])]);
     btns.push([L.done?'Merksatz des Tages':'Lektion des Tages',()=>{if(L.done)dlg(`«${L.m}»`,[['Danke, Meister',()=>endTalk()]]);else{endTalk();DW.openLesson();}}]);
+    {const ri=DW.rankInfo();btns.unshift([ri.max?'Mein Rang':ri.eligible?'Rangprüfung ablegen':'Mein Rang',()=>{
+      if(ri.max){dlg(`Du bist ${ri.name}. Höher geht es nicht. Jetzt gibst du weiter, was du gelernt hast.`,[['Danke',()=>endTalk()]]);return;}
+      if(!ri.eligible){dlg(`Du bist ${ri.name}. Für ${ri.nextName} brauchst du ${ri.next.days} Tage im Rang (jetzt ${ri.days}) und ${Math.round(ri.next.pct*100)} % erfüllte Tage in den letzten ${ri.next.win} Tagen (jetzt ${Math.round(ri.pct*100)} %). Geduld. Eine Gewohnheit braucht Zeit.`,[['Verstanden',()=>endTalk()]]);return;}
+      const q=DW.examQ();dlg('Bevor ich dir den Schlüssel gebe, eine Frage:\n'+q.q,q.o.map((o,i)=>[o,()=>{if(i===q.a){DW.rankUp();const L=DW.lockedRooms();const ri2=DW.rankInfo();
+        if(!L.length){dlg(`Du bist jetzt ${ri2.name}. Alle Türen stehen dir offen.`,[['Danke, Meister',()=>endTalk(),1]]);return;}
+        dlg(`Richtig. Du bist jetzt ${ri2.name}. Welche Tür willst du öffnen? Dahinter wartet eine neue Routine.`,L.map(r=>[r.n,()=>{DW.openDoor(r.id);endTalk();msg(r.n+' ist offen. Geh hin und lege deine neue Routine an.');setTimeout(()=>{if(W){const keep={room:r.id};close();open(keep);}},1600);}]));}
+        else dlg('Nicht ganz. Lies die Lektionen im Dojo noch einmal und komm morgen wieder.',[['Verstanden',()=>endTalk()]]);}]));},ri.eligible]);}
     const sto=DW.story();if(sto.length)btns.push(['Eure Geschichte, Meister',()=>{let i=sto.length-1;const show=()=>dlg(sto[i].t,[...(i>0?[['Früher',()=>{i--;show();}]]:[]),['Danke, Meister',()=>endTalk()]]);show();}]);
     btns.push(['Weisheit',()=>dlg(DW.wisdom(),[['Danke',()=>endTalk()],['Zurück',()=>menu(greet(st))]])]);
     dlg(text,btns);};
@@ -381,7 +472,7 @@ function interactables(st){
   const rp=DW.rituals();W.scrollEarned=rp.rest||rp.due===0||rp.done>=Math.ceil(rp.due/2);
   if(!DW.scrollTried()&&DW.scrollAvailable()&&W.scrollEarned){const d=new Date();const r=rng(d.getFullYear()*400+d.getMonth()*31+d.getDate());
     const spots=[[0,-6.2],[-6.4,-4.6],[6.6,-3.8],[-27,-9],[24,-16],[-21,19],[29,9],[-33,-2],[11,-28],[-14,-27],[18,26],[-9,31],[5.6,-10],[-30,14]];
-    let si=Math.floor(r()*spots.length),s=spots[si];for(let k=0;k<spots.length&&(W.noGo.some(n=>Math.hypot(s[0]-n[0],s[1]-n[1])<n[2]+.5)||W.solids.some(q=>Math.hypot(s[0]-q[0],s[1]-q[1])<q[2]+.4)||(W.edgeZ&&s[1]>W.edgeZ-2)||(W.ch===2&&Math.abs(s[0])<1.6&&s[1]>-6));k++){si=(si+1)%spots.length;s=spots[si];}
+    let si=Math.floor(r()*spots.length),s=spots[si];for(let k=0;k<spots.length&&(W.noGo.some(n=>Math.hypot(s[0]-n[0],s[1]-n[1])<n[2]+.5)||W.solids.some(q=>Math.hypot(s[0]-q[0],s[1]-q[1])<q[2]+.4)||(s[1]>23)||(W.ch===2&&Math.abs(s[0])<1.6&&s[1]>-6));k++){si=(si+1)%spots.length;s=spots[si];}
     const g=new TH.Group();g.position.set(s[0],groundH(s[0],s[1])+.07,s[1]);g.rotation.y=r()*6;W.root.add(g);
     const sc=new TH.Mesh(new TH.CylinderGeometry(.05,.05,.36,10),new TH.MeshStandardMaterial({color:'#d9caa8',roughness:.9}));sc.rotation.z=Math.PI/2;sc.castShadow=true;g.add(sc);
     [-.19,.19].forEach(dx=>{const e=new TH.Mesh(new TH.CylinderGeometry(.065,.065,.04,10),W.M.red);e.rotation.z=Math.PI/2;e.position.x=dx;g.add(e);});
@@ -392,7 +483,7 @@ function msg(t){const m=$('#wMsg');m.textContent=t;m.classList.add('show');clear
 
 /* ---------- Bewegung & Kollision ---------- */
 function blocked(x,z,px,pz){
-  if(Math.hypot(x,z)>40)return true;
+  if(Math.hypot(x,z)>40)return true;if(z>25)return true;
   for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}
   if(W.edgeZ&&z>W.edgeZ)return true;if(W.ch===2&&Math.hypot(x,z+12)<6.9)return true;if(W.ch===2&&Math.abs(x)<1.1&&z>-5&&z<14&&!(W.bridge&&z>W.bridge.z0&&z<W.bridge.z1))return true;
   if(W.ch===0&&W.platform){const inP=Math.abs(x)<5.5&&Math.abs(z)<4,wasP=Math.abs(px)<5.5&&Math.abs(pz)<4,steps=Math.abs(x)<2.1&&z>=3.6&&z<5.6;if(inP&&!wasP&&!(Math.abs(px)<2.1&&pz>=3.6))return true;if(!inP&&wasP&&!steps)return true;}
@@ -459,7 +550,7 @@ function loop(){
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
-function open(){
+function open(opts){opts=opts||{};
   if(!TH){DW.toast('3D ist auf diesem Gerät nicht verfügbar');return;}
   $('#world').hidden=false;document.body.classList.add('inworld');
   const cv=$('#wgl');W={noGo:[],rects:[],flagsArr:[],imps:[],solids:[],flick:[],inter:[],yaw:0,pitch:.32,walk:0,clock:new TH.Clock()};
@@ -468,13 +559,16 @@ function open(){
   W.scene=new TH.Scene();W.cam=new TH.PerspectiveCamera(window.innerWidth<window.innerHeight?62:50,window.innerWidth/window.innerHeight,.1,700);W.root=new TH.Group();W.scene.add(W.root);
   W.tod=TOD[DW.tod()]||TOD.dusk;W.M=mats();W.ch=DW.chapter();const se=W.ch===3?Object.assign({},DW.season(),DW.seasonData('winter')||{},{winter:true}):DW.season();W.se=se;env(se);
   const st=DW.stage(),ch=DW.chapter();W.ch=ch;W.noGo=[];W.rects=[];W.flagsArr=[];
-  if(ch>0)BUILD[ch](st);else{temple(st);path();}poles();
+  W.ch=0;temple(5);path();poles();kloster();
   W.noGo.push([ch===2?3.6:0,12,5],[ch===2?3.6:0,18,4]);
   const ng=(x,z,m)=>W.noGo.some(n=>Math.hypot(x-n[0],z-n[1])<n[2]+(m||0))||(W.edgeZ&&z>W.edgeZ-3);
   const r=rng(21);let c=0,tries=0;while(c<(ch===3?0:ch===1?6:14)&&tries<500){tries++;const a=r()*6.28,d=11+r()*20,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ng(x,z,3))continue;if(Math.abs(x)<3.2&&z>3)continue;if(Math.hypot(x-9,z-7)<8)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<4))continue;maple(x,z,.8+r()*.5,r()*6);c++;}
   c=0;tries=0;while(c<(ch===3?0:30)&&tries<800){tries++;const a=r()*6.28,d=24+r()*24,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ng(x,z,3))continue;if(Math.abs(x)<4&&z>3)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<3.5))continue;pine(x,z,.8+r()*.5,r()*6);c++;}
   if(ch!==3)grassField();
-  applyTod();avatar();interactables(st);meister(st);shadowFoe();controls();
+  {let room=opts.room;const h=new Date().getHours();if(!room&&h>=4&&h<12){const z=DW.rooms().find(r=>r.id==='zelle');if(z&&z.rit.some(x=>x.type==='window'&&x.due&&!x.done))room='zelle';}
+   if(room){const sp=spotOf(room),P=RPOS[room];W.spawnAt=[sp[0],sp[1],sp[2],P.c[0]-sp[0],P.c[1]-sp[2]];W.autoRoom=room;}}
+  W.meisterPos=[-4.2,0,8.6];applyTod();avatar();interactables(5);meister(5);shadowFoe();controls();ptsHud();
+  if(W.autoRoom)setTimeout(()=>{if(W)roomDialog(W.autoRoom);},900);
   $('#wDlgX').onclick=()=>endTalk();
   W.cam.position.set(0,6,22);W.yaw=0;
   W.onResize=()=>{R.setSize(window.innerWidth,window.innerHeight,false);W.cam.aspect=window.innerWidth/window.innerHeight;W.cam.fov=window.innerWidth<window.innerHeight?62:50;W.cam.updateProjectionMatrix();};window.addEventListener('resize',W.onResize);
@@ -598,5 +692,5 @@ $('#gAgain').onclick=()=>{const c=G&&G.reward;finishG(true);startPoles();};
 function finishG(again){if(!G)return;cancelAnimationFrame(G.raf);g3dEnd();const chi=G.state==='end'?G.reward:0;G=null;$('#game').hidden=true;if(chi){DW.gameReward(chi,'Pflaumenblüten-Pfähle');if(W)msg('+'+chi+' Chi gutgeschrieben');}}
 window.addEventListener('resize',()=>{if(G)sizeG();});
 
-window.DWWorld={open,close};
+window.DWWorld={open,close,refreshRoom};
 })();

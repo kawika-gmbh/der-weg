@@ -465,6 +465,8 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 .w-prompt{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(14,15,18,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--stroke);padding:8px 8px 8px 16px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap;animation:spIn .3s}
 .w-msg{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translate(-50%,-10px);opacity:0;background:rgba(14,15,18,.82);padding:10px 16px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
 .w-msg.show{opacity:1;transform:translate(-50%,0)}
+.w-pts{position:absolute;top:calc(env(safe-area-inset-top) + 64px);left:12px;display:flex;flex-wrap:wrap;gap:5px;max-width:70%;pointer-events:none}.w-pts span{display:flex;align-items:center;gap:5px;background:rgba(14,15,18,.7);padding:4px 8px;border-radius:999px;font-size:11.5px}.w-pts i{width:7px;height:7px;border-radius:50%;display:block}
+.w-dlg-b button{text-align:left}
 .w-dlg{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 16px);background:rgba(14,15,18,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--stroke);border-radius:22px;padding:14px 16px 16px;animation:spIn .3s;max-width:520px;margin:0 auto}
 .w-dlg-h{display:flex;justify-content:space-between;align-items:center}
 .w-dlg-h .icon{width:34px;height:34px}
@@ -489,6 +491,9 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 #scBonus:not(:empty){margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(155,59,37,.12);font-weight:700;font-size:14px;color:#7a2a17}
 @keyframes scrOpen{from{clip-path:inset(48% 0 48% 0);opacity:.4}to{clip-path:inset(0 0 0 0);opacity:1}}
 .ci.ws{cursor:pointer}
+.card.kc h3{margin:4px 0 6px}.kc-h{display:flex;justify-content:space-between;align-items:center}
+.kbar{height:5px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:6px;overflow:hidden}.kbar i{display:block;height:100%;background:#d9a83a;border-radius:3px}
+.pts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.pt{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.06)}.pt i{width:8px;height:8px;border-radius:50%;display:block}.pt b{font-weight:700}
 .card.shadow{background:linear-gradient(160deg,rgba(60,14,10,.85),rgba(18,12,14,.9));border:1px solid rgba(255,106,77,.35)}
 .card.shadow .segs i.on{background:#ff6a4d}
 body.shadowed .kbw{filter:saturate(.55) brightness(.78) contrast(1.05)}
@@ -523,7 +528,7 @@ body.shadowed .kbw{filter:saturate(.55) brightness(.78) contrast(1.05)}
   <div class="loc"><span class="loc1" id="loc1">Kapitel 01 // Der Tempel</span><span class="loc2 num" id="loc2"></span></div>
   <div class="spacer"></div>
   <section class="dock" id="dock">
-    <div class="dockrow"><button class="enter" id="enterWorld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-6 8 6v12"/><path d="M10 21v-6h4v6"/></svg>Welt betreten</button>
+    <div class="dockrow"><button class="enter" id="enterWorld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-6 8 6v12"/><path d="M10 21v-6h4v6"/></svg>Ins Kloster</button>
     <button class="handle" id="handle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><span id="handleT">Welt ansehen</span></button></div>
     <div class="panel" id="panel"><div class="grab" id="grab"></div>
       <div class="pane" id="pane-missions"></div>
@@ -749,8 +754,33 @@ const ICON_KEYS=Object.keys(IC);
 const LOCK='<path d="M6 11h12v10H6zM8 11V8a4 4 0 0 1 8 0v3"/>';
 function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k]||IC.mind}</svg>`;}
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
+const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
+const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
+const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:10,pct:.8,win:7,slots:3},{n:'Bruder · Schwester',days:21,pct:.8,win:14,slots:4},{n:'Hüter',days:30,pct:.85,win:21,slots:5},{n:'Lehrer',days:45,pct:.85,win:30,slots:6},{n:'Meister',days:60,pct:.9,win:30,slots:7},{n:'Grossmeister',days:90,pct:.9,win:60,slots:8}];
+const EVENTS=[{id:'brunnen',n:'Der Brunnen ist versandet',cost:{nahrung:30,kraft:20},rw:'Brunnen auf dem Dorfplatz'},{id:'medizin',n:'Fieber im Dorf: Medizin holen',cost:{schritte:4000,ruhe:30},rw:'Eine Heilerin zieht ins Dorf'},{id:'bruecke',n:'Die Brücke über den Bach ist gebrochen',cost:{kraft:60,ordnung:20},rw:'Der Weg zum Markt ist offen'},{id:'schule',n:'Die Kinder wollen lesen lernen',cost:{weisheit:50},rw:'Eine Dorfschule'},{id:'ernte',n:'Erntefest vorbereiten',cost:{nahrung:50,ruhe:30,schritte:6000},rw:'Markttag einmal pro Woche'},{id:'dach',n:'Sturm: Dächer flicken',cost:{kraft:40,ordnung:30},rw:'Neue Dächer'},{id:'laternen',n:'Laternen für das Lichterfest',cost:{ruhe:40,weisheit:20},rw:'Laternen über dem Tal'},{id:'pfad',n:'Den Bergpfad freiräumen',cost:{schritte:8000,kraft:30},rw:'Pilger finden den Weg'}];
+const VSTUFE=[{n:'Weiler',at:0},{n:'Dorf',at:4},{n:'Marktflecken',at:12},{n:'Kleinstadt',at:25}];
+function catOf(r){const n=(r.name||'').toLowerCase();if(r.cat)return r.cat;if(/schritt|wander|gehen/.test(n))return 'schritte';if(/aufsteh|tagwache|wach|schlaf|licht aus|bildschirm|handy|kalt|dusch/.test(n))return 'ordnung';if(/wasser|essen|früh|tee|trink|ernähr|koch/.test(n))return 'nahrung';if(/medit|atem|stille|achtsam|dankbar|spazier|natur/.test(n))return 'ruhe';if(/lauf|kraft|train|mobil|dehn|beweg|sport|yoga/.test(n))return 'kraft';if(/lies|lese|lern|lektion|tagebuch|journal|buch/.test(n))return 'weisheit';return r.type==='timer'?'ruhe':'ordnung';}
+function roomOf(r){if(r.room)return r.room;const n=(r.name||'').toLowerCase(),c=catOf(r);if(/kalt|dusch/.test(n))return 'bad';if(/spazier|dankbar|natur|garten/.test(n))return 'garten';return {ordnung:'zelle',nahrung:'kueche',ruhe:'halle',kraft:'hof',weisheit:'bibliothek',schritte:'tor'}[c];}
+function activeRituals(){return S.rituals.filter(r=>!r.arch);}
+function slots(){return KRANG[S.rank||0].slots;}
+function rankStats(){const R=KRANG[(S.rank||0)+1];const since=new Date(S.rankSince+'T12:00:00');const days=Math.max(0,Math.round((Date.now()-since)/DAY));if(!R)return{max:true,days};
+  let sum=0,n=0;const t=new Date();for(let i=1;i<=R.win;i++){const d=new Date(t);d.setDate(d.getDate()-i);const k=dk(d);if(k<S.rankSince)break;n++;sum+=Math.min(1,dayFrac(S.days[k]));}
+  const pct=n?sum/n:0;return{next:R,days,pct,n,okDays:days>=R.days,okPct:pct>=R.pct,eligible:S.test||(days>=R.days&&pct>=R.pct)};}
+function addPts(cat,n){S.pts[cat]=(S.pts[cat]||0)+n;}
+function weekId(){const d=new Date(),y=new Date(d.getFullYear(),0,1);return d.getFullYear()+'-'+Math.ceil(((d-y)/DAY+y.getDay()+1)/7);}
+function curEvent(){const V=S.village;const wid=weekId();if(V.week!==wid){V.week=wid;V.paid={};V.idx=((V.idx==null?-1:V.idx)+1)%EVENTS.length;V.ok=false;save();}return EVENTS[V.idx];}
+function vLevel(){let l=0;VSTUFE.forEach((v,i)=>{if(S.village.done>=v.at)l=i;});return l;}
 const TPL={
-  shaolin:{n:'Shaolin',d:'Früh aufstehen, laufen, Kraft, Stille, Kälte',r:[
+  frueh:{n:'Frühaufsteher',d:'Aufstehen im Zeitfenster und ein Glas Wasser',r:[
+    {id:'wake',name:'Aufstehen',icon:'sun',type:'window',cfg:{start:'06:30',win:20},freq:{mode:'daily'},cat:'ordnung',room:'zelle'},
+    {name:'Glas Wasser',icon:'drop',type:'check',cfg:{},freq:{mode:'daily'},cat:'nahrung',room:'kueche'}]},
+  ruhe:{n:'Ruhe finden',d:'Drei Minuten atmen und kein Handy am Morgen',r:[
+    {name:'Erste halbe Stunde ohne Handy',icon:'phone',type:'check',cfg:{},freq:{mode:'daily'},cat:'ordnung',room:'zelle'},
+    {name:'Tee in Ruhe',icon:'drop',type:'check',cfg:{},freq:{mode:'daily'},cat:'nahrung',room:'kueche'}]},
+  bewegung:{n:'In Bewegung',d:'Aufstehen und ein gesundes Frühstück',r:[
+    {id:'wake',name:'Aufstehen',icon:'sun',type:'window',cfg:{start:'07:00',win:30},freq:{mode:'daily'},cat:'ordnung',room:'zelle'},
+    {name:'Gesundes Frühstück',icon:'drop',type:'check',cfg:{},freq:{mode:'daily'},cat:'nahrung',room:'kueche'}]},
+  _shaolin:{n:'Shaolin',d:'Früh aufstehen, laufen, Kraft, Stille, Kälte',r:[
     {id:'wake',name:'Tagwache',icon:'sun',type:'window',cfg:{start:'05:30',win:20},freq:{mode:'daily'}},
     {id:'run',name:'Laufen',icon:'run',type:'amount',cfg:{unit:'km',goal:5},freq:{mode:'week',n:3}},
     {name:'Kraft & Dehnen',icon:'fist',type:'timer',cfg:{min:20,breath:false,hint:'Liegestütze, Kniebeugen, Dehnen'},freq:{mode:'days',days:[0,2,4]}},
@@ -870,9 +900,9 @@ function applyLook(a){if(window.MonkKit)MonkKit.setLook(...lookOf(a||S.avatar));
 function refreshPortrait(){if(!window.MonkKit||!MonkKit.gltf)return;applyLook(S.avatar);portraitURL=MonkKit.portrait(192);renderTop();if(typeof tab!=='undefined'&&tab==='op')renderOp();}
 const uid=()=>'r'+Math.random().toString(36).slice(2,8);
 const clone=o=>JSON.parse(JSON.stringify(o));
-function tplRituals(k){return TPL[k].r.map(r=>Object.assign(clone(r),{id:r.id||uid()}));}
+function tplRituals(k){if(!TPL[k])k='frueh';return TPL[k].r.map(r=>Object.assign(clone(r),{id:r.id||uid()}));}
 function randomAvatar(){const r=n=>Math.floor(Math.random()*n);return{skin:r(5),hair:HAIR[r(4)][0],hairColor:r(5),robe:r(5),eyes:EYES[r(2)][0],acc:ACC[r(4)][0]};}
-function defaults(){return{v:3,name:'',avatar:randomAvatar(),rituals:tplRituals('shaolin'),sound:true,hq:true,test:false,days:{},cycleStart:dk(new Date()),cycle:1,best:0,seals:[],learn:{log:{},exams:{},practice:{},review:[]}};}
+function defaults(){return{v:3,name:'',avatar:randomAvatar(),rituals:tplRituals('frueh'),sound:true,hq:true,test:false,days:{},cycleStart:dk(new Date()),cycle:1,best:0,seals:[],learn:{log:{},exams:{},practice:{},review:[]}};}
 function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r);}catch(e){}return null;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function migrate(){
@@ -894,8 +924,14 @@ function migrate(){
   if(!S.inv.ws){S.inv.ws=[];S.inv.wsStreak={d:'',n:0};S.inv.story=[];}
   ['log','exams','practice','review'].forEach(k=>{if(!S.learn[k])S.learn[k]=D.learn[k];});
   S.rituals.forEach(r=>{if(!r.freq)r.freq=r.id==='run'?{mode:'week',n:3}:{mode:'daily'};});
-  if((S.v||0)<5){S.rituals=S.rituals.filter(r=>r.id!=='slow'&&!/ultra-slow/i.test(r.name));if(!S.rituals.length)S.rituals=tplRituals('shaolin');}
-  S.v=5;
+  if((S.v||0)<5){S.rituals=S.rituals.filter(r=>r.id!=='slow'&&!/ultra-slow/i.test(r.name));if(!S.rituals.length)S.rituals=tplRituals('frueh');}
+  if((S.v||0)<6){S.rank=0;S.rankSince=dk(new Date());S.pts={ordnung:0,nahrung:0,ruhe:0,kraft:0,weisheit:0,schritte:0};S.village={lvl:0,done:0,paid:{},week:'',idx:null};
+    S.rituals.forEach(r=>{r.cat=catOf(r);r.room=roomOf(r);});
+    const pri=r=>['zelle','kueche'].includes(r.room)?0:1;const sorted=S.rituals.slice().sort((a,b)=>pri(a)-pri(b));sorted.forEach((r,i)=>{r.arch=i>=2;});
+    S.doors=[...new Set(['zelle','kueche',...S.rituals.filter(r=>!r.arch).map(r=>r.room)])];}
+  if(!S.pts)S.pts={ordnung:0,nahrung:0,ruhe:0,kraft:0,weisheit:0,schritte:0};if(!S.doors)S.doors=['zelle','kueche'];if(S.rank==null)S.rank=0;if(!S.rankSince)S.rankSince=dk(new Date());if(!S.village)S.village={lvl:0,done:0,paid:{},week:'',idx:null};
+  S.rituals.forEach(r=>{if(!r.cat)r.cat=catOf(r);if(!r.room)r.room=roomOf(r);});
+  S.v=6;
 }
 function dk(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function pk(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
@@ -908,8 +944,9 @@ function isoDow(d){return (d.getDay()+6)%7;}
 function freqOf(r){return r.freq||{mode:'daily'};}
 function weekDone(r,exToday){const mk=mondayKey(new Date()),tk=dk(new Date());let n=0;for(const k in S.days){if(k>=mk&&k<=tk&&!(exToday&&k===tk)){const x=S.days[k][r.id];if(x&&x.d)n++;}}return n;}
 function dueToday(r){const f=freqOf(r),d=today();if(d._rest)return false;if(f.mode==='days')return (f.days||[]).includes(isoDow(new Date()))||!!(d[r.id]&&d[r.id].v);if(f.mode==='week')return !!(d[r.id]&&d[r.id].d)||weekDone(r,true)<f.n;return true;}
-function dueList(){return S.rituals.filter(dueToday);}
+function dueList(){return S.rituals.filter(r=>!r.arch&&dueToday(r));}
 function share(){return Math.round(85/Math.max(1,dueList().length));}
+function wakeFactor(r){const[h,m]=r.cfg.start.split(':').map(Number);const now=new Date(),e=new Date(now);e.setHours(h,m+(+r.cfg.win||20),0,0);const late=(now-e)/60000;return S.test||late<=0?1:late<=30?.5:0;}
 function freqLabel(r){const f=freqOf(r);if(f.mode==='days')return (f.days||[]).slice().sort().map(i=>DOW[i]).join(' ');if(f.mode==='week')return f.n+'× pro Woche';return 'Täglich';}
 function restThisWeek(){const mk=mondayKey(new Date());return Object.keys(S.days).some(k=>k>=mk&&S.days[k]._rest);}
 function recDone(r,rec){return !!(rec&&rec.d);}
@@ -1458,6 +1495,26 @@ window.DW={
   avatarGroup:()=>avatarGroup(),
   applyLook:()=>applyLook(S.avatar),
   tod:()=>todNow(),
+  rooms:()=>Object.entries(ROOMS).map(([id,R])=>{const d=today(),tk=dk(new Date());return{id,n:R.n,d:R.d,cat:R.cat,open:S.doors.includes(id),
+    rit:activeRituals().filter(r=>(r.room||roomOf(r))===id).map(r=>{const rec=d[r.id],due=dueToday(r);let label=r.type==='window'?'Aufwachen':r.type==='timer'?`Timer ${r.cfg.min} Min`:r.type==='amount'?`Eintragen (${r.cfg.unit})`:'Erledigt';
+      return{id:r.id,name:r.name,type:r.type,done:recDone(r,rec),due,label,sub:r.type==='window'?`Ziel ${r.cfg.start} ±${r.cfg.win} Min`:r.type==='amount'?`${fmtNum(rec?rec.v:0)} / ${fmtNum(r.cfg.goal)} ${r.cfg.unit}`:freqLabel(r),editable:!(r.editLock&&r.editLock>tk)};}),
+    arch:S.rituals.filter(r=>r.arch&&(r.room||roomOf(r))===id).map(r=>({id:r.id,name:r.name}))};}),
+  slotsFree:()=>slots()-activeRituals().length,
+  doRitual(id){const r=S.rituals.find(x=>x.id===id);if(!r)return;if(r.type==='timer'){openTimer(r);return;}
+    if(r.type==='amount'){$('#dlIn').hidden=false;$('#dlIn').value='';$('#dlIn').placeholder=r.cfg.unit;$('#dlIn').setAttribute('inputmode','decimal');ask(r.name,`Wie viel heute? Ziel ${fmtNum(r.cfg.goal)} ${r.cfg.unit}.`,()=>{const v=parseFloat(($('#dlIn').value||'').replace(',','.'));$('#dlIn').hidden=true;if(v>0)complete(r,v);else toast('Bitte eine Zahl eintragen');});return;}
+    complete(r,true);},
+  editRitual(id){openRForm(id);},
+  newRitual(room){if(activeRituals().length>=slots()){toast('Alle Plätze belegt');return;}openRForm(null);fd.room=room;fd.cat=ROOMS[room].cat;renderRForm();},
+  unarchive(id){const r=S.rituals.find(x=>x.id===id);if(!r)return;if(activeRituals().length>=slots()){toast('Alle Plätze belegt');return;}r.arch=false;save();renderPane();},
+  rankInfo:()=>{const st=rankStats();return Object.assign({rank:S.rank||0,name:KRANG[S.rank||0].n,nextName:st.next?st.next.n:null},st);},
+  examQ:()=>{const L=LESSONS[Math.floor(Math.random()*LESSONS.length)];return{q:L.q,o:L.o,a:L.a};},
+  rankUp(){S.rank=Math.min(KRANG.length-1,(S.rank||0)+1);S.rankSince=dk(new Date());if(S.rank>=2&&!S.doors.includes('tor'))S.doors.push('tor');save();bell(1.3);renderAll();},
+  lockedRooms:()=>Object.keys(ROOMS).filter(k=>!S.doors.includes(k)&&k!=='tor').map(k=>({id:k,n:ROOMS[k].n,d:ROOMS[k].d})),
+  openDoor(k){if(!S.doors.includes(k))S.doors.push(k);save();renderAll();},
+  pts:()=>Object.entries(CATS).map(([k,c])=>({k,n:c.n,c:c.c,v:S.pts[k]||0})),
+  village:()=>{const ev=curEvent(),V=S.village;return{ev,paid:V.paid,ok:V.ok,done:V.done,lvl:vLevel(),stufe:VSTUFE[vLevel()].n};},
+  invest(){const ev=curEvent(),V=S.village;if(V.ok)return{ok:true};let any=false;for(const [k,v] of Object.entries(ev.cost)){const need=v-(V.paid[k]||0),give=Math.min(need,S.pts[k]||0);if(give>0){V.paid[k]=(V.paid[k]||0)+give;S.pts[k]-=give;any=true;}}
+    const full=Object.entries(ev.cost).every(([k,v])=>(V.paid[k]||0)>=v);if(full){V.ok=true;V.done++;}save();renderAll();return{any,full};},
   name:()=>S.name||'Novize',
   day(k,v){const d=today();if(v!==undefined){d[k]=v;save();}return d[k];},
   lesson:()=>{const L=LESSONS[lessonIdx()];return{t:L.t,m:L.m,cat:L.cat,done:!!lessonToday()};},
@@ -1502,6 +1559,17 @@ function untilMidnight(){const n=new Date(),m=new Date(n);m.setHours(24,0,0,0);c
 function winState(r){const[h,m]=r.cfg.start.split(':').map(Number);const now=new Date(),s=new Date(now);s.setHours(h,m,0,0);const e=new Date(s.getTime()+r.cfg.win*60000);const p=n=>String(n).padStart(2,'0');return{open:S.test||(now>=s&&now<=e),before:now<s,label:`${p(s.getHours())}:${p(s.getMinutes())}–${p(e.getHours())}:${p(e.getMinutes())}`};}
 function fmtNum(v){return String(Math.round(v*10)/10).replace('.',',');}
 let amtOpen=null;
+function klosterCards(){
+  const st=rankStats(),K=KRANG[S.rank||0],ev=curEvent(),V=S.village;
+  let h=`<div class="card kc"><div class="kc-h"><span class="lbl">Rang ${(S.rank||0)+1} von ${KRANG.length}</span><button class="linkbtn" data-a2="kloster" style="margin:0">Ins Kloster</button></div><h3>${K.n}</h3>`;
+  if(st.max)h+=`<p>Höchster Rang erreicht.</p>`;
+  else h+=`<p>Nächster Rang: <b>${st.next.n}</b>. ${st.eligible?'Du bist bereit. Geh zu Meister Shen für die Rangprüfung.':`Noch ${Math.max(0,st.next.days-st.days)} Tage im Rang, Erfüllung ${Math.round(st.pct*100)} % von ${Math.round(st.next.pct*100)} % (letzte ${st.next.win} Tage).`}</p><div class="kbar"><i style="width:${Math.min(100,st.days/st.next.days*100)}%"></i></div><div class="kbar"><i style="width:${Math.min(100,st.pct/st.next.pct*100)}%;background:#7fa7c9"></i></div>`;
+  h+=`<p style="margin-top:8px">Routinen: ${activeRituals().length} von ${slots()} Plätzen · Türen offen: ${S.doors.length} von ${Object.keys(ROOMS).length}</p>`;
+  h+=`<div class="pts">${Object.entries(CATS).map(([k,c])=>`<span class="pt"><i style="background:${c.c}"></i>${c.n}<b class="num">${fmtNum(S.pts[k]||0)}</b></span>`).join('')}</div></div>`;
+  const cost=Object.entries(ev.cost).map(([k,v])=>{const p=(V.paid[k]||0);return `${fmtNum(p)}/${fmtNum(v)} ${CATS[k].n}`;}).join(' · ');
+  h+=`<div class="card kc"><span class="lbl">Dorf im Tal · ${VSTUFE[vLevel()].n} · ${V.done} Hilfen</span><h3>${V.ok?'Erledigt: ':''}${esc(ev.n)}</h3><p>${cost}</p><p style="color:rgba(236,235,230,.55)">Belohnung: ${esc(ev.rw)}. Investieren am Klostertor${S.doors.includes('tor')?'':' (öffnet ab Rang 3)'}.</p></div>`;
+  return h;
+}
 function shadowCard(){
   const du=duelState(),dm=dmgNow(),mi=S.decay.miss;
   if(du&&!du.won)return `<div class="card shadow"><span class="lbl" style="color:#ff6a4d">Schattenduell · Kapitel ${du.ch+1}</span><h3>${du.n} / 7 perfekte Tage</h3><p>Der Schatten versperrt den Weg ins nächste Kapitel. Er weicht erst nach sieben perfekten Tagen in Folge. Ein Fehltag, und das Duell beginnt von vorn.</p><div class="segs">${[0,1,2,3,4,5,6].map(i=>`<i class="${i<du.n?'on':''}"></i>`).join('')}</div></div>`;
@@ -1513,7 +1581,7 @@ function renderMissions(){
   const d=today(),list=dueList(),sh=share(),n=list.length,done=list.filter(r=>recDone(r,d[r.id])).length;
   let h=`<div class="ph"><div><span class="lbl">${DOW[isoDow(new Date())]} · Tagesmissionen</span><h2>${d._rest?'Ruhetag':n?`${done} / ${n} erfüllt`:'Nichts fällig'}</h2></div><span class="num">NEU IN ${untilMidnight()}</span></div>`;
   if(n)h+=`<div class="segs">${list.map(r=>`<i class="${recDone(r,d[r.id])?'on':''}"></i>`).join('')}</div>`;
-  h+=shadowCard();
+  h+=shadowCard()+klosterCards();
   if(d._chest==='ready')h+=`<button class="chestcard" id="openChest"><span class="chest-mini">${CHEST_SVG}</span><span><b>Truhe bereit</b><span>Tippen zum Öffnen</span></span><span class="act">Öffnen</span></button>`;
   if(!lessonToday())h+=`<button class="teaser" data-go="dojo"><span class="mi" style="width:36px;height:36px">${icon('book')}</span><span><b>Tageslektion offen</b><span>${LESSONS[lessonIdx()].t} · +10 Chi</span></span></button>`;
   if(d._rest)h+=`<div class="card"><h3>Heute ist Ruhetag</h3><p>Erholung ist Teil des Trainings. Der Tag zählt nicht als verpasst, und deine Jahreszeit bleibt stabil.</p>${Object.keys(d).some(k=>k[0]!=='_')?'':'<button class="act ghost" style="align-self:flex-start" id="restOff">Ruhetag aufheben</button>'}</div>`;
@@ -1521,10 +1589,11 @@ function renderMissions(){
   h+='<ul class="list">';
   list.forEach(r=>{
     const rec=d[r.id],dn=recDone(r,rec);let sub='',act='',bar='';
-    if(r.type==='window'){const w=winState(r);sub=`${w.label} · ${TYPES.window.n}${S.test?' · Test':''}`;act=dn?'':(w.open?`<button class="act cut-s" data-a="do" data-id="${r.id}">Ich bin wach</button>`:`<button class="act" disabled>${w.before?'ab '+r.cfg.start:'Verpasst'}</button>`);}
-    if(r.type==='timer'){sub=`${r.cfg.min} Min${r.cfg.hint?' · '+r.cfg.hint:''}`;act=dn?'':`<button class="act cut-s" data-a="timer" data-id="${r.id}">Start</button>`;}
-    if(r.type==='amount'){const v=rec?rec.v:0;sub=`${fmtNum(v)} / ${fmtNum(r.cfg.goal)} ${r.cfg.unit}`;bar=`<span class="mbar"><i style="width:${Math.min(100,v/r.cfg.goal*100)}%"></i></span>`;act=dn?'':`<button class="act cut-s ${amtOpen===r.id?'ghost':''}" data-a="amt" data-id="${r.id}">${amtOpen===r.id?'Zu':(v?'Mehr':'Eintragen')}</button>`;}
-    if(r.type==='check'){sub=TYPES.check.n;act=dn?'':`<button class="act cut-s" data-a="do" data-id="${r.id}">Erledigt</button>`;}
+    if(r.type==='window'){const w=winState(r);sub=`${w.label}`;act='';}
+    if(r.type==='timer'){sub=`${r.cfg.min} Min${r.cfg.hint?' · '+r.cfg.hint:''}`;act='';}
+    if(r.type==='amount'){const v=rec?rec.v:0;sub=`${fmtNum(v)} / ${fmtNum(r.cfg.goal)} ${r.cfg.unit}`;bar=`<span class="mbar"><i style="width:${Math.min(100,v/r.cfg.goal*100)}%"></i></span>`;act='';}
+    if(r.type==='check'){sub=TYPES.check.n;act='';}
+    sub=ROOMS[r.room||roomOf(r)].n+' · '+CATS[r.cat||catOf(r)].n+' · '+sub;if(!dn)act=`<button class="act cut-s" data-a="go" data-id="${r.id}">Hingehen</button>`;
     {const f=freqOf(r);if(f.mode==='week')sub+=` · ${weekDone(r,false)}/${f.n} diese Woche`;}
     const rew=dn?`+${rec.c}`:`+${sh}`;
     h+=`<li class="ms cut-s ${dn?'done':''}" id="ms-${r.id}"><span class="mi">${icon(r.icon)}</span><div class="mt"><b>${esc(r.name)}</b><span>${esc(sub)}</span>${bar}</div><div class="mr"><span class="rew num">${rew} CHI</span>${dn?'<span class="okstamp">Erfüllt</span>':act}</div>`;
@@ -1551,22 +1620,27 @@ $('#pane-missions').addEventListener('click',e=>{
   if(e.target.closest('#restOn')){ask('Ruhetag nehmen?','Heute stehen keine Missionen an. Der Tag zählt nicht als verpasst. Einmal pro Woche möglich.',()=>{today()._rest=true;today()._n=0;save();buildWorld();renderAll();bell(.6);toast('Ruhetag. Gute Erholung');});return;}
   if(e.target.closest('#restOff')){const d=today();delete d._rest;delete d._n;save();buildWorld();renderAll();return;}
   const b=e.target.closest('button[data-a]');if(!b)return;const r=S.rituals.find(x=>x.id===b.dataset.id);if(!r)return;tick();
+  if(b.dataset.a==='go'){if(window.DWWorld)DWWorld.open({room:r.room||roomOf(r)});return;}
   if(b.dataset.a==='do')complete(r,true);
   if(b.dataset.a==='timer')openTimer(r);
   if(b.dataset.a==='amt'){amtOpen=amtOpen===r.id?null:r.id;renderMissions();}
 });
+document.addEventListener('click',e=>{const k=e.target.closest('[data-a2="kloster"]');if(k&&window.DWWorld){DWWorld.open({});}});
 $('#pane-missions').addEventListener('submit',e=>{e.preventDefault();const f=e.target.closest('form.amt');if(!f)return;const r=S.rituals.find(x=>x.id===f.dataset.id);const v=parseFloat(($('#amtIn').value||'').replace(',','.'));if(!(v>0)){toast('Bitte eine Zahl eintragen');return;}amtOpen=null;complete(r,v);});
 
 function complete(r,val){
   const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();
   const d=today();let rec=d[r.id]||{v:0,c:0,d:false};const sh=share();
   if(r.type==='amount'){rec.v=Math.round(((rec.v||0)+val)*10)/10;rec.c=Math.round(sh*Math.min(1,rec.v/r.cfg.goal));rec.d=rec.v>=r.cfg.goal;}
+  else if(r.type==='window'){const f=wakeFactor(r);rec.v=true;rec.c=Math.round(sh*f);rec.d=true;rec.t=Date.now();rec.f=f;}
   else{rec.v=true;rec.c=sh;rec.d=true;}
+  if(rec.d&&!rec.p){rec.p=1;const cat=r.cat||catOf(r);if(cat==='schritte'&&r.type==='amount')addPts('schritte',Math.round(rec.v));else addPts(cat,Math.round(10*(rec.f!=null?rec.f:1)));}
+  if(r.type==='amount'&&(r.cat||catOf(r))==='schritte'&&rec.p){rec.ps=rec.ps||0;}
   d[r.id]=rec;const dl=dueList();d._n=dl.length;
   const perfect=!d._b&&dl.length>0&&dl.every(x=>recDone(x,d[x.id]));if(perfect){d._b=15;if(!d._chest)d._chest='ready';}
   if(rec.d&&!rec.e){rec.e=1;S.energy=Math.min(6,(S.energy||0)+1);}if(perfect)S.energy=Math.min(6,S.energy+1);
   let firstChest=false;if(!S.inv.first&&rec.d){S.inv.first=true;if(!d._chest){d._chest='ready';firstChest=true;}}
-  save();afterGain(before,pB,lvB,rB,seB,{title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
+  save();if(window.DWWorld&&DWWorld.refreshRoom)DWWorld.refreshRoom();afterGain(before,pB,lvB,rB,seB,{title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
 }
 function afterGain(before,pB,lvB,rB,seB,o){
   duelState();const after=totalChi(),pA=prog(after),lvA=lvOf(after),rA=rankIdx(after);updateBest();
@@ -1755,17 +1829,17 @@ let onboarding=false,editId=null,fd=null;
 function openEditor(onb){onboarding=!!onb;renderEditor();$('#editor').hidden=false;$('#editor').scrollTop=0;$('#settings').hidden=true;}
 function renderEditor(){
   const n=S.rituals.length;$('#edInfo').textContent=`${n} von maximal 6 Ritualen. Pro Tag gibt es 85 Chi aus Missionen, verteilt auf die Rituale, die an diesem Tag fällig sind (heute je ${share()} Chi), plus 15 Chi Bonus für einen perfekten Tag.`;
-  $('#edTpl').innerHTML=Object.entries(TPL).map(([k,t])=>`<button class="tpl cut-s" data-tpl="${k}"><b>${t.n}</b><span>${t.d}</span></button>`).join('');
+  $('#edTpl').innerHTML=Object.entries(TPL).filter(([k])=>['frueh','ruhe','bewegung'].includes(k)).map(([k,t])=>`<button class="tpl cut-s" data-tpl="${k}"><b>${t.n}</b><span>${t.d}</span></button>`).join('');
   $('#edList').innerHTML=S.rituals.map(r=>`<div class="rrow cut-s"><span class="mi">${icon(r.icon)}</span><div><b>${esc(r.name)}</b><span>${freqLabel(r)} · ${TYPES[r.type].n}${r.type==='window'?' · '+r.cfg.start:r.type==='timer'?' · '+r.cfg.min+' Min':r.type==='amount'?' · Ziel '+fmtNum(r.cfg.goal)+' '+esc(r.cfg.unit):''}</span></div><button class="ib" data-e="${r.id}" aria-label="${esc(r.name)} bearbeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${IC.pen}</svg></button><button class="ib" data-del="${r.id}" aria-label="${esc(r.name)} löschen" ${n<=1?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div>`).join('');
-  $('#edAdd').disabled=n>=6;$('#edAdd').style.opacity=n>=6?.4:1;
+  {const full=activeRituals().length>=slots();$('#edAdd').style.opacity=full?.4:1;$('#edInfo').textContent=`Als ${KRANG[S.rank||0].n} hast du ${slots()} Plätze für Routinen, ${activeRituals().length} sind belegt. Jede Routine gehört zu einem Ort im Kloster. Dort trägst du sie ein und kannst sie bearbeiten.`;}
   $('#edX').hidden=onboarding;$('#edDone').textContent=onboarding?'Den Weg beginnen':'Fertig';
 }
 $('#editor').addEventListener('click',e=>{
   const t=e.target.closest('[data-tpl]');if(t){const k=t.dataset.tpl;ask('Vorlage «'+TPL[k].n+'» laden?','Ersetzt deine aktuellen Rituale. Bereits verdientes Chi bleibt erhalten.',()=>{S.rituals=tplRituals(k);save();renderEditor();renderPane();toast('Vorlage geladen');});return;}
-  const ed=e.target.closest('[data-e]');if(ed){openRForm(ed.dataset.e);return;}
+  const ed=e.target.closest('[data-e]');if(ed){const r=S.rituals.find(x=>x.id===ed.dataset.e);if(r&&!onboarding){toast('Bearbeiten nur im Kloster: '+ROOMS[r.room||roomOf(r)].n);return;}openRForm(ed.dataset.e);return;}
   const del=e.target.closest('[data-del]');if(del&&!del.disabled){const r=S.rituals.find(x=>x.id===del.dataset.del);ask('«'+r.name+'» löschen?','Das Ritual verschwindet aus deinen Missionen. Verdientes Chi bleibt.',()=>{S.rituals=S.rituals.filter(x=>x.id!==r.id);save();renderEditor();renderPane();});}
 });
-$('#edAdd').onclick=()=>{if(S.rituals.length<6)openRForm(null);};
+$('#edAdd').onclick=()=>{if(activeRituals().length>=slots()){toast('Alle '+slots()+' Plätze belegt. Ein neuer Rang bringt einen weiteren.');return;}openRForm(null);};
 $('#edX').onclick=$('#edDone').onclick=()=>{$('#editor').hidden=true;renderPane();if(onboarding){onboarding=false;cam.intro=1;bell(1);toast('Willkommen auf dem Weg, '+S.name);}};
 function openRForm(id){
   editId=id;const r=id?S.rituals.find(x=>x.id===id):{name:'',icon:'flame',type:'check',cfg:{},freq:{mode:'daily'}};fd=clone(r);if(!fd.freq)fd.freq={mode:'daily'};
@@ -1784,12 +1858,14 @@ function renderRForm(){
   if(f.mode==='days')q+=`<div class="opts">${DOW.map((t,i)=>opt((f.days||[]).includes(i),t,`data-dy="${i}"`)).join('')}</div><p class="lead" style="margin:0">Das Ritual erscheint nur an diesen Tagen.</p>`;
   if(f.mode==='week')q+=`<div class="opts">${[1,2,3,4,5,6].map(v=>opt(f.n===v,v+'×',`data-wn="${v}"`)).join('')}</div><p class="lead" style="margin:0">Steht jeden Tag in der Liste, bis das Wochenziel erreicht ist. Extra-Einheiten bringen kein Chi.</p>`;
   if(f.mode==='daily')q+=`<p class="lead" style="margin:0">Steht jeden Tag in den Missionen.</p>`;
+  q=`<span class="lbl">Ort im Kloster</span><div class="opts">${S.doors.map(k=>opt((fd.room||'zelle')===k,ROOMS[k].n,`data-rm="${k}"`)).join('')}</div><p class="lead" style="margin:0 0 12px">Eintragen und Bearbeiten nur an diesem Ort. Nach dem Speichern ist die Routine 24 Stunden gesperrt.</p>`+q;
   $('#rfFreq').innerHTML=q;
 }
 $('#rform').addEventListener('click',e=>{
   const fq=e.target.closest('[data-fq]');if(fq){readCfg();const m=fq.dataset.fq;fd.freq=m==='days'?{mode:'days',days:[0,2,4]}:m==='week'?{mode:'week',n:3}:{mode:'daily'};tick();renderRForm();return;}
   const dy=e.target.closest('[data-dy]');if(dy){readCfg();const i=+dy.dataset.dy,a=fd.freq.days||[];fd.freq.days=a.includes(i)?(a.length>1?a.filter(x=>x!==i):a):[...a,i];tick();renderRForm();return;}
   const wn=e.target.closest('[data-wn]');if(wn){readCfg();fd.freq.n=+wn.dataset.wn;tick();renderRForm();return;}
+  const rm=e.target.closest('[data-rm]');if(rm){readCfg();fd.room=rm.dataset.rm;fd.cat=ROOMS[fd.room].cat;tick();renderRForm();return;}
   const i=e.target.closest('[data-ic]');if(i){fd.icon=i.dataset.ic;tick();renderRForm();return;}const t=e.target.closest('[data-ty]');if(t){readCfg();fd.type=t.dataset.ty;fd.cfg={};tick();renderRForm();}});
 function readCfg(){const v=id=>{const e=document.getElementById(id);return e?e.value:null;};
   if(fd.type==='window')fd.cfg={start:v('cfStart')||'06:00',win:+(v('cfWin')||15)};
@@ -1797,7 +1873,9 @@ function readCfg(){const v=id=>{const e=document.getElementById(id);return e?e.v
   if(fd.type==='amount')fd.cfg={unit:(v('cfUnit')||'').trim()||'x',goal:parseFloat((v('cfGoal')||'').replace(',','.'))||1};
   if(fd.type==='check')fd.cfg={};}
 $('#rfSave').onclick=()=>{fd.name=($('#rfName').value||'').trim();if(!fd.name){toast('Bitte einen Namen eingeben');return;}readCfg();
-  if(editId){const i=S.rituals.findIndex(x=>x.id===editId);S.rituals[i]=Object.assign(fd,{id:editId});}else S.rituals.push(Object.assign(fd,{id:uid()}));
+  fd.room=fd.room||'zelle';fd.cat=ROOMS[fd.room].cat==='ordnung'&&!/kalt|dusch/i.test(fd.name)&&fd.room!=='zelle'?catOf(fd):ROOMS[fd.room].cat;fd.editLock=dk(new Date(Date.now()+864e5));
+  if(editId){const i=S.rituals.findIndex(x=>x.id===editId);S.rituals[i]=Object.assign(fd,{id:editId});}else{if(activeRituals().length>=slots())fd.arch=true;S.rituals.push(Object.assign(fd,{id:uid()}));}
+  if(window.DWWorld&&DWWorld.refreshRoom)DWWorld.refreshRoom();
   save();$('#rform').hidden=true;renderEditor();renderPane();};
 $('#rfX').onclick=()=>{$('#rform').hidden=true;};
 $('#rfDel').onclick=()=>{ask('Ritual löschen?','Verdientes Chi bleibt erhalten.',()=>{S.rituals=S.rituals.filter(x=>x.id!==editId);save();$('#rform').hidden=true;renderEditor();renderPane();});};
