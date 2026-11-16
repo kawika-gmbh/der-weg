@@ -466,10 +466,11 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 .w-msg.show{opacity:1;transform:translate(-50%,0)}
 /* Minispiel */
 #game{position:fixed;inset:0;z-index:45;background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
-#gc{position:absolute;inset:0;width:100%;height:100%}
+#gc,#g3{position:absolute;inset:0;width:100%;height:100%;display:block}
 .g-exit{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:12px}
 .g-info{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 30px);transform:translateX(-50%);font-size:14px;color:rgba(255,255,255,.8);text-align:center;width:90%}
 .g-end{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(8,8,10,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-align:center;padding:20px}
+.spr.mk img{width:100%;height:100%;object-fit:contain;filter:brightness(.6) saturate(.8) sepia(.15) drop-shadow(0 4px 6px rgba(0,0,0,.45))}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -630,7 +631,7 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
   <div id="wMsg" class="w-msg"></div>
 </div>
 <div id="game" hidden>
-  <canvas id="gc"></canvas>
+  <canvas id="g3"></canvas><canvas id="gc"></canvas>
   <button class="icon g-exit" id="gExit" aria-label="Minispiel beenden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <div class="g-info" id="gInfo"></div>
   <div class="g-end" id="gEnd" hidden><span class="eyebrow">Pflaumenblüten-Pfähle</span><div class="mega" id="gEndT">Gemeistert</div><p class="lead" id="gEndS"></p><div class="sp-s num" id="gEndC" style="font-size:18px"></div><div class="btnrow"><button class="big-act" id="gAgain">Nochmal · 1 Energie</button><button class="big-ghost" id="gDone">Fertig</button></div></div>
@@ -1259,7 +1260,7 @@ function renderSprites(vp){
   const at=(x,y,w,svg,cls)=>`<div class="spr ${cls||''}" style="left:${(ox+x*s).toFixed(1)}px;top:${(oy+y*s).toFixed(1)}px;width:${(w*s).toFixed(1)}px;height:${(w*s*(svg===SIL.tiger?.6:svg===SIL.moench?1.66:1)).toFixed(1)}px">${svg}</div>`;
   let h='';const A=S.inv.animals;
   ['reh','fuchs','eule','tiger'].forEach(k=>{if(A.includes(k)&&P[k])h+=at(P[k][0],P[k][1],P[k][2],SIL[k],'breathe');});
-  const nm=vp.st>=5?3:vp.st>=3?2:vp.st>=2?1:0;P.m.slice(0,nm).forEach(m=>h+=at(m[0],m[1],m[2],SIL.moench,'breathe'));
+  const nm=vp.st>=5?3:vp.st>=3?2:vp.st>=2?1:0;const MI=['monk_idle','monk_stance','monk_idle2'];P.m.slice(0,nm).forEach((m,i)=>{const w=m[2]*1.25;h+=`<div class="spr mk" style="left:${(ox+(m[0]-(w-m[2])/2)*s).toFixed(1)}px;top:${(oy+(m[1]+m[2]*1.66-w*1.5*.95)*s).toFixed(1)}px;width:${(w*s).toFixed(1)}px;height:${(w*1.5*s).toFixed(1)}px"><img src="img/${MI[i%3]}.webp" alt=""></div>`;});
   if(A.includes('kranich'))[0,1,2].forEach(i=>h+=`<div class="crane" style="top:${12+i*2.5}%;left:${-i*4}%;animation-delay:${-i*.8}s;width:${6-i}%">${SIL.kranich}</div>`);
   box.innerHTML=h;
 }
@@ -1322,9 +1323,10 @@ function dragEnd(e){if(dragY===null)return;const dy=e.clientY-dragY;dragY=null;$
 $('#enterWorld').onclick=()=>{tick();if(window.DWWorld)window.DWWorld.open();else toast('Spielmodus lädt noch');};
 window.DW={
   get S(){return S;},bell,tick,toast,
-  stage:()=>{const p=prog(totalChi());return p.ch>0?5:p.st;},
+  stage:()=>{const p=viewProg();return p.ch>0?5:p.st;},
   season:()=>SEASONS[curSeason()],
   avatarGroup:()=>avatarGroup(),
+  photo:()=>{const p=viewProg();const a=PHOTO[p.ch];return a?a[p.st]:null;},
   robe:()=>(ROBE[S.avatar.robe]||ROBE[0]).c,
   energy:()=>S.energy||0,
   spendEnergy(n){if(S.test)return true;if((S.energy||0)<n)return false;S.energy-=n;save();renderTop();return true;},
