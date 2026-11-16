@@ -83,7 +83,7 @@ function mergeGeos(gs){const pos=[],uv=[],nrm=[],idx=[];let o=0;gs.forEach(g=>{c
 /* ---------- Tempel (nach Baustufe) ---------- */
 function temple(st){
   const M=W.M;W.platform=st>=1;W.walls=st>=3;
-  if(st===0){const r=rng(5);for(let i=0;i<14;i++){const s=.4+r()*.7;const b=box(s*1.4,s*.6,s,M.stone,(r()-.5)*11,-.1,(r()-.5)*8,1.5);b.rotation.set(r()*.3,r()*3,r()*.3);}
+  if(st===0){const r=rng(5);for(let i=0;i<14;i++){const s=.4+r()*.7;const b=box(s*1.4,s*.6,s,M.stone,(r()-.5)*11,-.1,(r()-.5)*8,1.5);b.rotation.set(r()*.3,r()*3,r()*.3);W.solids.push([b.position.x,b.position.z,s*.8]);}
     [[-2.5,-1.5,1.1],[1.8,-2.4,.6],[3.4,1.2,1.5]].forEach(([x,z,h])=>{cyl(.24,h,M.red,x,0,z,14);W.solids.push([x,z,.4]);});return;}
   box(11,.7,8,M.stone,0,0,0,2);[0,1,2].forEach(i=>box(4.2,.23,.5,M.stone,0,.7-(i+1)*.23,4.25+i*.5,2));
   [[-4.2,6.2],[4.2,6.2]].forEach(([x,z])=>{box(.6,.7,.6,M.stone,x,0,z,1);box(.9,.15,.9,M.stone,x,.7,z,1);box(.5,.45,.5,M.stone,x,.85,z,1);box(.95,.2,.95,M.stone,x,1.3,z,1);W.solids.push([x,z,.6]);
@@ -151,20 +151,11 @@ function env(se){
 function avatar(){
   const g=new TH.Group();W.scene.add(g);W.av=g;g.position.set(0,0,12);g.rotation.y=Math.PI;
   const fb=DW.avatarGroup();fb.traverse(o=>{if(o.isMesh)o.castShadow=true;});g.add(fb);
-  if(!TH.GLTFLoader)return;
-  const done=gl=>{if(!W||W.av!==g)return;g.remove(fb);const m=gl.scene;m.scale.setScalar(.92);
-    const U=window.__monkU||(window.__monkU={value:new TH.Color()});U.value.set(DW.robe()).convertSRGBToLinear();
-    m.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;const mt=o.material;if(mt&&!mt.userData.tinted){mt.userData.tinted=1;mt.roughness=Math.max(.55,mt.roughness||0);
-      mt.onBeforeCompile=sh=>{sh.uniforms.robeTint=U;sh.fragmentShader='uniform vec3 robeTint;\n'+sh.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\n{vec3 c=diffuseColor.rgb;float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b));float sat=(mx-mn)/(mx+.001);float k=smoothstep(.12,.28,mx)*(1.-smoothstep(.1,.2,sat));float lum=dot(c,vec3(.333));diffuseColor.rgb=mix(c,robeTint*clamp(lum/.5,0.,1.6),k);}');};mt.needsUpdate=true;}}});
-    g.add(m);W.model=m;const mx=new TH.AnimationMixer(m),A={};gl.animations.forEach(c=>A[c.name]=mx.clipAction(c));
+  if(!window.MonkKit)return;DW.applyLook();
+  MonkKit.load(gl=>{if(!W||W.av!==g)return;g.remove(fb);const m=gl.scene;m.position.set(0,0,0);m.rotation.set(0,0,0);g.add(m);W.model=m;
+    const mx=new TH.AnimationMixer(m),A={};gl.animations.forEach(c=>A[c.name]=mx.clipAction(c));
     W.mixer=mx;W.acts=A;['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(n==='Idle'?1:0);}});
-    if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}};
-  if(window.__monkU)window.__monkU.value.set(DW.robe()).convertSRGBToLinear();
-  if(window.__monk)done(window.__monk);
-  else{const L=new TH.GLTFLoader(),ok=gl=>{window.__monk=gl;done(gl);};
-    const fromB64=()=>{const parse=()=>{const b=atob(window.__monkB64),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);L.parse(u.buffer,'',ok,()=>{});};
-      if(window.__monkB64)return parse();const sc=document.createElement('script');sc.src='monk.js';sc.onload=parse;document.head.appendChild(sc);};
-    L.load('monk.glb',ok,undefined,fromB64);}
+    if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}});
 }
 function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(on){a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();}else a.fadeOut(.3);}
 
@@ -190,7 +181,7 @@ function blocked(x,z,px,pz){
   if(W.walls){if(Math.abs(x)<4.3&&z<-2.4&&z>-2.85)return true;if(Math.abs(Math.abs(x)-4.1)<.2&&z>-2.6&&z<2.6)return true;}
   return false;
 }
-function heightAt(x,z){if(W.platform){if(Math.abs(x)<5.5&&Math.abs(z)<4)return .7;if(Math.abs(x)<2.1&&z>=4&&z<5.6)return .7*(1-(z-4)/1.5);}return groundH(x,z);}
+function heightAt(x,z){if(Math.abs(x)<1.15&&z>5.8&&z<26)return groundH(x,z)+.1;if(W.platform){if(Math.abs(x)<5.5&&Math.abs(z)<4)return .7;if(Math.abs(x)<2.1&&z>=4&&z<5.6)return .7*(1-(z-4)/1.5);}return groundH(x,z);}
 
 /* ---------- Steuerung ---------- */
 function controls(){
@@ -263,6 +254,7 @@ function open(){
 }
 function close(){
   if(!W)return;cancelAnimationFrame(W.raf);window.removeEventListener('resize',W.onResize);window.removeEventListener('keydown',W.kd);window.removeEventListener('keyup',W.ku);
+  if(W.mixer&&W.model){W.mixer.stopAllAction();W.mixer.uncacheRoot(W.model);}
   if(W.av)W.scene.remove(W.av);
   W.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});Object.values(W.tex||{}).forEach(t=>t.dispose());Object.values(W.impT||{}).forEach(t=>t.dispose());W.R.dispose();
   W=null;$('#world').hidden=true;$('#wPrompt').hidden=true;document.body.classList.remove('inworld');DW.refresh();

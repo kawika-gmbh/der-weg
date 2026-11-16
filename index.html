@@ -382,7 +382,8 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 .sw[aria-pressed="true"]{outline-offset:4px}
 .swl{font-weight:500;font-size:11px;letter-spacing:0;text-transform:none}
 .txt{border-radius:14px;font-weight:600;font-size:18px;letter-spacing:0;text-transform:none}
-.avbox{border-radius:50%}
+.avbox{border-radius:24px;width:230px;height:300px;overflow:hidden}
+#emblem img,.op .av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .setrow b{font-weight:600;font-size:16px;letter-spacing:0;text-transform:none}
 .tgl{transform:none;border-radius:999px}.tgl::after{border-radius:50%}
 .testbox{border-radius:var(--r-md)}
@@ -788,7 +789,10 @@ const WISDOM=['Der Berg wird nicht kleiner. Deine Schritte werden sicherer.','We
 
 /* =================== ZUSTAND =================== */
 const KEY='derweg.v1';
-let S=null,pvCh=null,pvSt=null,pvSe=null;
+let S=null,pvCh=null,pvSt=null,pvSe=null,portraitURL=null;
+function lookOf(a){return[(ROBE[a.robe]||ROBE[0]).c,SKIN[a.skin]||SKIN[1],HAIRC[a.hairColor]||HAIRC[0]];}
+function applyLook(a){if(window.MonkKit)MonkKit.setLook(...lookOf(a||S.avatar));}
+function refreshPortrait(){if(!window.MonkKit||!MonkKit.gltf)return;applyLook(S.avatar);portraitURL=MonkKit.portrait(192);renderTop();if(typeof tab!=='undefined'&&tab==='op')renderOp();}
 const uid=()=>'r'+Math.random().toString(36).slice(2,8);
 const clone=o=>JSON.parse(JSON.stringify(o));
 function tplRituals(k){return TPL[k].r.map(r=>Object.assign(clone(r),{id:r.id||uid()}));}
@@ -1326,6 +1330,7 @@ window.DW={
   stage:()=>{const p=viewProg();return p.ch>0?5:p.st;},
   season:()=>SEASONS[curSeason()],
   avatarGroup:()=>avatarGroup(),
+  applyLook:()=>applyLook(S.avatar),
   photo:()=>{const p=viewProg();const a=PHOTO[p.ch];return a?a[p.st]:null;},
   robe:()=>(ROBE[S.avatar.robe]||ROBE[0]).c,
   energy:()=>S.energy||0,
@@ -1341,7 +1346,7 @@ $('#player').onclick=()=>setTab('op');
 function renderTop(from){
   const chi=totalChi(),ri=rankIdx(chi),lv=lvOf(chi),vp=viewProg(),se=curSeason();
   $('#pName').textContent=S.name||'Novize';$('#enVal').textContent=S.energy||0;$('#pIns').innerHTML=insignia(ri);$('#pLv').textContent='LV '+String(lv).padStart(2,'0');$('#pRank').textContent=RANKS[ri][1];
-  $('#emblem').innerHTML=avatarSVG(S.avatar,'26 10 68 68');
+  $('#emblem').innerHTML=portraitURL?`<img src="${portraitURL}" alt="">`:avatarSVG(S.avatar,'26 10 68 68');
   {const a0=chiForLv(lv),b0=chiForLv(lv+1);$('#emblem').style.setProperty('--xp',lv>=LVMAX?100:Math.round((chi-a0)/(b0-a0)*100));}
   const a=chiForLv(lv),b=chiForLv(lv+1);$('#xpFill').style.width=(lv>=LVMAX?100:((chi-a)/(b-a))*100)+'%';
   $('#xpTxt').textContent=lv>=LVMAX?'MAX LEVEL':`${n0(chi-a)} / ${n0(b-a)} XP`;
@@ -1522,7 +1527,7 @@ function renderWeg(){
 /* --- OPERATOR --- */
 function renderOp(){
   const chi=totalChi(),ri=rankIdx(chi),lv=lvOf(chi),open=ROBE.filter((_,i)=>robeOpen(i)).length;
-  let h=`<div class="op"><div class="av">${avatarSVG(S.avatar)}</div><div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Operator</span><b class="nm">${esc(S.name||'Novize')}</b><div class="ins" style="display:flex;align-items:center;gap:10px">${insignia(ri)}<div><b style="font-family:var(--f-hud);font-size:18px;text-transform:uppercase;letter-spacing:.08em">${RANKS[ri][1]}</b><div class="num" style="font-size:12px;color:var(--acc)">LV ${lv}</div></div></div><span class="num" style="font-size:11px;color:var(--mute)">ROBEN ${open}/${ROBE.length}</span><button class="act cut-s" style="align-self:flex-start" id="opEdit">Anpassen</button></div></div>`;
+  let h=`<div class="op"><div class="av">${portraitURL?`<img src="${portraitURL}" alt="">`:avatarSVG(S.avatar)}</div><div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Operator</span><b class="nm">${esc(S.name||'Novize')}</b><div class="ins" style="display:flex;align-items:center;gap:10px">${insignia(ri)}<div><b style="font-family:var(--f-hud);font-size:18px;text-transform:uppercase;letter-spacing:.08em">${RANKS[ri][1]}</b><div class="num" style="font-size:12px;color:var(--acc)">LV ${lv}</div></div></div><span class="num" style="font-size:11px;color:var(--mute)">ROBEN ${open}/${ROBE.length}</span><button class="act cut-s" style="align-self:flex-start" id="opEdit">Anpassen</button></div></div>`;
   h+=collectionHTML();
   h+=`<div class="ph" style="margin-top:16px"><div><span class="lbl">Rangleiter</span><h2>Ränge</h2></div></div><div class="ladder">`;
   RANKS.forEach((r,i)=>{h+=`<div class="lr ${i===ri?'cur':''} ${i>ri?'lock':''}">${insignia(i)}<b>${r[1]}</b><span class="num">${n0(r[0])} CHI</span></div>`;});
@@ -1577,7 +1582,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&T&&T.run&&
 let draft=null,first=false;
 const opt=(on,l,a)=>`<button class="opt cut-s" aria-pressed="${on}" ${a}>${l}</button>`;
 function renderCreator(){
-  $('#crPrev').innerHTML=avatarSVG(draft);
+  applyLook(draft);if(!window.MonkKit||!MonkKit.gltf)$('#crPrev').innerHTML=avatarSVG(draft);
   $('#oSkin').innerHTML=SKIN.map((c,i)=>`<button class="sw" style="background:${c}" aria-pressed="${draft.skin===i}" aria-label="Hautton ${i+1}" data-o="skin" data-v="${i}"></button>`).join('');
   $('#oHair').innerHTML=HAIR.map(([v,l])=>opt(draft.hair===v,l,`data-o="hair" data-v="${v}"`)).join('');
   $('#oHairC').innerHTML=HAIRC.map((c,i)=>`<button class="sw" style="background:${c}" aria-pressed="${draft.hairColor===i}" aria-label="Haarfarbe ${i+1}" data-o="hairColor" data-v="${i}"></button>`).join('');
@@ -1589,10 +1594,12 @@ function renderCreator(){
 $('#creator').addEventListener('click',e=>{const b=e.target.closest('[data-o]');if(!b)return;tick();const o=b.dataset.o,v=b.dataset.v;draft[o]=['skin','hairColor','robe'].includes(o)?+v:v;renderCreator();});
 function openCreator(f){first=!!f;draft=clone(S.avatar);$('#crName').value=S.name||'';$('#crT').textContent=f?'Wer geht den Weg?':'Operator anpassen';
   $('#crL').textContent=f?'Erstelle deinen Novizen. Er lebt in der Welt, die du mit deinen Ritualen baust. Vier Kapitel, ein Jahr.':'Neue Roben schaltest du mit jedem Kapitel frei.';
-  $('#crSave').textContent=f?'Weiter: Rituale wählen':'Speichern';$('#crX').hidden=!!f;renderCreator();$('#creator').hidden=false;$('#creator').scrollTop=0;}
+  $('#crSave').textContent=f?'Weiter: Rituale wählen':'Speichern';$('#crX').hidden=!!f;renderCreator();$('#creator').hidden=false;$('#creator').scrollTop=0;
+  ['oHair','oEyes','oAcc'].forEach(id=>{const g=$('#'+id).closest('.grp');if(g)g.hidden=true;});$('#gHairC').classList.remove('dis');
+  if(window.MonkKit)MonkKit.preview($('#crPrev'));}
 $('#crRnd').onclick=()=>{const k=draft.robe;draft=randomAvatar();if(!robeOpen(draft.robe))draft.robe=k;renderCreator();};
-$('#crX').onclick=()=>{$('#creator').hidden=true;};
-$('#crSave').onclick=()=>{S.avatar=draft;S.name=($('#crName').value||'').trim()||'Novize';save();buildAvatar3D();renderTop();if(tab==='op')renderOp();$('#creator').hidden=true;$('#settings').hidden=true;if(first){openEditor(true);}};
+$('#crX').onclick=()=>{$('#creator').hidden=true;if(window.MonkKit){MonkKit.stopPreview();applyLook(S.avatar);}};
+$('#crSave').onclick=()=>{if(window.MonkKit)MonkKit.stopPreview();S.avatar=draft;setTimeout(refreshPortrait,0);S.name=($('#crName').value||'').trim()||'Novize';save();buildAvatar3D();renderTop();if(tab==='op')renderOp();$('#creator').hidden=true;$('#settings').hidden=true;if(first){openEditor(true);}};
 
 /* =================== RITUAL-EDITOR =================== */
 let onboarding=false,editId=null,fd=null;
@@ -1700,6 +1707,7 @@ function start(data){
   init3D();
   if(G.ok){if(bloom)bloom.enabled=S.hq;buildAvatar3D();requestAnimationFrame(frame);}
   buildWorld(true);requestAnimationFrame(fxLoop);
+  window.addEventListener('load',()=>{if(window.MonkKit)MonkKit.load(()=>refreshPortrait());});
   window.addEventListener('pointermove',e=>{ptr.tx=(e.clientX/window.innerWidth-.5)*2;ptr.ty=(e.clientY/window.innerHeight-.5)*2;},{passive:true});window.addEventListener('resize',()=>{if(photoOn)fxSize();});
   renderAll();
   if(fresh)openCreator(true);else if(dayN()>365)setTimeout(()=>showYear(false),800);
@@ -1709,6 +1717,7 @@ const hot=window.claude&&window.claude.hot;
 if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
 })();
 </script>
+<script src="monkkit.js"></script>
 <script src="world.js"></script>
 </body>
 </html>
