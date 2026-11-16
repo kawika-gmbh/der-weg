@@ -695,8 +695,8 @@ const SF=[0,.08,.22,.42,.66,.88];
 const STAGES=[
   ['Ruinen','Fundament','Säulen','Dach','Pagode','Tempel'],
   ['Felswand','Pfad','Mauer','Kloster','Turm','Licht'],
-  ['Wildwasser','Trittsteine','Brücke','Pavillon','Tor','Lotus'],
-  ['Grat','Steinmänner','Pfad','Schrein','Glocke','Stupa']
+  ['Wildwasser','Trittsteine','Brücke','Pavillon','Pagode','Laternen'],
+  ['Grat','Steinmänner','Mauer','Stupa','Gebetsmühlen','Butterlampen']
 ];
 const RANKS=[[0,'Novize'],[150,'Lernender'],[400,'Schüler'],[800,'Wanderer'],[1800,'Hüter'],[3500,'Mönch'],[6000,'Lehrer'],[9500,'Meister'],[14000,'Weiser'],[20000,'Grossmeister']];
 const SEASONS={
@@ -1290,7 +1290,7 @@ function frame(){
 }
 
 /* =================== FOTO-MODUS (vorgerenderte Blender-Szenen) =================== */
-const PHOTO={0:[0,1,2,3,4,5].map(i=>'img/k1_s'+i+'.webp'),1:[0,1,2,3,4,5].map(i=>'img/k2_s'+i+'.webp')};
+const PHOTO={0:[0,1,2,3,4,5].map(i=>'img/k1_s'+i+'.webp'),1:[0,1,2,3,4,5].map(i=>'img/k2_s'+i+'.webp'),2:[0,1,2,3,4,5].map(i=>'img/k3_s'+i+'.webp'),3:[0,1,2,3,4,5].map(i=>'img/k4_s'+i+'.webp')};
 const SEFILTER={fruehling:'hue-rotate(-8deg) saturate(1.06) brightness(1.04)',sommer:'hue-rotate(16deg) saturate(1.08) brightness(1.03)',herbst:'none',winter:'saturate(.28) brightness(1.1) contrast(.94)'};
 let photoOn=false,bgFront='A',bgSrc='';
 function photoUpdate(vp,se){
@@ -1343,7 +1343,9 @@ const SIL={
  moench:'<svg viewBox="0 0 60 100"><circle cx="30" cy="22" r="9" fill="#1c140f"/><path d="M14 98C14 72 17 46 30 38C43 46 46 72 46 98Z" fill="#1c140f"/></svg>',
  kranich:'<svg viewBox="0 0 120 60"><g class="wa"><path d="M10 34L50 32L66 30L96 26L104 22L100 30L66 36L50 38Z M52 33L38 6L60 32Z" fill="#1c140f"/></g><g class="wb"><path d="M10 34L50 32L66 30L96 26L104 22L100 30L66 36L50 38Z M52 35L40 58L62 35Z" fill="#1c140f"/></g></svg>'
 };
-const POS={0:{fuchs:[300,1340,120],reh:[95,1120,150],eule:[770,860,55],tiger:[820,1470,200],m:[[430,1125,70],[650,1128,70],[520,1132,66]]},1:{fuchs:[190,1015,95],reh:[120,840,120],eule:[835,700,45],tiger:[900,1030,150],m:[[500,1012,60],[620,1014,60],[720,1016,58]]}};
+const POS={0:{fuchs:[300,1340,120],reh:[95,1120,150],eule:[770,860,55],tiger:[820,1470,200],m:[[430,1125,70],[650,1128,70],[520,1132,66]]},1:{fuchs:[190,1015,95],reh:[120,840,120],eule:[835,700,45],tiger:[900,1030,150],m:[[500,1012,60],[620,1014,60],[720,1016,58]]},
+  2:{fuchs:[110,1560,110],reh:[30,1300,130],eule:[150,820,45],tiger:[820,1600,190],m:[[760,1150,46],[840,1152,46],[250,1320,50]]},
+  3:{fuchs:[160,1480,110],reh:[60,1330,120],eule:[130,560,45],tiger:[800,1450,180],m:[[470,1085,44],[600,1088,44],[690,1090,42]]}};
 let lastVp=null;
 function renderSprites(vp){
   lastVp=vp;const box=$('#sprites');if(!box)return;const P=POS[vp.ch];if(!P){box.innerHTML='';return;}
@@ -1449,7 +1451,9 @@ function dragEnd(e){if(dragY===null)return;const dy=e.clientY-dragY;dragY=null;$
 $('#enterWorld').onclick=()=>{tick();if(window.DWWorld)window.DWWorld.open();else toast('Spielmodus lädt noch');};
 window.DW={
   get S(){return S;},bell,tick,toast,
-  stage:()=>{const p=viewProg();return p.ch>0?5:p.st;},
+  stage:()=>viewProg().st,
+  chapter:()=>Math.min(3,viewProg().ch),
+  seasonData:k=>SEASONS[k],
   season:()=>SEASONS[curSeason()],
   avatarGroup:()=>avatarGroup(),
   applyLook:()=>applyLook(S.avatar),
