@@ -1325,6 +1325,7 @@ window.DW={
   stage:()=>{const p=prog(totalChi());return p.ch>0?5:p.st;},
   season:()=>SEASONS[curSeason()],
   avatarGroup:()=>avatarGroup(),
+  robe:()=>(ROBE[S.avatar.robe]||ROBE[0]).c,
   energy:()=>S.energy||0,
   spendEnergy(n){if(S.test)return true;if((S.energy||0)<n)return false;S.energy-=n;save();renderTop();return true;},
   best:k=>S.games[k]||0,setBest(k,v){S.games[k]=v;save();},

@@ -145,10 +145,13 @@ function avatar(){
   const fb=DW.avatarGroup();fb.traverse(o=>{if(o.isMesh)o.castShadow=true;});g.add(fb);
   if(!TH.GLTFLoader)return;
   const done=gl=>{if(!W||W.av!==g)return;g.remove(fb);const m=gl.scene;m.scale.setScalar(.92);
-    m.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material.roughness=Math.max(.55,o.material.roughness||0);}}});
+    const U=window.__monkU||(window.__monkU={value:new TH.Color()});U.value.set(DW.robe()).convertSRGBToLinear();
+    m.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;const mt=o.material;if(mt&&!mt.userData.tinted){mt.userData.tinted=1;mt.roughness=Math.max(.55,mt.roughness||0);
+      mt.onBeforeCompile=sh=>{sh.uniforms.robeTint=U;sh.fragmentShader='uniform vec3 robeTint;\n'+sh.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\n{vec3 c=diffuseColor.rgb;float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b));float sat=(mx-mn)/(mx+.001);float k=smoothstep(.12,.28,mx)*(1.-smoothstep(.1,.2,sat));float lum=dot(c,vec3(.333));diffuseColor.rgb=mix(c,robeTint*clamp(lum/.5,0.,1.6),k);}');};mt.needsUpdate=true;}}});
     g.add(m);const mx=new TH.AnimationMixer(m),A={};gl.animations.forEach(c=>A[c.name]=mx.clipAction(c));
     W.mixer=mx;W.acts=A;['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(n==='Idle'?1:0);}});
     if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}};
+  if(window.__monkU)window.__monkU.value.set(DW.robe()).convertSRGBToLinear();
   if(window.__monk)done(window.__monk);
   else{const L=new TH.GLTFLoader(),ok=gl=>{window.__monk=gl;done(gl);};
     const fromB64=()=>{const parse=()=>{const b=atob(window.__monkB64),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);L.parse(u.buffer,'',ok,()=>{});};
