@@ -9,7 +9,7 @@ let W=null;
 function sst(a,b,x){const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);}
 function nz(x,z){return Math.sin(x*.11+1.3)*Math.cos(z*.09+.7)*.6+Math.sin(x*.23+z*.17+2)*.3+Math.sin(x*.51-z*.43)*.12;}
 function rng(seed){seed=Math.floor(Math.abs(seed))%2147483646+1;return()=>(seed=(seed*16807)%2147483647)/2147483647;}
-function groundH(x,z){const r=Math.hypot(x,z);return sst(24,60,r)*(nz(x,z)+1.2)*5+sst(70,150,r)*(nz(x*.5,z*.5)+1.3)*30+(r>24?0:nz(x*3,z*3)*.04);}
+function groundH(x,z){const r=Math.hypot(x,z);return sst(24,60,r)*(nz(x,z)+1.2)*1.6-sst(60,110,r)*2+(r>24?0:nz(x*3,z*3)*.04);}
 
 /* ---------- Texturen & Materialien ---------- */
 function loadTex(name,srgb,rep){const t=new TH.TextureLoader().load('tex/'+name);t.wrapS=t.wrapT=TH.RepeatWrapping;if(srgb)t.encoding=TH.sRGBEncoding;t.anisotropy=8;if(rep)t.repeat.set(rep,rep);return t;}
@@ -22,7 +22,7 @@ function mats(){
     roof:S({map:T.roofD,normalMap:T.roofN,roughness:.7,color:'#5a5e66',side:TH.DoubleSide}),
     red:S({map:T.woodD,roughness:.5,color:'#d0402c'}),
     wood:S({map:T.woodD,roughness:.8,color:'#7a5038'}),
-    plaster:S({color:'#d9d0bf',roughness:.95,normalMap:T.stoneN,normalScale:new TH.Vector2(.15,.15)}),
+    plaster:S({color:'#b9ab92',roughness:.95,normalMap:T.stoneN,normalScale:new TH.Vector2(.25,.25)}),
     gold:S({color:'#d4a94e',metalness:.8,roughness:.3}),
     glow:new TH.MeshBasicMaterial({color:new TH.Color(2.2,1.1,.45)}),
     paper:new TH.MeshStandardMaterial({color:'#f2dcb0',emissive:new TH.Color('#ff9a40'),emissiveIntensity:1.6,roughness:.9}),
@@ -63,7 +63,7 @@ function impTex(k){W.impT=W.impT||{};if(!W.impT[k]){const t=new TH.TextureLoader
 function imp(k,x,z,h,seed,solidR){
   const [tw,th]=IMP[k],w=h*tw/th,base=impTex(k),t=base.clone();t.needsUpdate=true;t.repeat.set(.25,.5);
   const tint=new TH.Color(W.se.light).lerp(new TH.Color('#ffffff'),.45).multiplyScalar(.82);
-  const m=new TH.Mesh(new TH.PlaneGeometry(w,h),new TH.MeshBasicMaterial({map:t,alphaTest:.45,side:TH.DoubleSide,color:tint}));
+  const m=new TH.Mesh(new TH.PlaneGeometry(w,h),new TH.MeshBasicMaterial({map:t,alphaTest:.45,side:TH.DoubleSide,color:tint,toneMapped:false}));
   m.geometry.translate(0,h/2,0);m.position.set(x,groundH(x,z)-.05,z);m.castShadow=true;
   m.customDepthMaterial=new TH.MeshDepthMaterial({depthPacking:TH.RGBADepthPacking,map:t,alphaTest:.45});
   W.root.add(m);W.imps.push({k,m,t,x,z,off:Math.floor(seed*8)%8,cur:-1});if(solidR)W.solids.push([x,z,solidR]);
@@ -124,24 +124,22 @@ function path(){const r=rng(3);let z=5.8;while(z<26){const w=1.5+r()*.6,d=.8+r()
 /* ---------- Himmel, Licht, Boden ---------- */
 function env(se){
   const sc=W.scene;sc.fog=new TH.FogExp2(new TH.Color(se.fog),.014);
-  const SUN=new TH.Vector3(-.48,.26,-.84).normalize();W.SUN=SUN;
+  const SUN=new TH.Vector3(-.93,.34,-.15).normalize();W.SUN=SUN;
   const sky=new TH.Mesh(new TH.SphereGeometry(400,32,16),new TH.ShaderMaterial({side:TH.BackSide,depthWrite:false,fog:false,uniforms:{top:{value:new TH.Color(se.top)},hor:{value:new TH.Color(se.hor)},bot:{value:new TH.Color(se.bot)},sunCol:{value:new TH.Color(se.sun)},sunDir:{value:SUN}},
     vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
     fragmentShader:'uniform vec3 top;uniform vec3 hor;uniform vec3 bot;uniform vec3 sunCol;uniform vec3 sunDir;varying vec3 vW;void main(){vec3 d=normalize(vW);float h=d.y;vec3 c=h>0.?mix(hor,top,pow(h,.5)):mix(hor,bot,pow(-h,.35));float s=max(dot(d,sunDir),0.);c+=sunCol*(pow(s,5.)*.5+pow(s,60.)*1.5);gl_FragColor=vec4(c,1.);}'}));
   sc.add(sky);W.sky=sky;
+  new TH.TextureLoader().load('tex/sky_k1.jpg',t=>{if(!W)return;t.encoding=TH.sRGBEncoding;const m=new TH.Mesh(new TH.SphereGeometry(400,64,32),new TH.MeshBasicMaterial({map:t,side:TH.BackSide,depthWrite:false,fog:false,toneMapped:false}));m.scale.x=-1;m.rotation.y=-1.379;m.renderOrder=-1;sc.add(m);sc.remove(sky);W.sky=m;W.tex.sky=t;});
+  sc.fog.color.set('#5e4840');
   sc.add(new TH.HemisphereLight(new TH.Color(se.hs),new TH.Color(se.hg),.75));
   const d=new TH.DirectionalLight(new TH.Color(se.light),2.4);d.castShadow=true;d.shadow.mapSize.set(2048,2048);const c=d.shadow.camera;c.left=-22;c.right=22;c.top=22;c.bottom=-22;c.near=1;c.far=120;d.shadow.bias=-.0005;d.shadow.normalBias=.03;sc.add(d,d.target);W.dir=d;
   const f=new TH.DirectionalLight(0x8090b0,.35);f.position.set(10,14,30);sc.add(f);
   // Boden
-  const g=new TH.PlaneGeometry(320,320,220,220);g.rotateX(-Math.PI/2);const p=g.attributes.position,uv=g.attributes.uv,col=[];const r=rng(2);
+  const g=new TH.PlaneGeometry(240,240,180,180);g.rotateX(-Math.PI/2);const p=g.attributes.position,uv=g.attributes.uv,col=[];const r=rng(2);
   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),y=groundH(x,z);p.setY(i,y);uv.setXY(i,x/2.3,z/2.3);const k=Math.hypot(x,z)>40?.55:.85+r()*.2;const m=se.winter?[1.2,1.25,1.3]:[1,1,1];col.push(k*m[0],k*m[1],k*m[2]);}
   g.setAttribute('color',new TH.Float32BufferAttribute(col,3));g.computeVertexNormals();
   const gm=new TH.MeshStandardMaterial({map:W.tex.groundD,normalMap:W.tex.groundN,roughness:.95,vertexColors:true,color:se.winter?'#d8dde3':'#c7b9a3'});
   const ground=new TH.Mesh(g,gm);ground.receiveShadow=true;W.root.add(ground);
-  // Berge
-  const rr=rng(31);for(let i=0;i<16;i++){const a=Math.PI*(.8+1.4*i/15)+rr()*.1,dist=150+rr()*70,rad=30+rr()*30,h=55+rr()*55;const cg=new TH.ConeGeometry(rad,h,8,5);const cp=cg.attributes.position,cc=[];const rock=new TH.Color('#4a4642'),snow=new TH.Color('#d9dee4');
-    for(let k=0;k<cp.count;k++){const y=cp.getY(k);if(y<h/2-.01){cp.setX(k,cp.getX(k)*(.85+rr()*.3));cp.setZ(k,cp.getZ(k)*(.85+rr()*.3));}const t=(cp.getY(k)+h/2)/h;const c2=rock.clone().lerp(snow,sst(.6,.78,t));cc.push(c2.r,c2.g,c2.b);}
-    cg.setAttribute('color',new TH.Float32BufferAttribute(cc,3));cg.computeVertexNormals();const mm=new TH.Mesh(cg,new TH.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:1}));mm.position.set(Math.cos(a)*dist,h/2-6,Math.sin(a)*dist);sc.add(mm);}
   // Partikel
   const n=500,pp=new Float32Array(n*3);for(let i=0;i<n;i++){pp[i*3]=(Math.random()-.5)*60;pp[i*3+1]=Math.random()*14;pp[i*3+2]=(Math.random()-.5)*60;}
   const pg=new TH.BufferGeometry();pg.setAttribute('position',new TH.BufferAttribute(pp,3));
