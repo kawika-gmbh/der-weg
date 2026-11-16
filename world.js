@@ -3,6 +3,7 @@
 'use strict';
 const TH=window.THREE;
 const $=s=>document.querySelector(s);
+const FINE=window.matchMedia&&matchMedia('(pointer:fine)').matches;
 const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 let W=null;
 
@@ -448,7 +449,7 @@ function greet(st){
   const b=st===0?' Diese Ruinen waren einmal ein Tempel. Jedes Ritual, das du lebst, setzt einen Stein zurück.':st<3?' Die Mauern wachsen. Langsam, aber sie wachsen.':st<5?' Sieh dich um. Das hast du mit deinen Ritualen gebaut.':' Der Tempel steht. Jetzt geht es darum, ihn zu halten.';
   return a+b;
 }
-function dlg(text,btns){const d=$('#wDlg');$('#wDlgK').textContent='Meister Shen';$('#wDlgT').textContent=text;const B=$('#wDlgB');B.innerHTML='';btns.forEach(([l,f,pri])=>{const b=document.createElement('button');b.textContent=l;if(pri)b.className='pri';b.onclick=()=>{DW.tick();f();};B.appendChild(b);});d.hidden=false;$('#wPrompt').hidden=true;if(!W.talking)W.talkPos=W.av.position.clone();W.talking=true;}
+function dlg(text,btns){const d=$('#wDlg');$('#wDlgK').textContent='Meister Shen';$('#wDlgT').textContent=text;const B=$('#wDlgB');B.innerHTML='';btns.forEach(([l,f,pri],i)=>{const b=document.createElement('button');b.textContent=(FINE&&i<9?(i+1)+'  ':'')+l;if(pri)b.className='pri';b.onclick=()=>{DW.tick();f();};B.appendChild(b);});d.hidden=false;$('#wPrompt').hidden=true;if(!W.talking)W.talkPos=W.av.position.clone();W.talking=true;}
 function endTalk(){$('#wDlg').hidden=true;if(W){W.talking=false;W.near=null;if(W.camOv){W.camOv=null;if(W.fogSave)W.scene.fog.density=W.fogSave;}}}
 function talk(st){
   const q=questToday(st),qs=DW.day('_qs')||0;// 0 offen, 1 angenommen, 2 erledigt
@@ -526,7 +527,7 @@ function controls(){
   const joy=$('#wJoy'),knob=joy.querySelector('.w-knob');W.mv={x:0,z:0};W.keys={};
   let jid=null,jx=0,jy=0,lid=null,lx=0,ly=0;
   const cv=$('#world');
-  cv.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const left=e.clientX<window.innerWidth*.45;
+  cv.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const left=e.pointerType!=='mouse'&&e.clientX<window.innerWidth*.45;if(e.pointerType==='mouse'&&cv.setPointerCapture)cv.setPointerCapture(e.pointerId);
     if(left&&jid===null){jid=e.pointerId;jx=e.clientX;jy=e.clientY;joy.style.left=(jx-60)+'px';joy.style.top=(jy-60)+'px';joy.classList.add('on');}
     else if(lid===null){lid=e.pointerId;lx=e.clientX;ly=e.clientY;}
     $('#wHint').classList.add('gone');});
@@ -535,7 +536,16 @@ function controls(){
     if(e.pointerId===lid){W.yaw-=(e.clientX-lx)*.006;W.pitch=Math.max(.05,Math.min(.9,W.pitch+(e.clientY-ly)*.004));lx=e.clientX;ly=e.clientY;}});
   const up=e=>{if(e.pointerId===jid){jid=null;W.mv.x=W.mv.z=0;knob.style.transform='';joy.classList.remove('on');}if(e.pointerId===lid)lid=null;};
   cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-  W.kd=e=>{W.keys[e.key.toLowerCase()]=true;if(e.key==='e'&&W.near)W.near.act();};W.ku=e=>{W.keys[e.key.toLowerCase()]=false;};
+  W.kd=e=>{const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;if(!$('#game').hidden)return;
+    if(document.querySelector('.ov:not([hidden]):not(#world),#dialog:not([hidden])'))return;
+    const k=e.key.toLowerCase();if(['w','a','s','d','q','e','arrowup','arrowdown','arrowleft','arrowright',' ','shift'].includes(k))e.preventDefault();
+    W.keys[k]=true;$('#wHint').classList.add('gone');
+    if(!$('#wDlg').hidden){if(k==='escape'){endTalk();return;}const n=parseInt(e.key,10);if(n>=1&&n<=9){const b=[...document.querySelectorAll('#wDlgB button')].at(n-1);if(b)b.click();}return;}
+    if((k==='e'||k==='enter'||k===' ')&&W.near&&!e.repeat)W.near.act();
+    if(k==='escape')close();};
+  W.ku=e=>{W.keys[e.key.toLowerCase()]=false;};
+  W.wheel=e=>{if(!$('#wDlg').hidden)return;W.zoom=Math.max(3.5,Math.min(12,(W.zoom||6.5)+e.deltaY*.01));e.preventDefault();};cv.addEventListener('wheel',W.wheel,{passive:false});
+  W.blur=()=>{W.keys={};};window.addEventListener('blur',W.blur);
   window.addEventListener('keydown',W.kd);window.addEventListener('keyup',W.ku);
   $('#wPromptB').onclick=()=>{if(W.near)W.near.act();};
   $('#wExit').onclick=close;
@@ -548,7 +558,7 @@ function loop(){
   const dt=Math.min(.05,W.clock.getDelta()),t=W.clock.elapsedTime;
   let mx=W.mv.x,mz=W.mv.z;const K=W.keys;if(K.w||K.arrowup)mz=-1;if(K.s||K.arrowdown)mz=1;if(K.a||K.arrowleft)mx=-1;if(K.d||K.arrowright)mx=1;
   const ml=Math.min(1,Math.hypot(mx,mz)),av=W.av;
-  if(ml>.08){const sy=Math.sin(W.yaw),cy=Math.cos(W.yaw);const dx=(mx*cy+mz*sy),dz=(-mx*sy+mz*cy);const sp=4.6*ml*dt;const nx=av.position.x+dx/ml*sp*ml,nz2=av.position.z+dz/ml*sp*ml;
+  if(ml>.08){const sy=Math.sin(W.yaw),cy=Math.cos(W.yaw);const dx=(mx*cy+mz*sy),dz=(-mx*sy+mz*cy);const sp=4.6*ml*dt*((K.shift)?1.8:1);const nx=av.position.x+dx/ml*sp*ml,nz2=av.position.z+dz/ml*sp*ml;
     if(!blocked(nx,nz2,av.position.x,av.position.z)){av.position.x=nx;av.position.z=nz2;}else if(!blocked(nx,av.position.z,av.position.x,av.position.z))av.position.x=nx;else if(!blocked(av.position.x,nz2,av.position.x,av.position.z))av.position.z=nz2;
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
   else W.walk*=.9;
@@ -557,7 +567,7 @@ function loop(){
   if(av.userData.torso){const b=1+Math.sin(t*1.3)*.012;av.userData.torso.scale.set(b,1,b);av.rotation.z=Math.sin(W.walk)*.04*ml;}
   // Kamera
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut)W.inHut.roof.forEach(m=>m.visible=true);if(inHut)inHut.roof.forEach(m=>m.visible=false);W.inHut=inHut;}
-  const dist=inHut?3.4:6.5,cx=av.position.x+Math.sin(W.yaw)*dist*Math.cos(W.pitch),cz=av.position.z+Math.cos(W.yaw)*dist*Math.cos(W.pitch),cyy=av.position.y+1.4+Math.sin(W.pitch)*dist;
+  const dist=inHut?3.4:(W.zoom||6.5),cx=av.position.x+Math.sin(W.yaw)*dist*Math.cos(W.pitch),cz=av.position.z+Math.cos(W.yaw)*dist*Math.cos(W.pitch),cyy=av.position.y+1.4+Math.sin(W.pitch)*dist;
   const sh=W.shake>0?(Math.random()-.5)*W.shake*.15:0;W.shake=Math.max(0,(W.shake||0)-dt);
   if(W.camOv){W.cam.position.lerp(W.camOv.p,Math.min(1,dt*2.5));W.cam.lookAt(W.camOv.t);}
   else if(inHut){const hx=(inHut.x0+inHut.x1)/2,hz=(inHut.z0+inHut.z1)/2;const tx=Math.max(inHut.x0+.4,Math.min(inHut.x1-.4,hx+(hx-av.position.x)*.6)),tz=Math.max(inHut.z0+.4,Math.min(inHut.z1-.4,hz+(hz-av.position.z)*.6));W.cam.position.lerp(new TH.Vector3(tx,3.15,tz),Math.min(1,dt*6));}
@@ -570,7 +580,7 @@ function loop(){
   if(W.pts&&!RM){const a=W.pts.geometry.attributes.position.array;for(let i=0;i<a.length;i+=3){a[i+1]-=dt*.9;a[i]+=Math.sin(t+i)*.01;if(a[i+1]<0){a[i+1]=14;a[i]=av.position.x+(Math.random()-.5)*60;a[i+2]=av.position.z+(Math.random()-.5)*60;}}W.pts.geometry.attributes.position.needsUpdate=true;}
   // Interaktion
   let near=null;for(const it of W.inter){if(Math.hypot(av.position.x-it.x,av.position.z-it.z)<it.r){if(it.auto){it.act();W.inter=W.inter.filter(x=>x!==it);break;}near=it;}}
-  if(W.talking)near=W.near;if(near!==W.near){W.near=near;const p=$('#wPrompt');if(near){$('#wPromptT').textContent=near.label;$('#wPromptB').textContent=near.btn;p.hidden=false;}else p.hidden=true;}
+  if(W.talking)near=W.near;if(near!==W.near){W.near=near;const p=$('#wPrompt');if(near){$('#wPromptT').textContent=near.label;$('#wPromptB').textContent=near.btn+(FINE?' · E':'');p.hidden=false;}else p.hidden=true;}
   $('#wEn').textContent=DW.energy();
   if(W.npcMix){W.npcMix.update(dt);const o=W.npc,dx=av.position.x-o.position.x,dz=av.position.z-o.position.z;if(Math.hypot(dx,dz)<5){let d=Math.atan2(dx,dz)-o.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;o.rotation.y+=d*Math.min(1,dt*3);}}
   if(W.foeMix){W.foeMix.update(dt);const o=W.foe;o.position.y+=Math.sin(t*1.7)*.0015;const dx=av.position.x-o.position.x,dz=av.position.z-o.position.z;let d=Math.atan2(dx,dz)-o.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;o.rotation.y+=d*Math.min(1,dt*2);}
@@ -606,11 +616,11 @@ function open(opts){opts=opts||{};
   $('#wDlgX').onclick=()=>endTalk();
   W.cam.position.set(0,6,22);W.yaw=0;
   W.onResize=()=>{R.setSize(window.innerWidth,window.innerHeight,false);W.cam.aspect=window.innerWidth/window.innerHeight;W.cam.fov=window.innerWidth<window.innerHeight?62:50;W.cam.updateProjectionMatrix();};window.addEventListener('resize',W.onResize);
-  $('#wHint').classList.remove('gone');msg(st===0?'Die Ruinen deines Tempels. Baue sie mit deinen Ritualen auf.':'Willkommen in deiner Welt');
+  $('#wHint').textContent=matchMedia('(pointer:fine)').matches?'WASD laufen · Shift rennen · Maus ziehen umsehen · Rad zoomen · E benutzen · 1–9 im Dialog · Esc zurück':'Links ziehen zum Laufen · rechts wischen zum Umsehen';$('#wHint').classList.remove('gone');msg(st===0?'Die Ruinen deines Tempels. Baue sie mit deinen Ritualen auf.':'Willkommen in deiner Welt');
   loop();
 }
 function close(){
-  if(!W)return;cancelAnimationFrame(W.raf);window.removeEventListener('resize',W.onResize);window.removeEventListener('keydown',W.kd);window.removeEventListener('keyup',W.ku);
+  if(!W)return;cancelAnimationFrame(W.raf);window.removeEventListener('resize',W.onResize);window.removeEventListener('keydown',W.kd);window.removeEventListener('keyup',W.ku);window.removeEventListener('blur',W.blur);
   if(W.mixer&&W.model){W.mixer.stopAllAction();W.mixer.uncacheRoot(W.model);}
   if(W.av)W.scene.remove(W.av);
   W.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});Object.values(W.tex||{}).forEach(t=>t.dispose());Object.values(W.impT||{}).forEach(t=>t.dispose());W.R.dispose();
