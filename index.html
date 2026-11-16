@@ -626,23 +626,36 @@ const LOCK='<path d="M6 11h12v10H6zM8 11V8a4 4 0 0 1 8 0v3"/>';
 function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k]||IC.mind}</svg>`;}
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
 const TPL={
-  shaolin:{n:'Shaolin',d:'Tagwache, Joggen, Ultra-Slow-Training, Meditation',r:[
-    {id:'wake',name:'Tagwache',icon:'sun',type:'window',cfg:{start:'05:00',win:15}},
-    {id:'run',name:'Joggen',icon:'run',type:'amount',cfg:{unit:'km',goal:3},freq:{mode:'week',n:3}},
-    {id:'slow',name:'Ultra-Slow-Training',icon:'wave',type:'timer',cfg:{min:6,breath:false,hint:'Master Your Journey, Level 1'}},
-    {id:'med',name:'Regenerations-Meditation',icon:'enso',type:'timer',cfg:{min:10,breath:true,hint:'Mit deinem Audio'}}]},
-  athlet:{n:'Athlet:in',d:'Aufstehen, Training, Mobility, Mentaltraining, Wasser, Schlaf',r:[
-    {name:'Aufstehen',icon:'sun',type:'window',cfg:{start:'06:30',win:20}},
+  shaolin:{n:'Shaolin',d:'Früh aufstehen, laufen, Kraft, Stille, Kälte',r:[
+    {id:'wake',name:'Tagwache',icon:'sun',type:'window',cfg:{start:'05:30',win:20},freq:{mode:'daily'}},
+    {id:'run',name:'Laufen',icon:'run',type:'amount',cfg:{unit:'km',goal:5},freq:{mode:'week',n:3}},
+    {name:'Kraft & Dehnen',icon:'fist',type:'timer',cfg:{min:20,breath:false,hint:'Liegestütze, Kniebeugen, Dehnen'},freq:{mode:'days',days:[0,2,4]}},
+    {id:'med',name:'Meditation',icon:'enso',type:'timer',cfg:{min:15,breath:true,hint:'Aufrecht sitzen, Atem beobachten'},freq:{mode:'daily'}},
+    {name:'Kalt duschen',icon:'cold',type:'check',cfg:{},freq:{mode:'daily'}}]},
+  disziplin:{n:'Disziplin',d:'Morgenroutine, Bewegung, Lesen, ruhiger Abend',r:[
+    {name:'Früh aufstehen',icon:'sun',type:'window',cfg:{start:'06:00',win:20},freq:{mode:'daily'}},
+    {name:'Bewegung',icon:'walk',type:'amount',cfg:{unit:'Min',goal:30},freq:{mode:'daily'}},
+    {name:'Lesen',icon:'book',type:'amount',cfg:{unit:'Seiten',goal:10},freq:{mode:'daily'}},
+    {name:'Meditation',icon:'enso',type:'timer',cfg:{min:10,breath:true,hint:'Augen zu, nur atmen'},freq:{mode:'daily'}},
+    {name:'Kein Bildschirm nach 22 Uhr',icon:'phone',type:'check',cfg:{},freq:{mode:'daily'}}]},
+  athlet:{n:'Athlet:in',d:'Training, Mobility, Mentaltraining, Wasser, Schlaf',r:[
+    {name:'Aufstehen',icon:'sun',type:'window',cfg:{start:'06:30',win:20},freq:{mode:'daily'}},
     {name:'Training',icon:'dumbbell',type:'check',cfg:{},freq:{mode:'week',n:4}},
     {name:'Mobility',icon:'wave',type:'timer',cfg:{min:15,breath:false,hint:'Hüfte, Schultern, Wirbelsäule'},freq:{mode:'days',days:[0,2,4,6]}},
-    {name:'Mentaltraining',icon:'mind',type:'timer',cfg:{min:10,breath:true,hint:'Visualisierung oder Atemübung'}},
-    {name:'Wasser',icon:'drop',type:'amount',cfg:{unit:'Liter',goal:2.5}},
-    {name:'Licht aus vor 22:30',icon:'moon',type:'check',cfg:{}}]},
+    {name:'Mentaltraining',icon:'mind',type:'timer',cfg:{min:10,breath:true,hint:'Visualisierung oder Atemübung'},freq:{mode:'daily'}},
+    {name:'Wasser',icon:'drop',type:'amount',cfg:{unit:'Liter',goal:2.5},freq:{mode:'daily'}},
+    {name:'Licht aus vor 22:30',icon:'moon',type:'check',cfg:{},freq:{mode:'daily'}}]},
+  mental:{n:'Mentale Stärke',d:'Handyfreier Morgen, Dankbarkeit, Stille, Tagebuch',r:[
+    {name:'Erste Stunde ohne Handy',icon:'phone',type:'check',cfg:{},freq:{mode:'daily'}},
+    {name:'Drei Dinge, für die ich dankbar bin',icon:'heart',type:'check',cfg:{},freq:{mode:'daily'}},
+    {name:'Stille',icon:'enso',type:'timer',cfg:{min:10,breath:true,hint:'Atem beobachten, Gedanken ziehen lassen'},freq:{mode:'daily'}},
+    {name:'Spaziergang draussen',icon:'leaf',type:'amount',cfg:{unit:'Min',goal:20},freq:{mode:'week',n:5}},
+    {name:'Tagebuch',icon:'pen',type:'check',cfg:{},freq:{mode:'daily'}}]},
   einsteiger:{n:'Einsteiger',d:'Wasser, Spaziergang, Stille, Tagebuch',r:[
-    {name:'Wasser',icon:'drop',type:'amount',cfg:{unit:'Gläser',goal:6}},
+    {name:'Wasser',icon:'drop',type:'amount',cfg:{unit:'Gläser',goal:6},freq:{mode:'daily'}},
     {name:'Spaziergang',icon:'walk',type:'amount',cfg:{unit:'Min',goal:20},freq:{mode:'week',n:5}},
-    {name:'Stille',icon:'enso',type:'timer',cfg:{min:5,breath:true,hint:'Augen zu, nur atmen'}},
-    {name:'Tagebuch',icon:'book',type:'check',cfg:{}}]}
+    {name:'Stille',icon:'enso',type:'timer',cfg:{min:5,breath:true,hint:'Augen zu, nur atmen'},freq:{mode:'daily'}},
+    {name:'Tagebuch',icon:'book',type:'check',cfg:{},freq:{mode:'daily'}}]}
 };
 const LESSONS=[
   {cat:'Gewohnheit',t:'Klein anfangen',x:'Neue Gewohnheiten scheitern selten am Willen, meistens an zu grossen Schritten. Eine Version, die nur zwei Minuten dauert, ist leicht genug, um sie auch an schlechten Tagen zu machen. Wachsen darf sie später.',m:'Mach es so klein, dass du nicht Nein sagen kannst.',q:'Worum geht es bei der Zwei-Minuten-Regel?',o:['Jede Gewohnheit genau zwei Minuten lang machen','Den Einstieg so klein machen, dass er immer gelingt','Nach zwei Minuten aufhören, wenn es keinen Spass macht'],a:1,e:'Es geht um den Einstieg. Wer anfängt, macht oft mehr. Wer nicht anfängt, macht nichts.'},
@@ -704,7 +717,8 @@ function migrate(){
   ['sound','hq','test','days','cycle','best','seals','learn','avatar'].forEach(k=>{if(S[k]===undefined)S[k]=D[k];});
   ['log','exams','practice','review'].forEach(k=>{if(!S.learn[k])S.learn[k]=D.learn[k];});
   S.rituals.forEach(r=>{if(!r.freq)r.freq=r.id==='run'?{mode:'week',n:3}:{mode:'daily'};});
-  S.v=4;
+  if((S.v||0)<5){S.rituals=S.rituals.filter(r=>r.id!=='slow'&&!/ultra-slow/i.test(r.name));if(!S.rituals.length)S.rituals=tplRituals('shaolin');}
+  S.v=5;
 }
 function dk(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function pk(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
