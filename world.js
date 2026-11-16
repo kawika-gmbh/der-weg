@@ -150,7 +150,10 @@ function avatar(){
     W.mixer=mx;W.acts=A;['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(n==='Idle'?1:0);}});
     if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}};
   if(window.__monk)done(window.__monk);
-  else new TH.GLTFLoader().load('monk.glb',gl=>{window.__monk=gl;done(gl);},undefined,()=>{});
+  else{const L=new TH.GLTFLoader(),ok=gl=>{window.__monk=gl;done(gl);};
+    const fromB64=()=>{const parse=()=>{const b=atob(window.__monkB64),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);L.parse(u.buffer,'',ok,()=>{});};
+      if(window.__monkB64)return parse();const sc=document.createElement('script');sc.src='monk.js';sc.onload=parse;document.head.appendChild(sc);};
+    L.load('monk.glb',ok,undefined,fromB64);}
 }
 function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(on){a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();}else a.fadeOut(.3);}
 
