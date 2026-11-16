@@ -489,6 +489,9 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 #scBonus:not(:empty){margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(155,59,37,.12);font-weight:700;font-size:14px;color:#7a2a17}
 @keyframes scrOpen{from{clip-path:inset(48% 0 48% 0);opacity:.4}to{clip-path:inset(0 0 0 0);opacity:1}}
 .ci.ws{cursor:pointer}
+.card.shadow{background:linear-gradient(160deg,rgba(60,14,10,.85),rgba(18,12,14,.9));border:1px solid rgba(255,106,77,.35)}
+.card.shadow .segs i.on{background:#ff6a4d}
+body.shadowed .kbw{filter:saturate(.55) brightness(.78) contrast(1.05)}
 .scq{display:block;width:100%;text-align:left;margin:8px 0 0;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.55);border:1px solid rgba(90,60,30,.25);color:#2a1d12;font-size:14px;line-height:1.4;font-weight:500}
 .scq:active{background:rgba(155,59,37,.2)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -624,7 +627,7 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
     <span class="lbl">Stufe</span><div class="opts" id="pvSt"></div>
     <span class="lbl">Jahreszeit</span><div class="opts" id="pvSe"></div>
     <span class="lbl">Tageszeit (Welt)</span><div class="opts" id="pvTod"></div>
-    <div class="btnrow" style="justify-content:flex-start"><button class="big-ghost" id="devChest" style="padding:9px 14px">Truhe geben</button><button class="big-ghost" id="dev100" style="padding:9px 14px">+100 Chi</button><button class="big-ghost" id="dev1000" style="padding:9px 14px">+1000 Chi</button><button class="big-ghost" id="devStage" style="padding:9px 14px">Nächste Stufe</button><button class="big-ghost" id="demoWeek" style="padding:9px 14px">Beispielwoche</button><button class="big-ghost" id="demoYear" style="padding:9px 14px">Prestige ansehen</button></div>
+    <div class="btnrow" style="justify-content:flex-start"><button class="big-ghost" id="devChest" style="padding:9px 14px">Truhe geben</button><button class="big-ghost" id="devDmg" style="padding:9px 14px">Schatten-Schaden +1</button><button class="big-ghost" id="devDuel" style="padding:9px 14px">Duell gewinnen</button><button class="big-ghost" id="dev100" style="padding:9px 14px">+100 Chi</button><button class="big-ghost" id="dev1000" style="padding:9px 14px">+1000 Chi</button><button class="big-ghost" id="devStage" style="padding:9px 14px">Nächste Stufe</button><button class="big-ghost" id="demoWeek" style="padding:9px 14px">Beispielwoche</button><button class="big-ghost" id="demoYear" style="padding:9px 14px">Prestige ansehen</button></div>
   </div>
   <button class="danger" id="stReset">Fortschritt zurücksetzen</button>
 </div></div>
@@ -887,6 +890,7 @@ function migrate(){
   ['sound','hq','test','days','cycle','best','seals','learn','avatar'].forEach(k=>{if(S[k]===undefined)S[k]=D[k];});
   if(S.energy===undefined)S.energy=3;if(!S.games)S.games={};
   if(!S.inv)S.inv={scrolls:[],robes:[],animals:[],opened:0,since:0,first:false};
+  if(!S.decay)S.decay={last:dk(new Date(Date.now()-864e5)),miss:0,dmg:0};if(!S.duels)S.duels={};
   if(!S.inv.ws){S.inv.ws=[];S.inv.wsStreak={d:'',n:0};S.inv.story=[];}
   ['log','exams','practice','review'].forEach(k=>{if(!S.learn[k])S.learn[k]=D.learn[k];});
   S.rituals.forEach(r=>{if(!r.freq)r.freq=r.id==='run'?{mode:'week',n:3}:{mode:'daily'};});
@@ -915,8 +919,18 @@ function dayFrac(d){if(!d)return 0;if(d._rest||d._n===0)return 1;const n=d._n||S
 function totalChi(){return Object.values(S.days).reduce((a,d)=>a+dayChi(d),0);}
 const ST0=[0,60,200,500,1000,1700];
 function stageAt(ch,st){if(ch===0)return ST0[st];const a=CH[ch-1].end,b=CH[ch].end;return Math.ceil(a+(b-a)*SF[st]);}
-function prog(chi){let start=0;for(let i=0;i<CH.length;i++){if(chi<CH[i].end){const f=(chi-start)/(CH[i].end-start);let st=0;for(let j=0;j<6;j++){if(chi>=stageAt(i,j))st=j;}return{ch:i,st,f,done:false};}start=CH[i].end;}return{ch:3,st:5,f:1,done:true};}
-function viewProg(){const p=prog(totalChi());if(pvCh==null&&pvSt==null)return p;const ch=pvCh!=null?pvCh:p.ch;return{ch,st:pvSt!=null?pvSt:(ch!==p.ch?5:p.st)};}
+function prog(chi){let start=0;for(let i=0;i<CH.length;i++){if(chi>=CH[i].end&&S&&S.duels&&!S.duels[i])return{ch:i,st:5,f:1,done:false,duel:true};if(chi<CH[i].end){const f=(chi-start)/(CH[i].end-start);let st=0;for(let j=0;j<6;j++){if(chi>=stageAt(i,j))st=j;}return{ch:i,st,f,done:false};}start=CH[i].end;}return{ch:3,st:5,f:1,done:true};}
+function isGood(d){return dayFrac(d)>=.5;}
+function isPerfect(d){return !!d&&(d._rest||dayFrac(d)>=1);}
+function processDecay(){const D=S.decay,yd=dk(new Date(Date.now()-864e5));if(!D.last||D.last>=yd)return;
+  const t=new Date(D.last+'T12:00:00');for(let g=0;g<60;g++){t.setDate(t.getDate()+1);const k=dk(t);if(k>yd)break;const d=S.days[k];
+    if(k<S.cycleStart){continue;}
+    if(!isGood(d)){D.miss++;if(D.miss>=2)D.dmg=Math.min(3,D.dmg+1);}else{D.miss=0;if(isPerfect(d))D.dmg=Math.max(0,D.dmg-1);}}
+  D.last=yd;save();}
+function dmgNow(){const D=S.decay;return Math.max(0,D.dmg-(isPerfect(today())&&D.dmg>0?1:0));}
+function perfectRun(){let n=0;const t=new Date();if(isPerfect(today()))n++;for(let g=0;g<30;g++){t.setDate(t.getDate()-1);const k=dk(t);if(isPerfect(S.days[k]))n++;else break;}return n;}
+function duelState(){const p=prog(totalChi());if(!p.duel)return null;const n=perfectRun();if(n>=7){S.duels[p.ch]=dk(new Date());save();return{won:true,ch:p.ch};}return{ch:p.ch,n};}
+function viewProg(){const p0=prog(totalChi());const p=Object.assign({},p0);if(pvCh==null&&pvSt==null){p.st=Math.max(0,p.st-dmgNow());return p;}const ch=pvCh!=null?pvCh:p.ch;return{ch,st:pvSt!=null?pvSt:(ch!==p.ch?5:p.st)};}
 function rankIdx(chi){let r=0;RANKS.forEach((x,i)=>{if(chi>=x[0])r=i;});return r;}
 const LVMAX=55;
 function lvOf(chi){return Math.min(LVMAX,1+Math.floor(54*Math.pow(Math.min(1,chi/20000),.65)));}
@@ -1455,6 +1469,7 @@ window.DW={
   claimScroll:()=>claimWorldScroll(),
   scrollAvailable:()=>wsLeft(wsChapter()).length>0,
   scrollTried:()=>!!today()._scrollTry,
+  shadow:()=>{const du=duelState();return{dmg:dmgNow(),miss:S.decay.miss,duel:du&&!du.won?du.n:null};},
   rituals:()=>{const d=today(),due=dueList();return{done:due.filter(x=>recDone(x,d[x.id])).length,due:due.length,rest:!!d._rest};},
   lessonDone:()=>!!lessonToday(),
   level:k=>S.games[k+'Lv']||1,setLevel(k,v){S.games[k+'Lv']=v;save();},
@@ -1475,7 +1490,7 @@ function renderTop(from){
   if(from!=null&&!RM){const t0=performance.now();const st=n=>{const p=Math.min(1,(n-t0)/700);el.textContent=n0(Math.round(from+(chi-from)*(1-Math.pow(1-p,3))));if(p<1)requestAnimationFrame(st);};requestAnimationFrame(st);}else el.textContent=n0(chi);
   const pv=pvCh!=null||pvSt!=null||pvSe;
   $('#loc1').textContent=`Kapitel ${String(vp.ch+1).padStart(2,'0')} // ${CH[vp.ch].n}`;
-  $('#loc2').textContent=`STUFE ${vp.st}/5: ${STAGES[vp.ch][vp.st].toUpperCase()} · ${SEASONS[se].n.toUpperCase()} · TAG ${String(Math.min(365,dayN())).padStart(3,'0')}/365${pv?' · VORSCHAU':''}`;
+  $('#loc2').textContent=`STUFE ${vp.st}/5: ${STAGES[vp.ch][vp.st].toUpperCase()} · ${SEASONS[se].n.toUpperCase()} · TAG ${String(Math.min(365,dayN())).padStart(3,'0')}/365${(()=>{const du=duelState();return du&&!du.won?' · SCHATTENDUELL '+du.n+'/7':dmgNow()?' · BESCHÄDIGT':'';})()}${pv?' · VORSCHAU':''}`;
   $('#dojoDot').hidden=!!lessonToday();
 }
 function renderPane(){({missions:renderMissions,dojo:renderDojo,weg:renderWeg,op:renderOp,stats:renderStats})[tab]();}
@@ -1483,10 +1498,18 @@ function untilMidnight(){const n=new Date(),m=new Date(n);m.setHours(24,0,0,0);c
 function winState(r){const[h,m]=r.cfg.start.split(':').map(Number);const now=new Date(),s=new Date(now);s.setHours(h,m,0,0);const e=new Date(s.getTime()+r.cfg.win*60000);const p=n=>String(n).padStart(2,'0');return{open:S.test||(now>=s&&now<=e),before:now<s,label:`${p(s.getHours())}:${p(s.getMinutes())}–${p(e.getHours())}:${p(e.getMinutes())}`};}
 function fmtNum(v){return String(Math.round(v*10)/10).replace('.',',');}
 let amtOpen=null;
+function shadowCard(){
+  const du=duelState(),dm=dmgNow(),mi=S.decay.miss;
+  if(du&&!du.won)return `<div class="card shadow"><span class="lbl" style="color:#ff6a4d">Schattenduell · Kapitel ${du.ch+1}</span><h3>${du.n} / 7 perfekte Tage</h3><p>Der Schatten versperrt den Weg ins nächste Kapitel. Er weicht erst nach sieben perfekten Tagen in Folge. Ein Fehltag, und das Duell beginnt von vorn.</p><div class="segs">${[0,1,2,3,4,5,6].map(i=>`<i class="${i<du.n?'on':''}"></i>`).join('')}</div></div>`;
+  if(dm>0)return `<div class="card shadow"><span class="lbl" style="color:#ff6a4d">Der Schatten war hier</span><h3>Dein Tempel ist beschädigt (${dm}/3)</h3><p>Ausreden haben Spuren hinterlassen: Deine Welt ist ${dm} Stufe${dm>1?'n':''} zurückgefallen. Jeder perfekte Tag repariert eine Stufe. Dein Chi bleibt.</p></div>`;
+  if(mi>=1)return `<div class="card shadow"><span class="lbl" style="color:#ff6a4d">Warnung</span><h3>Der Schatten wartet</h3><p>Gestern hast du ausgelassen. Verpasst du heute auch, greift der Schatten deinen Tempel an. Erledige mindestens die Hälfte deiner Rituale.</p></div>`;
+  return '';
+}
 function renderMissions(){
   const d=today(),list=dueList(),sh=share(),n=list.length,done=list.filter(r=>recDone(r,d[r.id])).length;
   let h=`<div class="ph"><div><span class="lbl">${DOW[isoDow(new Date())]} · Tagesmissionen</span><h2>${d._rest?'Ruhetag':n?`${done} / ${n} erfüllt`:'Nichts fällig'}</h2></div><span class="num">NEU IN ${untilMidnight()}</span></div>`;
   if(n)h+=`<div class="segs">${list.map(r=>`<i class="${recDone(r,d[r.id])?'on':''}"></i>`).join('')}</div>`;
+  h+=shadowCard();
   if(d._chest==='ready')h+=`<button class="chestcard" id="openChest"><span class="chest-mini">${CHEST_SVG}</span><span><b>Truhe bereit</b><span>Tippen zum Öffnen</span></span><span class="act">Öffnen</span></button>`;
   if(!lessonToday())h+=`<button class="teaser" data-go="dojo"><span class="mi" style="width:36px;height:36px">${icon('book')}</span><span><b>Tageslektion offen</b><span>${LESSONS[lessonIdx()].t} · +10 Chi</span></span></button>`;
   if(d._rest)h+=`<div class="card"><h3>Heute ist Ruhetag</h3><p>Erholung ist Teil des Trainings. Der Tag zählt nicht als verpasst, und deine Jahreszeit bleibt stabil.</p>${Object.keys(d).some(k=>k[0]!=='_')?'':'<button class="act ghost" style="align-self:flex-start" id="restOff">Ruhetag aufheben</button>'}</div>`;
@@ -1542,13 +1565,14 @@ function complete(r,val){
   save();afterGain(before,pB,lvB,rB,seB,{title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
 }
 function afterGain(before,pB,lvB,rB,seB,o){
-  const after=totalChi(),pA=prog(after),lvA=lvOf(after),rA=rankIdx(after);updateBest();
+  duelState();const after=totalChi(),pA=prog(after),lvA=lvOf(after),rA=rankIdx(after);updateBest();
   renderTop(before);renderPane();
   const el=o.elId&&document.getElementById(o.elId);if(el){const f=document.createElement('span');f.className='float';f.textContent='+'+(after-before)+' CHI';el.appendChild(f);setTimeout(()=>f.remove(),1400);}
   const q=[];
   q.push({k:o.kicker,t:o.title,s:'+'+(after-before)+' CHI'});
   if(o.perfect)q.push({k:'Alle Missionen',t:'Perfekter Tag',s:'+15 CHI BONUS'});
   if(o.chest)q.push({k:o.first?'Willkommensgeschenk':'Belohnung',t:'Truhe erhalten',s:'IN DEN MISSIONEN ÖFFNEN'});
+  if(pB.duel&&pA.ch>pB.ch)q.push({k:'Schattenduell',t:'Schatten besiegt',s:'SIEBEN PERFEKTE TAGE'});
   if(lvA>lvB)q.push({k:'Level up',t:'Level '+lvA,s:RANKS[rA][1].toUpperCase()});
   if(rA>rB)q.push({k:'Neuer Rang',t:RANKS[rA][1],svg:insignia(rA)});
   const changed=pA.ch!==pB.ch||pA.st!==pB.st||curSeason()!==seB;
@@ -1814,6 +1838,8 @@ $('#demoWeek').onclick=()=>{const now=new Date(),sh=share();
   save();updateBest();buildWorld();renderAll();renderSettings();toast('Beispielwoche eingefüllt');};
 function devGain(n){const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();pvCh=pvSt=null;addBonus('_dev',n);$('#settings').hidden=true;afterGain(before,pB,lvB,rB,seB,{kicker:'Admin',title:'+'+n+' Chi'});}
 $('#dev100').onclick=()=>devGain(100);$('#devChest').onclick=()=>{today()._chest='ready';save();$('#settings').hidden=true;setTab('missions');toast('Truhe bereit');};$('#dev1000').onclick=()=>devGain(1000);
+$('#devDmg').onclick=()=>{S.decay.dmg=Math.min(3,S.decay.dmg+1);S.decay.miss=Math.max(2,S.decay.miss);save();document.body.classList.add('shadowed');buildWorld();renderAll();toast('Schaden '+S.decay.dmg+'/3');};
+$('#devDuel').onclick=()=>{const p=prog(totalChi());if(!p.duel){toast('Kein Duell aktiv');return;}const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();S.duels[p.ch]=dk(new Date());save();$('#settings').hidden=true;afterGain(before,pB,lvB,rB,seB,{kicker:'Admin',title:'Duell gewonnen'});};
 $('#devStage').onclick=()=>{const c=totalChi(),p=prog(c);if(p.done){toast('Alles gebaut');return;}const target=p.st<5?stageAt(p.ch,p.st+1):CH[p.ch].end;devGain(Math.max(1,target-c));};
 $('#demoYear').onclick=()=>{$('#settings').hidden=true;showYear(true);};
 function ask(t,p,ok){$('#dlT').textContent=t;$('#dlP').textContent=p;$('#dialog').hidden=false;$('#dlOk').onclick=()=>{$('#dialog').hidden=true;ok();};}
@@ -1826,7 +1852,8 @@ function renderAll(){renderTop();renderPane();}
 /* =================== START =================== */
 function start(data){
   S=load()||(data&&data.S)||null;const fresh=!S;if(fresh)S=defaults();migrate();
-  if(!robeOpen(S.avatar.robe))S.avatar.robe=0;if(!S.admin)S.test=false;updateBest();save();
+  if(!robeOpen(S.avatar.robe))S.avatar.robe=0;if(!S.admin)S.test=false;processDecay();duelState();updateBest();save();
+  document.body.classList.toggle('shadowed',dmgNow()>0);
   if(window.claude&&window.claude.hot&&window.claude.hot.snapshot)window.claude.hot.snapshot(()=>({S}));
   init3D();
   if(G.ok){if(bloom)bloom.enabled=S.hq;buildAvatar3D();requestAnimationFrame(frame);}

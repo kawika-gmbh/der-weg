@@ -222,7 +222,7 @@ function greet(st){
   const b=st===0?' Diese Ruinen waren einmal ein Tempel. Jedes Ritual, das du lebst, setzt einen Stein zurück.':st<3?' Die Mauern wachsen. Langsam, aber sie wachsen.':st<5?' Sieh dich um. Das hast du mit deinen Ritualen gebaut.':' Der Tempel steht. Jetzt geht es darum, ihn zu halten.';
   return a+b;
 }
-function dlg(text,btns){const d=$('#wDlg');$('#wDlgT').textContent=text;const B=$('#wDlgB');B.innerHTML='';btns.forEach(([l,f,pri])=>{const b=document.createElement('button');b.textContent=l;if(pri)b.className='pri';b.onclick=()=>{DW.tick();f();};B.appendChild(b);});d.hidden=false;$('#wPrompt').hidden=true;W.talking=true;}
+function dlg(text,btns){const d=$('#wDlg');$('#wDlgK').textContent='Meister Shen';$('#wDlgT').textContent=text;const B=$('#wDlgB');B.innerHTML='';btns.forEach(([l,f,pri])=>{const b=document.createElement('button');b.textContent=l;if(pri)b.className='pri';b.onclick=()=>{DW.tick();f();};B.appendChild(b);});d.hidden=false;$('#wPrompt').hidden=true;if(!W.talking)W.talkPos=W.av.position.clone();W.talking=true;}
 function endTalk(){$('#wDlg').hidden=true;if(W){W.talking=false;W.near=null;}}
 function talk(st){
   const q=questToday(st),qs=DW.day('_qs')||0;// 0 offen, 1 angenommen, 2 erledigt
@@ -236,6 +236,28 @@ function talk(st){
     btns.push(['Weisheit',()=>dlg(DW.wisdom(),[['Danke',()=>endTalk()],['Zurück',()=>menu(greet(st))]])]);
     dlg(text,btns);};
   if(qs===2)menu('Dein Auftrag für heute ist erfüllt. '+greet(st));else menu(greet(st));
+}
+
+/* ---------- Der Schatten ---------- */
+const TAUNT=['Morgen ist auch noch ein Tag. Oder übermorgen.','Du hast es dir verdient, heute auszuruhen. Nicht wahr?','Niemand sieht es, wenn du heute auslässt.','Du bist zu müde. Zu beschäftigt. Zu spät dran.','Fang am Montag an. Montag ist ein guter Tag.'];
+function shadowFoe(){
+  const sh=DW.shadow();if(!(sh.dmg>0||sh.duel!=null||sh.miss>=2)||!window.MonkKit)return;
+  W.tod.fogBoost=sh.dmg>0||sh.duel!=null;
+  if(W.tod.fogBoost){W.scene.fog.density*=1.7;if(W.sky&&W.sky.material.color)W.sky.material.color.multiplyScalar(.7);W.hemi.intensity*=.75;}
+  MonkKit.load(()=>{if(!W)return;const o=MonkKit.npc('#050506','#3a3036','#050506');if(!o)return;const p=sh.duel!=null?[0,groundH(0,7.2),7.2]:[3.2,groundH(3.2,9),9];
+    o.position.set(p[0],p[1],p[2]);o.rotation.y=Math.PI;o.scale.multiplyScalar(1.22);W.root.add(o);W.foe=o;
+    o.traverse(m=>{if(m.material){m.material.roughness=1;m.material.metalness=0;m.material.coloro.traverse(m=>{if(m.material){m.material.transparent=true;m.material.opacity=.88;m.material.roughness=1;}});o.traverse(m=>{if(m.material){m.material.transparent=true;m.material.opacity=.88;m.material.roughness=1;}});m.material.color.multiplyScalar(.35);}});
+    const eyeM=new TH.MeshBasicMaterial({color:new TH.Color(3,.25,.1)});[-.045,.045].forEach(dx=>{const e=new TH.Mesh(new TH.SphereGeometry(.018,8,6),eyeM);e.position.set(dx,1.72,.12);o.add(e);});
+    const L=new TH.PointLight(0xff3010,.9,4,2);L.position.set(0,1.6,.4);o.add(L);W.flick.push(L);
+    const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));if(A.Stance){A.Stance.play();A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}W.foeMix=mx;
+    // Rauch
+    const n=60,pp=new Float32Array(n*3);for(let i=0;i<n;i++){pp[i*3]=(Math.random()-.5)*1.2;pp[i*3+1]=Math.random()*2.2;pp[i*3+2]=(Math.random()-.5)*1.2;}
+    const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pp,3));W.smoke=new TH.Points(g,new TH.PointsMaterial({color:0x08060a,size:.55,transparent:true,opacity:.7,depthWrite:false}));W.smoke.position.copy(o.position);W.root.add(W.smoke);
+    if(sh.duel!=null)W.solids.push([p[0],p[2],.6]);
+    W.inter.push({x:p[0],z:p[2],r:2.4,label:'Der Schatten',btn:'Ansehen',act:()=>{
+      const t=TAUNT[Math.floor(Math.random()*TAUNT.length)];
+      const why=sh.duel!=null?`Hier endet dein Kapitel. Sieben perfekte Tage in Folge, dann lasse ich dich vorbei. Du stehst bei ${sh.duel} von 7.`:sh.dmg>0?`Ich habe mir genommen, was du liegen liessest. Jeder perfekte Tag nimmt mir wieder etwas weg.`:`Gestern warst du nicht da. Noch ein Tag, und ich nehme mir deinen Tempel.`;
+      dlg('«'+t+'»\n\n'+why,[['Wer bist du?',()=>dlg('Ich bin jede Ausrede, die du dir je erzählt hast. Ich werde nie ganz verschwinden. Aber ich weiche denen, die jeden Tag zurückkommen.',[['Ich komme wieder',()=>endTalk()]])],['Ich komme wieder',()=>endTalk(),1]]);$('#wDlgK').textContent='Der Schatten';}});});
 }
 
 /* ---------- Interaktion ---------- */
@@ -314,7 +336,9 @@ function loop(){
   if(W.talking)near=W.near;if(near!==W.near){W.near=near;const p=$('#wPrompt');if(near){$('#wPromptT').textContent=near.label;$('#wPromptB').textContent=near.btn;p.hidden=false;}else p.hidden=true;}
   $('#wEn').textContent=DW.energy();
   if(W.npcMix){W.npcMix.update(dt);const o=W.npc,dx=av.position.x-o.position.x,dz=av.position.z-o.position.z;if(Math.hypot(dx,dz)<5){let d=Math.atan2(dx,dz)-o.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;o.rotation.y+=d*Math.min(1,dt*3);}}
-  if(W.talking&&Math.hypot(av.position.x-W.npc.position.x,av.position.z-W.npc.position.z)>3.2)endTalk();
+  if(W.foeMix){W.foeMix.update(dt);const o=W.foe;o.position.y+=Math.sin(t*1.7)*.0015;const dx=av.position.x-o.position.x,dz=av.position.z-o.position.z;let d=Math.atan2(dx,dz)-o.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;o.rotation.y+=d*Math.min(1,dt*2);}
+  if(W.smoke){const a=W.smoke.geometry.attributes.position.array;for(let i=0;i<a.length;i+=3){a[i+1]+=dt*.35;a[i]+=Math.sin(t+i)*.004;if(a[i+1]>2.4)a[i+1]=0;}W.smoke.geometry.attributes.position.needsUpdate=true;}
+  if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   impUpdate();W.R.render(W.scene,W.cam);
 }
 
@@ -331,7 +355,7 @@ function open(){
   const r=rng(21);let c=0,tries=0;while(c<14&&tries<500){tries++;const a=r()*6.28,d=11+r()*20,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<3.2&&z>3)continue;if(Math.hypot(x-9,z-7)<8)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<4))continue;maple(x,z,.8+r()*.5,r()*6);c++;}
   c=0;tries=0;while(c<30&&tries<800){tries++;const a=r()*6.28,d=24+r()*24,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<4&&z>3)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<3.5))continue;pine(x,z,.8+r()*.5,r()*6);c++;}
   grassField();
-  applyTod();avatar();interactables(st);meister(st);controls();
+  applyTod();avatar();interactables(st);meister(st);shadowFoe();controls();
   $('#wDlgX').onclick=()=>endTalk();
   W.cam.position.set(0,6,22);W.yaw=0;
   W.onResize=()=>{R.setSize(window.innerWidth,window.innerHeight,false);W.cam.aspect=window.innerWidth/window.innerHeight;W.cam.fov=window.innerWidth<window.innerHeight?62:50;W.cam.updateProjectionMatrix();};window.addEventListener('resize',W.onResize);
