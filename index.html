@@ -462,11 +462,17 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 .w-knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.75);box-shadow:0 4px 14px rgba(0,0,0,.4)}
 .w-hint{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 28px);transform:translateX(-50%);background:rgba(0,0,0,.55);padding:9px 16px;border-radius:999px;font-size:13px;white-space:nowrap;transition:opacity .6s;pointer-events:none}
 .w-hint.gone{opacity:0}
+body.menuOver #hud{z-index:38}
+body.menuOver #world{filter:brightness(.42) saturate(.8);pointer-events:none}
+body.menuOver .loc,body.menuOver #handle{display:none}
+body.menuOver #world .w-top,body.menuOver #world .w-pts,body.menuOver #world .w-hint,body.menuOver #world .w-dlg{visibility:hidden}
+body.menuOver #hud::before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(8,8,10,.35),rgba(8,8,10,.7));pointer-events:none;z-index:-1}
 .w-hint{white-space:normal!important;max-width:calc(100% - 32px);text-align:center;line-height:1.4}
 .w-prompt{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(14,15,18,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--stroke);padding:8px 8px 8px 16px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap;animation:spIn .3s}
 .w-msg{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translate(-50%,-10px);opacity:0;background:rgba(14,15,18,.82);padding:10px 16px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
 .w-msg.show{opacity:1;transform:translate(-50%,0)}
-.w-pts{position:absolute;top:calc(env(safe-area-inset-top) + 64px);left:12px;display:flex;flex-wrap:wrap;gap:5px;max-width:70%;pointer-events:none}.w-pts span{display:flex;align-items:center;gap:5px;background:rgba(14,15,18,.7);padding:4px 8px;border-radius:999px;font-size:11.5px}.w-pts i{width:7px;height:7px;border-radius:50%;display:block}
+.w-l{display:flex;gap:8px;align-items:center}.w-rank{display:flex;align-items:center;gap:8px;background:rgba(14,15,18,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:999px;padding:4px 14px 4px 4px;text-align:left}.w-rank b{display:block;font-size:13.5px}.w-rank small{display:block;font-size:11px;color:rgba(236,235,230,.6)}.w-por{width:34px;height:34px;border-radius:50%;overflow:hidden;background:#222;display:block}.w-por img{width:100%;height:100%;object-fit:cover}
+.w-pts{position:absolute;top:calc(env(safe-area-inset-top) + 64px);left:12px;right:12px;display:flex;flex-wrap:nowrap;overflow:hidden;gap:4px;pointer-events:none}.w-pts span{display:flex;align-items:center;gap:4px;background:rgba(14,15,18,.7);padding:3px 7px;border-radius:999px;font-size:11px;white-space:nowrap}.w-pts i{width:7px;height:7px;border-radius:50%;display:block}
 .w-dlg-b button{text-align:left}
 .w-dlg{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 16px);background:rgba(14,15,18,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--stroke);border-radius:22px;padding:14px 16px 16px;animation:spIn .3s;max-width:520px;margin:0 auto}
 .w-dlg-h{display:flex;justify-content:space-between;align-items:center}
@@ -654,7 +660,7 @@ body.shadowed .kbw{filter:saturate(.55) brightness(.78) contrast(1.05)}
 </div></div>
 <div id="world" hidden>
   <canvas id="wgl"></canvas>
-  <div class="w-top"><button class="icon" id="wExit" aria-label="Welt verlassen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button><div class="chi en"><i class="bolt"></i><b id="wEn">3</b></div></div>
+  <div class="w-top"><div class="w-l"><button class="icon" id="wExit" aria-label="Menü öffnen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><button class="w-rank" id="wRank" aria-label="Rang und Missionen"><span class="w-por" id="wPor"></span><span><b id="wRankN">Novize</b><small id="wRankS">Rang 1</small></span></button></div><div class="chi en"><i class="bolt"></i><b id="wEn">3</b></div></div>
   <div id="wJoy" class="w-joy"><div class="w-knob"></div></div>
   <div class="w-hint" id="wHint">Links ziehen zum Laufen · rechts wischen zum Umsehen</div>
   <div id="wPrompt" class="w-prompt" hidden><span id="wPromptT"></span><button class="act" id="wPromptB"></button></div>
@@ -1480,6 +1486,9 @@ function setTab(t){
   ['missions','dojo','weg','op','stats'].forEach(k=>$('#pane-'+k).hidden=k!==t);
   setDock(true);renderPane();
 }
+function autoEnter(n){n=n||0;if(document.body.classList.contains('inworld'))return;if(window.DWWorld&&document.readyState==='complete'&&!document.querySelector('.ov:not([hidden]),.dialog:not([hidden])')){DWWorld.open({});return;}if(n<200)setTimeout(()=>autoEnter(n+1),150);}
+function openMenu(tabName){document.body.classList.add('menuOver');setDock(true);if(tabName)setTab(tabName);renderAll();$('#enterWorld').lastChild.textContent='Zurück in die Welt';}
+function closeMenu(){document.body.classList.remove('menuOver');}
 function setDock(open){$('#dock').classList.toggle('collapsed',!open);$('#handleT').textContent=open?'Welt ansehen':'Menü öffnen';cam.toff=open?.17:.02;}
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;tick();if(b.dataset.tab===tab&&!$('#dock').classList.contains('collapsed'))setDock(false);else setTab(b.dataset.tab);});
 $('#handle').onclick=()=>{if(dragMoved)return;tick();setDock($('#dock').classList.contains('collapsed'));};
@@ -1488,7 +1497,7 @@ function dragStart(e){dragY=e.clientY;dragMoved=false;}
 function dragMove(e){if(dragY===null)return;const dy=e.clientY-dragY;if(Math.abs(dy)>8)dragMoved=true;const pnl=$('#panel');if(!$('#dock').classList.contains('collapsed')&&dy>0)pnl.style.transform=`translateY(${Math.min(dy,240)}px)`;}
 function dragEnd(e){if(dragY===null)return;const dy=e.clientY-dragY;dragY=null;$('#panel').style.transform='';if(dy>50)setDock(false);else if(dy<-40)setDock(true);setTimeout(()=>dragMoved=false,50);}
 ['handle','grab'].forEach(id=>{const el=$('#'+id);el.addEventListener('pointerdown',e=>{dragStart(e);el.setPointerCapture&&el.setPointerCapture(e.pointerId);});el.addEventListener('pointermove',dragMove);el.addEventListener('pointerup',dragEnd);el.addEventListener('pointercancel',dragEnd);});
-$('#enterWorld').onclick=()=>{tick();if(window.DWWorld)window.DWWorld.open();else toast('Spielmodus lädt noch');};
+$('#enterWorld').onclick=()=>{tick();if(document.body.classList.contains('menuOver')){closeMenu();return;}if(window.DWWorld)window.DWWorld.open();else toast('Spielmodus lädt noch');};
 window.DW={
   get S(){return S;},bell,tick,toast,
   stage:()=>viewProg().st,
@@ -1498,6 +1507,8 @@ window.DW={
   avatarGroup:()=>avatarGroup(),
   applyLook:()=>applyLook(S.avatar),
   tod:()=>todNow(),
+  portrait:()=>portraitURL,doneToday:()=>{const d=today(),l=dueList();return{done:l.filter(r=>recDone(r,d[r.id])).length,n:l.length};},
+  openMenu:t=>openMenu(t),closeMenu:()=>closeMenu(),
   flag(k,v){S.flags=S.flags||{};if(v!==undefined){S.flags[k]=v;save();}return S.flags[k];},
   rooms:()=>Object.entries(ROOMS).map(([id,R])=>{const d=today(),tk=dk(new Date());return{id,n:R.n,d:R.d,cat:R.cat,open:S.doors.includes(id),
     rit:activeRituals().filter(r=>(r.room||roomOf(r))===id).map(r=>{const rec=d[r.id],due=dueToday(r);let label=r.type==='window'?'Aufwachen':r.type==='timer'?`Timer ${r.cfg.min} Min`:r.type==='amount'?`Eintragen (${r.cfg.unit})`:'Erledigt';
@@ -1568,7 +1579,7 @@ function fmtNum(v){return String(Math.round(v*10)/10).replace('.',',');}
 let amtOpen=null;
 function klosterCards(){
   const st=rankStats(),K=KRANG[S.rank||0],ev=curEvent(),V=S.village;
-  let h=`<div class="card kc"><div class="kc-h"><span class="lbl">Rang ${(S.rank||0)+1} von ${KRANG.length}</span><button class="linkbtn" data-a2="kloster" style="margin:0">Ins Kloster</button></div><h3>${K.n}</h3>`;
+  let h=`<div class="card kc"><div class="kc-h"><span class="lbl">Rang ${(S.rank||0)+1} von ${KRANG.length}</span><button class="linkbtn" data-a2="kloster" style="margin:0">Zur Welt</button></div><h3>${K.n}</h3>`;
   if(st.max)h+=`<p>Höchster Rang erreicht.</p>`;
   else h+=`<p>Nächster Rang: <b>${st.next.n}</b>. ${st.eligible?'Du bist bereit. Geh zu Meister Shen für die Rangprüfung.':`Noch ${Math.max(0,st.next.days-st.days)} Tage im Rang, Erfüllung ${Math.round(st.pct*100)} % von ${Math.round(st.next.pct*100)} % (letzte ${st.next.win} Tage).`}</p><div class="kbar"><i style="width:${Math.min(100,st.days/st.next.days*100)}%"></i></div><div class="kbar"><i style="width:${Math.min(100,st.pct/st.next.pct*100)}%;background:#7fa7c9"></i></div>`;
   h+=`<p style="margin-top:8px">Routinen: ${activeRituals().length} von ${slots()} Plätzen · Türen offen: ${S.doors.length} von ${Object.keys(ROOMS).length}</p>`;
@@ -1627,12 +1638,12 @@ $('#pane-missions').addEventListener('click',e=>{
   if(e.target.closest('#restOn')){ask('Ruhetag nehmen?','Heute stehen keine Missionen an. Der Tag zählt nicht als verpasst. Einmal pro Woche möglich.',()=>{today()._rest=true;today()._n=0;save();buildWorld();renderAll();bell(.6);toast('Ruhetag. Gute Erholung');});return;}
   if(e.target.closest('#restOff')){const d=today();delete d._rest;delete d._n;save();buildWorld();renderAll();return;}
   const b=e.target.closest('button[data-a]');if(!b)return;const r=S.rituals.find(x=>x.id===b.dataset.id);if(!r)return;tick();
-  if(b.dataset.a==='go'){if(window.DWWorld)DWWorld.open({room:r.room||roomOf(r)});return;}
+  if(b.dataset.a==='go'){const rm=r.room||roomOf(r);if(document.body.classList.contains('inworld')&&DWWorld.goRoom){closeMenu();DWWorld.goRoom(rm);}else if(window.DWWorld)DWWorld.open({room:rm});return;}
   if(b.dataset.a==='do')complete(r,true);
   if(b.dataset.a==='timer')openTimer(r);
   if(b.dataset.a==='amt'){amtOpen=amtOpen===r.id?null:r.id;renderMissions();}
 });
-document.addEventListener('click',e=>{const k=e.target.closest('[data-a2="kloster"]');if(k&&window.DWWorld){DWWorld.open({});}});
+document.addEventListener('click',e=>{const k=e.target.closest('[data-a2="kloster"]');if(!k)return;if(document.body.classList.contains('inworld'))closeMenu();else if(window.DWWorld)DWWorld.open({});});
 $('#pane-missions').addEventListener('submit',e=>{e.preventDefault();const f=e.target.closest('form.amt');if(!f)return;const r=S.rituals.find(x=>x.id===f.dataset.id);const v=parseFloat(($('#amtIn').value||'').replace(',','.'));if(!(v>0)){toast('Bitte eine Zahl eintragen');return;}amtOpen=null;complete(r,v);});
 
 function complete(r,val){
@@ -1847,7 +1858,7 @@ $('#editor').addEventListener('click',e=>{
   const del=e.target.closest('[data-del]');if(del&&!del.disabled){const r=S.rituals.find(x=>x.id===del.dataset.del);ask('«'+r.name+'» löschen?','Das Ritual verschwindet aus deinen Missionen. Verdientes Chi bleibt.',()=>{S.rituals=S.rituals.filter(x=>x.id!==r.id);save();renderEditor();renderPane();});}
 });
 $('#edAdd').onclick=()=>{if(activeRituals().length>=slots()){toast('Alle '+slots()+' Plätze belegt. Ein neuer Rang bringt einen weiteren.');return;}openRForm(null);};
-$('#edX').onclick=$('#edDone').onclick=()=>{$('#editor').hidden=true;renderPane();if(onboarding){onboarding=false;cam.intro=1;bell(1);toast('Willkommen auf dem Weg, '+S.name);}};
+$('#edX').onclick=$('#edDone').onclick=()=>{$('#editor').hidden=true;renderPane();if(onboarding){onboarding=false;bell(1);if(window.DWWorld)DWWorld.open({});}};
 function openRForm(id){
   editId=id;const r=id?S.rituals.find(x=>x.id===id):{name:'',icon:'flame',type:'check',cfg:{},freq:{mode:'daily'}};fd=clone(r);if(!fd.freq)fd.freq={mode:'daily'};
   $('#rfT').textContent=id?'Ritual bearbeiten':'Neues Ritual';$('#rfName').value=fd.name;$('#rfDel').hidden=!id||S.rituals.length<=1;renderRForm();$('#rform').hidden=false;$('#rform').scrollTop=0;
@@ -1950,7 +1961,7 @@ function start(data){
   window.addEventListener('load',()=>{if(window.MonkKit)MonkKit.load(()=>refreshPortrait());});
   window.addEventListener('pointermove',e=>{ptr.tx=(e.clientX/window.innerWidth-.5)*2;ptr.ty=(e.clientY/window.innerHeight-.5)*2;},{passive:true});window.addEventListener('resize',()=>{if(photoOn)fxSize();});
   renderAll();
-  if(fresh)openCreator(true);else if(dayN()>365)setTimeout(()=>showYear(false),800);
+  if(fresh)openCreator(true);else{if(dayN()>365)setTimeout(()=>showYear(false),800);autoEnter();}
   setInterval(()=>{if(tab==='missions'&&!document.querySelector('#pane-missions form'))renderMissions();},30000);
 }
 const hot=window.claude&&window.claude.hot;
