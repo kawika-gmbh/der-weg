@@ -956,7 +956,7 @@ function dayFrac(d){if(!d)return 0;if(d._rest||d._n===0)return 1;const n=d._n||S
 function totalChi(){return Object.values(S.days).reduce((a,d)=>a+dayChi(d),0);}
 const ST0=[0,60,200,500,1000,1700];
 function stageAt(ch,st){if(ch===0)return ST0[st];const a=CH[ch-1].end,b=CH[ch].end;return Math.ceil(a+(b-a)*SF[st]);}
-function prog(chi){let start=0;for(let i=0;i<CH.length;i++){if(chi>=CH[i].end&&S&&S.duels&&!S.duels[i])return{ch:i,st:5,f:1,done:false,duel:true};if(chi<CH[i].end){const f=(chi-start)/(CH[i].end-start);let st=0;for(let j=0;j<6;j++){if(chi>=stageAt(i,j))st=j;}return{ch:i,st,f,done:false};}start=CH[i].end;}return{ch:3,st:5,f:1,done:true};}
+function prog(chi){let start=0;for(let i=0;i<CH.length;i++){if(chi<CH[i].end){const f=(chi-start)/(CH[i].end-start);let st=0;for(let j=0;j<6;j++){if(chi>=stageAt(i,j))st=j;}return{ch:i,st,f,done:false};}start=CH[i].end;}return{ch:3,st:5,f:1,done:true};}
 function isGood(d){return dayFrac(d)>=.5;}
 function isPerfect(d){return !!d&&(d._rest||dayFrac(d)>=1);}
 function processDecay(){const D=S.decay,yd=dk(new Date(Date.now()-864e5));if(!D.last||D.last>=yd)return;
@@ -967,7 +967,9 @@ function processDecay(){const D=S.decay,yd=dk(new Date(Date.now()-864e5));if(!D.
 function dmgNow(){const D=S.decay;return Math.max(0,D.dmg-(isPerfect(today())&&D.dmg>0?1:0));}
 function perfectRun(){let n=0;const t=new Date();if(isPerfect(today()))n++;for(let g=0;g<30;g++){t.setDate(t.getDate()-1);const k=dk(t);if(isPerfect(S.days[k]))n++;else break;}return n;}
 function duelState(){const p=prog(totalChi());if(!p.duel)return null;const n=perfectRun();if(n>=7){S.duels[p.ch]=dk(new Date());save();return{won:true,ch:p.ch};}return{ch:p.ch,n};}
-function viewProg(){const p0=prog(totalChi());const p=Object.assign({},p0);if(pvCh==null&&pvSt==null){p.st=Math.max(0,p.st-dmgNow());return p;}const ch=pvCh!=null?pvCh:p.ch;return{ch,st:pvSt!=null?pvSt:(ch!==p.ch?5:p.st)};}
+const PILGER=[{ch:1,rank:3,n:'Bergkloster',cat:'kraft'},{ch:2,rank:5,n:'Wasserfall',cat:'ruhe'},{ch:3,rank:6,n:'Gipfel',cat:'weisheit'}];
+function pilgerMax(){let c=0;PILGER.forEach(p=>{if((S.rank||0)>=p.rank)c=p.ch;});return c;}
+function viewProg(){const p0=prog(totalChi());const p=Object.assign({},p0);if(pvCh==null&&pvSt==null){return{ch:pilgerMax(),st:Math.max(0,5-dmgNow()),f:1};}const ch=pvCh!=null?pvCh:p.ch;return{ch,st:pvSt!=null?pvSt:(ch!==p.ch?5:p.st)};}
 function rankIdx(chi){let r=0;RANKS.forEach((x,i)=>{if(chi>=x[0])r=i;});return r;}
 const LVMAX=55;
 function lvOf(chi){return Math.min(LVMAX,1+Math.floor(54*Math.pow(Math.min(1,chi/20000),.65)));}
@@ -1425,7 +1427,7 @@ $('#chBtn').onclick=()=>{
       if(it.type==='chi'){renderTop(before);}
     },550);},1250);
 };
-function wsChapter(){return Math.min(3,viewProg().ch);}
+function wsChapter(){return Math.min(3,window._worldCh!=null?window._worldCh:viewProg().ch);}
 function wsLeft(ch){return WSCROLLS[ch].map((_,i)=>ch+'-'+i).filter(id=>!S.inv.ws.includes(id));}
 function showScroll(id,extra){$('#scBtn').hidden=false;$('#scBtn').hidden=false;const [ch,i]=id.split('-').map(Number),w=WSCROLLS[ch][i],n=WSCROLLS[ch].filter((_,k)=>S.inv.ws.includes(ch+'-'+k)).length;
   $('#scK').textContent=`Schriftrolle · Kapitel ${ch+1}`;$('#scT').textContent=w[0];$('#scX').textContent=w[1];$('#scM').textContent=`${n} von ${WSCROLLS[ch].length} in diesem Kapitel gefunden`;
@@ -1508,9 +1510,12 @@ window.DW={
   unarchive(id){const r=S.rituals.find(x=>x.id===id);if(!r)return;if(activeRituals().length>=slots()){toast('Alle Plätze belegt');return;}r.arch=false;save();renderPane();},
   rankInfo:()=>{const st=rankStats();return Object.assign({rank:S.rank||0,name:KRANG[S.rank||0].n,nextName:st.next?st.next.n:null},st);},
   examQ:()=>{const L=LESSONS[Math.floor(Math.random()*LESSONS.length)];return{q:L.q,o:L.o,a:L.a};},
-  rankUp(){S.rank=Math.min(KRANG.length-1,(S.rank||0)+1);S.rankSince=dk(new Date());if(S.rank>=2&&!S.doors.includes('tor'))S.doors.push('tor');save();bell(1.3);renderAll();},
+  rankUp(){S.rank=Math.min(KRANG.length-1,(S.rank||0)+1);S.rankSince=dk(new Date());if(S.rank>=2&&!S.doors.includes('tor'))S.doors.push('tor');save();bell(1.3);renderAll();buildWorld();const pg=PILGER.find(p=>p.rank===S.rank);playSplashes([{k:'Rangprüfung bestanden',t:KRANG[S.rank].n,s:'+1 ROUTINE-PLATZ'}].concat(pg?[{k:'Pilgerziel freigeschaltet',t:pg.n,s:'AM KLOSTERTOR'}]:[]),()=>{});},
   lockedRooms:()=>Object.keys(ROOMS).filter(k=>!S.doors.includes(k)&&k!=='tor').map(k=>({id:k,n:ROOMS[k].n,d:ROOMS[k].d})),
-  openDoor(k){if(!S.doors.includes(k))S.doors.push(k);save();renderAll();},
+  openDoor(k){if(!S.doors.includes(k))S.doors.push(k);S.doorOrder=(S.doorOrder||[]).concat(k);save();renderAll();},
+  dustyDoor:()=>{const o=S.doorOrder||[];if(!o.length)return null;let sum=0;const t=new Date();for(let i=1;i<=7;i++){const d=new Date(t);d.setDate(d.getDate()-i);const k=dk(d);if(k<S.rankSince){sum+=1;continue;}sum+=Math.min(1,dayFrac(S.days[k]));}return sum/7<.5?o.at(-1):null;},
+  pilgrims:()=>PILGER.map(p=>Object.assign({open:(S.rank||0)>=p.rank,rankName:KRANG[p.rank].n,visited:(S.pilgrim||{})[p.ch]===weekId()},p)),
+  pilgrimVisit(ch){S.pilgrim=S.pilgrim||{};if(S.pilgrim[ch]===weekId())return false;S.pilgrim[ch]=weekId();const p=PILGER.find(x=>x.ch===ch);addPts(p.cat,20);save();renderAll();return true;},
   pts:()=>Object.entries(CATS).map(([k,c])=>({k,n:c.n,c:c.c,v:S.pts[k]||0})),
   village:()=>{const ev=curEvent(),V=S.village;return{ev,paid:V.paid,ok:V.ok,done:V.done,lvl:vLevel(),stufe:VSTUFE[vLevel()].n};},
   invest(){const ev=curEvent(),V=S.village;if(V.ok)return{ok:true};let any=false;for(const [k,v] of Object.entries(ev.cost)){const need=v-(V.paid[k]||0),give=Math.min(need,S.pts[k]||0);if(give>0){V.paid[k]=(V.paid[k]||0)+give;S.pts[k]-=give;any=true;}}
@@ -1656,7 +1661,7 @@ function afterGain(before,pB,lvB,rB,seB,o){
   const changed=pA.ch!==pB.ch||pA.st!==pB.st||curSeason()!==seB;
   if(pA.st>pB.st&&pA.ch===pB.ch)q.push({k:'Bau abgeschlossen',t:STAGES[pA.ch][pA.st],s:'STUFE '+pA.st+'/5'});
   if(changed){buildWorld();if(pA.st!==pB.st||pA.ch!==pB.ch){cam.pulse=1;flash();}}
-  bell(.6);playSplashes(q,()=>{if(pA.ch>pB.ch||(pA.done&&!pB.done))showChapter(pA.done?4:pA.ch);});
+  bell(.6);playSplashes(q,()=>{});
 }
 function flash(){const f=$('#flash');f.classList.add('on');requestAnimationFrame(()=>requestAnimationFrame(()=>f.classList.remove('on')));}
 function playSplashes(q,done){
