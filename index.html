@@ -468,7 +468,7 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 .w-dlg{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 16px);background:rgba(14,15,18,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--stroke);border-radius:22px;padding:14px 16px 16px;animation:spIn .3s;max-width:520px;margin:0 auto}
 .w-dlg-h{display:flex;justify-content:space-between;align-items:center}
 .w-dlg-h .icon{width:34px;height:34px}
-.w-dlg p{margin:6px 0 12px;font-size:15.5px;line-height:1.5}
+.w-dlg p{margin:6px 0 12px;font-size:15.5px;line-height:1.5;white-space:pre-line}
 .w-dlg-b{display:flex;flex-wrap:wrap;gap:8px}
 .w-dlg-b button{border-radius:999px;padding:9px 14px;font-weight:600;font-size:13.5px;background:rgba(255,255,255,.08);border:1px solid var(--stroke)}
 .w-dlg-b button.pri{background:linear-gradient(180deg,#f6d77a,#d9a83a);color:#1a1205;border:0}
@@ -489,6 +489,8 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 #scBonus:not(:empty){margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(155,59,37,.12);font-weight:700;font-size:14px;color:#7a2a17}
 @keyframes scrOpen{from{clip-path:inset(48% 0 48% 0);opacity:.4}to{clip-path:inset(0 0 0 0);opacity:1}}
 .ci.ws{cursor:pointer}
+.scq{display:block;width:100%;text-align:left;margin:8px 0 0;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.55);border:1px solid rgba(90,60,30,.25);color:#2a1d12;font-size:14px;line-height:1.4;font-weight:500}
+.scq:active{background:rgba(155,59,37,.2)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -681,10 +683,10 @@ const DAY=864e5;
 
 /* =================== DATEN =================== */
 const CH=[
-  {n:'Der Tempel',s:'Tempel',end:800,line:'Ein verfallener Tempel im Nebel. Baue ihn Stein für Stein wieder auf.'},
-  {n:'Das Bergkloster',s:'Kloster',end:3500,line:'Ein schmaler Pfad führt die Felswand hinauf. Oben wartet ein Kloster, das noch niemand gebaut hat.'},
-  {n:'Der Wasserfall',s:'Wasserfall',end:9500,line:'Am fallenden Wasser lernst du Geduld. Was du hier baust, braucht Zeit.'},
-  {n:'Der Gipfel',s:'Gipfel',end:20000,line:'Über den Wolken endet der Weg. Und beginnt von neuem.'}
+  {n:'Der Tempel',s:'Tempel',end:2500,line:'Ein verfallener Tempel im Nebel. Baue ihn Stein für Stein wieder auf.'},
+  {n:'Das Bergkloster',s:'Kloster',end:9000,line:'Ein schmaler Pfad führt die Felswand hinauf. Oben wartet ein Kloster, das noch niemand gebaut hat.'},
+  {n:'Der Wasserfall',s:'Wasserfall',end:20000,line:'Am fallenden Wasser lernst du Geduld. Was du hier baust, braucht Zeit.'},
+  {n:'Der Gipfel',s:'Gipfel',end:33000,line:'Über den Wolken endet der Weg. Und beginnt von neuem.'}
 ];
 const SF=[0,.08,.22,.42,.66,.88];
 const STAGES=[
@@ -911,7 +913,7 @@ function dayChi(d){let c=0;if(!d)return 0;for(const k in d){if(k==='_n')continue
 function dayDone(d){if(!d)return 0;let n=0;for(const k in d){if(k[0]!=='_'&&d[k]&&d[k].d)n++;}return n;}
 function dayFrac(d){if(!d)return 0;if(d._rest||d._n===0)return 1;const n=d._n||S.rituals.length;return Math.min(1,dayDone(d)/n);}
 function totalChi(){return Object.values(S.days).reduce((a,d)=>a+dayChi(d),0);}
-const ST0=[0,40,120,260,450,650];
+const ST0=[0,60,200,500,1000,1700];
 function stageAt(ch,st){if(ch===0)return ST0[st];const a=CH[ch-1].end,b=CH[ch].end;return Math.ceil(a+(b-a)*SF[st]);}
 function prog(chi){let start=0;for(let i=0;i<CH.length;i++){if(chi<CH[i].end){const f=(chi-start)/(CH[i].end-start);let st=0;for(let j=0;j<6;j++){if(chi>=stageAt(i,j))st=j;}return{ch:i,st,f,done:false};}start=CH[i].end;}return{ch:3,st:5,f:1,done:true};}
 function viewProg(){const p=prog(totalChi());if(pvCh==null&&pvSt==null)return p;const ch=pvCh!=null?pvCh:p.ch;return{ch,st:pvSt!=null?pvSt:(ch!==p.ch?5:p.st)};}
@@ -1372,22 +1374,36 @@ $('#chBtn').onclick=()=>{
 };
 function wsChapter(){return Math.min(3,viewProg().ch);}
 function wsLeft(ch){return WSCROLLS[ch].map((_,i)=>ch+'-'+i).filter(id=>!S.inv.ws.includes(id));}
-function showScroll(id,extra){const [ch,i]=id.split('-').map(Number),w=WSCROLLS[ch][i],n=WSCROLLS[ch].filter((_,k)=>S.inv.ws.includes(ch+'-'+k)).length;
+function showScroll(id,extra){$('#scBtn').hidden=false;$('#scBtn').hidden=false;const [ch,i]=id.split('-').map(Number),w=WSCROLLS[ch][i],n=WSCROLLS[ch].filter((_,k)=>S.inv.ws.includes(ch+'-'+k)).length;
   $('#scK').textContent=`Schriftrolle · Kapitel ${ch+1}`;$('#scT').textContent=w[0];$('#scX').textContent=w[1];$('#scM').textContent=`${n} von ${WSCROLLS[ch].length} in diesem Kapitel gefunden`;
   $('#scBonus').innerHTML=extra||'';$('#scBtn').textContent=extra!=null?'Aufbewahren':'Schliessen';$('#scrollOv').hidden=false;}
 let scPending=null;
 $('#scBtn').onclick=()=>{$('#scrollOv').hidden=true;if(scPending){const f=scPending;scPending=null;f();}if(tab==='op')renderOp();};
 function claimWorldScroll(){
   const ch=wsChapter(),left=wsLeft(ch);if(!left.length)return;
-  const id=left[Math.floor(Math.random()*left.length)];S.inv.ws.push(id);
+  const id=left[Math.floor(Math.random()*left.length)];today()._scrollTry=1;save();
+  const [c,i]=id.split('-').map(Number),w=WSCROLLS[c][i];
+  scPending=()=>scrollQuiz(id);showScroll(id,'Lies genau. Gleich prüft dich der Garten.');$('#scBtn').textContent='Ich habe es verstanden';
+}
+function scrollQuiz(id){
+  const [c,i]=id.split('-').map(Number),w=WSCROLLS[c][i],all=WSCROLLS.flat().filter(x=>x!==w);
+  const wrong=[];while(wrong.length<2){const x=all[Math.floor(Math.random()*all.length)];if(!wrong.includes(x))wrong.push(x);}
+  const opts=[w,...wrong].sort(()=>Math.random()-.5);
+  $('#scK').textContent='Prüfung';$('#scT').textContent=`Was lehrt «${w[0]}»?`;$('#scX').textContent='';$('#scM').textContent='Nur eine Antwort ist richtig. Ein Versuch.';
+  $('#scBonus').innerHTML=opts.map((o,k)=>`<button class="scq" data-k="${k}">${esc(o[1])}</button>`).join('');$('#scBtn').hidden=true;$('#scrollOv').hidden=false;
+  $('#scBonus').querySelectorAll('.scq').forEach(b=>b.onclick=()=>{tick();const ok=opts[+b.dataset.k]===w;$('#scBtn').hidden=false;
+    if(ok)keepScroll(id);else{S.inv.wsStreak.n=0;save();$('#scK').textContent='Die Rolle zerfällt';$('#scT').textContent='Nicht ganz.';$('#scX').textContent='Richtig wäre gewesen: '+w[1];$('#scM').textContent='Morgen liegt eine neue Rolle im Garten. Deine Serie beginnt von vorn.';$('#scBonus').innerHTML='';$('#scBtn').textContent='Schliessen';scPending=null;}});
+}
+function keepScroll(id){
+  const ch=+id.split('-')[0];S.inv.ws.push(id);
   const yd=dk(new Date(Date.now()-864e5)),td=dk(new Date()),st=S.inv.wsStreak;st.n=st.d===yd?st.n+1:st.d===td?st.n:1;st.d=td;
-  let bonus=`+5 Chi${st.n>1?` · Serie: ${st.n} Tage`:''}`;
+  let bonus=`Bestanden · +3 Chi${st.n>1?` · Serie: ${st.n} Tage`:''}`;
   if(st.n>0&&st.n%7===0){const pool=[...ANIMALS.filter(a=>!S.inv.animals.includes(a.id)).map(a=>({t:'animal',id:a.id,n:a.n})),...CROBES.filter(c=>!S.inv.robes.includes(c.id)).map(c=>({t:'robe',id:c.id,n:c.n}))];
     if(pool.length){const it=pool[Math.floor(Math.random()*pool.length)];if(it.t==='animal')S.inv.animals.push(it.id);else S.inv.robes.push(it.id);bonus+=`<br>7 Tage in Folge! Neu: ${esc(it.n)}`;}
     else{addBonus('_s7',30);bonus+='<br>7 Tage in Folge! +30 Chi';}}
   if(!wsLeft(ch).length&&!S.inv.story.includes(ch)){S.inv.story.push(ch);bonus+=`<br>Kapitel vollständig: Meister Shen erzählt dir ein Stück seiner Geschichte.`;}
-  const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();today()._scroll=5;save();
-  scPending=()=>afterGain(before,pB,lvB,rB,seB,{kicker:'Welt',title:'Schriftrolle gefunden'});showScroll(id,bonus);
+  const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();today()._scroll=3;save();
+  scPending=()=>afterGain(before,pB,lvB,rB,seB,{kicker:'Welt',title:'Schriftrolle behalten'});showScroll(id,bonus);
 }
 function collectionHTML(){
   const inv=S.inv;const cell=(type,id,name,r,own)=>`<div class="ci ${own?'':'lock'}" style="--rcol:${own?RAR[r].c+'88':'transparent'}">${itemIcon(type,id)}<span>${own?esc(name):'???'}</span></div>`;
@@ -1438,6 +1454,10 @@ window.DW={
   scrollFound:()=>!!today()._scroll,
   claimScroll:()=>claimWorldScroll(),
   scrollAvailable:()=>wsLeft(wsChapter()).length>0,
+  scrollTried:()=>!!today()._scrollTry,
+  rituals:()=>{const d=today(),due=dueList();return{done:due.filter(x=>recDone(x,d[x.id])).length,due:due.length,rest:!!d._rest};},
+  lessonDone:()=>!!lessonToday(),
+  level:k=>S.games[k+'Lv']||1,setLevel(k,v){S.games[k+'Lv']=v;save();},
   story:()=>S.inv.story.slice().sort().map(ch=>({ch,t:STORY[ch],n:CH[ch].n})),
   gameReward(chi,label){const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();addBonus('_g',chi);afterGain(before,pB,lvB,rB,seB,{kicker:label,title:'Prüfung beendet'});},
   refresh:()=>{renderAll();if(photoOn&&lastVp)renderSprites(lastVp);}
@@ -1517,7 +1537,7 @@ function complete(r,val){
   else{rec.v=true;rec.c=sh;rec.d=true;}
   d[r.id]=rec;const dl=dueList();d._n=dl.length;
   const perfect=!d._b&&dl.length>0&&dl.every(x=>recDone(x,d[x.id]));if(perfect){d._b=15;if(!d._chest)d._chest='ready';}
-  if(rec.d&&!rec.e){rec.e=1;S.energy=Math.min(9,(S.energy||0)+1);}if(perfect)S.energy=Math.min(9,S.energy+2);
+  if(rec.d&&!rec.e){rec.e=1;S.energy=Math.min(6,(S.energy||0)+1);}if(perfect)S.energy=Math.min(6,S.energy+1);
   let firstChest=false;if(!S.inv.first&&rec.d){S.inv.first=true;if(!d._chest){d._chest='ready';firstChest=true;}}
   save();afterGain(before,pB,lvB,rB,seB,{title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
 }

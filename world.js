@@ -121,7 +121,7 @@ function temple(st){
     const f=new TH.Mesh(new TH.SphereGeometry(.03,8,6),M.glow);f.position.set(x,b+1.2,-1.75);f.scale.y=1.8;W.root.add(f);W.flames=(W.flames||[]).concat(f);});
   {const L=new TH.PointLight(0xffb066,1.6,7,2);L.position.set(0,b+1.5,-1.3);W.root.add(L);W.flick.push(L);}
   [-1.6,0,1.6].forEach(x=>{const m=new TH.Mesh(new TH.CylinderGeometry(.32,.32,.06,20),new TH.MeshStandardMaterial({color:'#6e2a1c',roughness:1}));m.position.set(x,b+.03,0);m.receiveShadow=true;W.root.add(m);});
-  W.inter.push({x:0,z:-.6,r:1.3,label:'Vor dem Altar',btn:'Verneigen',act:()=>{pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);msg('Ein Moment der Stille.');}});
+  W.inter.push({x:0,z:-.6,r:1.3,label:'Vor dem Altar',btn:'Verneigen',act:()=>{pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}});
   if(st<4)return;
   const y2=b+ph+.3+1.25;box(6,1.8,4.4,M.plaster,0,y2,0);[-2.9,-1,1,2.9].forEach(x=>cyl(.1,1.8,M.red,x,y2,2.25,8));
   roof(9,7.4,2.1,0,y2+1.8,0);const ft=y2+3.9;cyl(.06,1.2,M.gold,0,ft-.1,0,6);[0,1,2].forEach(i=>{const s=new TH.Mesh(new TH.SphereGeometry(.2-i*.04,12,10),M.gold);s.position.set(0,ft+.2+i*.3,0);add(s);});
@@ -196,13 +196,17 @@ function avatar(){
 function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(on){a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();}else a.fadeOut(.3);}
 
 /* ---------- Meister Shen ---------- */
-const QUESTS=[
-  {id:'scroll',t:'Im Garten liegt heute eine Schriftrolle verborgen. Finde sie und lies sie aufmerksam.',ok:()=>DW.scrollFound(),need:0,avail:()=>DW.scrollAvailable()||DW.scrollFound()},
-  {id:'poles',t:'Geh zu den Pflaumenblüten-Pfählen und schaffe mindestens fünf Pfähle.',ok:()=>(DW.day('_qp')||0)>=5,need:0},
-  {id:'bow',t:'Tritt vor den Altar und verneige dich. Ein Moment der Stille reicht.',ok:()=>!!DW.day('_qa'),need:3},
-  {id:'bell',t:'Schlage die Tempelglocke dreimal. Lass den Klang ausklingen, bevor du wieder schlägst.',ok:()=>(DW.day('_qb')||0)>=3,need:4},
-];
-function questToday(st){const av=QUESTS.filter(q=>st>=q.need&&(!q.avail||q.avail()));const d=new Date();return av[(d.getDate()*7+d.getMonth()*3)%av.length];}
+const QA=[ // Teil 1: echtes Leben
+  {id:'rit',t:'Erledige heute alle fälligen Rituale',ok:()=>{const r=DW.rituals();return r.rest||r.due===0||r.done>=r.due;}},
+  {id:'lesson',t:'Mach die Tageslektion im Dojo und beantworte die Frage',ok:()=>DW.lessonDone()},
+  {id:'half',t:'Erledige mindestens zwei Drittel deiner Rituale',ok:()=>{const r=DW.rituals();return r.rest||r.due===0||r.done>=Math.ceil(r.due*2/3);}}];
+const QB=[ // Teil 2: Welt
+  {id:'scroll',t:'Finde die Schriftrolle im Garten und bestehe ihre Prüfung',ok:()=>DW.scrollFound(),avail:()=>DW.scrollAvailable()||DW.scrollFound(),need:0},
+  {id:'poles',t:'Bestehe eine Runde auf den Pfählen, ohne zu fallen',ok:()=>!!DW.day('_qpp'),need:0},
+  {id:'ritual',t:'Verneige dich vor dem Altar, danach schlage die Glocke dreimal',ok:()=>(DW.day('_qb2')||0)>=3,need:4},
+  {id:'level',t:'Erreiche auf den Pfählen eine neue Stufe',ok:()=>!!DW.day('_qlv'),need:0}];
+function questToday(st){const d=new Date(),k=d.getDate()*7+d.getMonth()*3;const b=QB.filter(q=>st>=q.need&&(!q.avail||q.avail()));return{a:QA[k%QA.length],b:b[(k>>1)%b.length]};}
+function qline(q){return (q.ok()?'✓ ':'○ ')+q.t;}
 function meister(st){
   if(!window.MonkKit)return;
   MonkKit.load(()=>{if(!W)return;const o=MonkKit.npc('#3a3633','#d6a37c','#c9c4bb');if(!o)return;
@@ -222,10 +226,11 @@ function dlg(text,btns){const d=$('#wDlg');$('#wDlgT').textContent=text;const B=
 function endTalk(){$('#wDlg').hidden=true;if(W){W.talking=false;W.near=null;}}
 function talk(st){
   const q=questToday(st),qs=DW.day('_qs')||0;// 0 offen, 1 angenommen, 2 erledigt
-  const L=DW.lesson();
+  const L=DW.lesson(),both=()=>q.a.ok()&&q.b.ok();
   const menu=(text)=>{const btns=[];
-    if(qs===0)btns.push(['Gib mir einen Auftrag',()=>{DW.day('_qs',1);DW.day('_qid',q.id);dlg(q.t,[['Ich mache es',()=>{endTalk();msg('Auftrag angenommen');}],['Zurück',()=>menu(greet(st))]]);},1]);
-    else if(qs===1){const ok=q.ok();btns.push([ok?'Auftrag erfüllt':'Mein Auftrag?',()=>{if(ok){DW.day('_qs',2);endTalk();DW.questReward(8,'Auftrag erfüllt');pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1500);}else dlg('Noch nicht. '+q.t,[['Verstanden',()=>endTalk()]]);},ok]);}
+    if(qs===0)btns.push(['Gib mir einen Auftrag',()=>{DW.day('_qs',1);dlg('Zwei Dinge für heute. Erst im Leben, dann hier im Tempel.\n'+qline(q.a)+'\n'+qline(q.b),[['Ich mache es',()=>{endTalk();msg('Auftrag angenommen');}],['Zurück',()=>menu(greet(st))]]);},1]);
+    else if(qs===1){const ok=both();btns.push([ok?'Auftrag erfüllt':'Mein Auftrag',()=>{if(ok){DW.day('_qs',2);endTalk();DW.questReward(12,'Auftrag erfüllt');pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1500);}else dlg('Noch nicht vollständig.\n'+qline(q.a)+'\n'+qline(q.b),[['Verstanden',()=>endTalk()]]);},ok]);}
+    if(!W.scrollEarned&&!DW.scrollTried()&&DW.scrollAvailable())btns.push(['Die Schriftrolle?',()=>dlg('Die Rolle zeigt sich nur denen, die heute schon etwas getan haben. Erledige die Hälfte deiner Rituale, dann such im Garten. Sie leuchtet nicht. Schau genau.',[['Verstanden',()=>endTalk()]])]);
     btns.push([L.done?'Merksatz des Tages':'Lektion des Tages',()=>{if(L.done)dlg(`«${L.m}»`,[['Danke, Meister',()=>endTalk()]]);else{endTalk();DW.openLesson();}}]);
     const sto=DW.story();if(sto.length)btns.push(['Eure Geschichte, Meister',()=>{let i=sto.length-1;const show=()=>dlg(sto[i].t,[...(i>0?[['Früher',()=>{i--;show();}]]:[]),['Danke, Meister',()=>endTalk()]]);show();}]);
     btns.push(['Weisheit',()=>dlg(DW.wisdom(),[['Danke',()=>endTalk()],['Zurück',()=>menu(greet(st))]])]);
@@ -235,15 +240,18 @@ function talk(st){
 
 /* ---------- Interaktion ---------- */
 function interactables(st){
-  W.inter=(W.inter||[]).concat([{x:9,z:7,r:3.2,label:'Pflaumenblüten-Pfähle',btn:'Spielen · 1 Energie',act:()=>startPoles()}]);
-  if(st>=4)W.inter.push({x:0,z:5.6,r:1.8,label:'Tempelglocke',btn:'Schlagen',act:()=>{DW.bell(1.4);W.shake=.6;DW.day('_qb',(DW.day('_qb')||0)+1);pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1600);if(W.bell)W.bellSwing=1;}});
-  // Schriftrolle des Tages
-  if(!DW.scrollFound()&&DW.scrollAvailable()){const d=new Date();const r=rng(d.getFullYear()*400+d.getMonth()*31+d.getDate());const spots=[[-12,-6],[14,-4],[-8,14],[16,12],[-18,4],[6,-12],[-4,-14],[12,18]];const s=spots[Math.floor(r()*spots.length)];
-    const g=new TH.Group();g.position.set(s[0],groundH(s[0],s[1])+.9,s[1]);W.root.add(g);
-    const sc=new TH.Mesh(new TH.CylinderGeometry(.09,.09,.6,12),new TH.MeshStandardMaterial({color:'#e9dcc0',emissive:new TH.Color('#ffcc66'),emissiveIntensity:.8}));sc.rotation.z=Math.PI/2;g.add(sc);
-    [-.32,.32].forEach(dx=>{const e=new TH.Mesh(new TH.CylinderGeometry(.12,.12,.06,12),W.M.red);e.rotation.z=Math.PI/2;e.position.x=dx;g.add(e);});
-    const L=new TH.PointLight(0xffc860,1.6,6,2);g.add(L);W.scroll=g;
-    W.inter.push({x:s[0],z:s[1],r:1.4,auto:true,act:()=>{W.root.remove(g);W.scroll=null;W.keys={};W.mv.x=W.mv.z=0;DW.claimScroll();}});}
+  W.inter=(W.inter||[]).concat([{x:9,z:7,r:3.2,label:'Pfähle · Stufe '+DW.level('poles'),btn:'Spielen · 1 Energie',act:()=>startPoles()}]);
+  if(st>=4)W.inter.push({x:0,z:5.6,r:1.8,label:'Tempelglocke',btn:'Schlagen',act:()=>{DW.bell(1.4);W.shake=.6;DW.day('_qb',(DW.day('_qb')||0)+1);if(DW.day('_qa'))DW.day('_qb2',(DW.day('_qb2')||0)+1);pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1600);if(W.bell)W.bellSwing=1;}});
+  // Schriftrolle des Tages: nur nach der Hälfte der Rituale, gut versteckt, ohne Leuchten
+  const rp=DW.rituals();W.scrollEarned=rp.rest||rp.due===0||rp.done>=Math.ceil(rp.due/2);
+  if(!DW.scrollTried()&&DW.scrollAvailable()&&W.scrollEarned){const d=new Date();const r=rng(d.getFullYear()*400+d.getMonth()*31+d.getDate());
+    const spots=[[0,-6.2],[-6.4,-4.6],[6.6,-3.8],[-27,-9],[24,-16],[-21,19],[29,9],[-33,-2],[11,-28],[-14,-27],[18,26],[-9,31],[5.6,-10],[-30,14]];
+    const s=spots[Math.floor(r()*spots.length)];
+    const g=new TH.Group();g.position.set(s[0],groundH(s[0],s[1])+.07,s[1]);g.rotation.y=r()*6;W.root.add(g);
+    const sc=new TH.Mesh(new TH.CylinderGeometry(.05,.05,.36,10),new TH.MeshStandardMaterial({color:'#d9caa8',roughness:.9}));sc.rotation.z=Math.PI/2;sc.castShadow=true;g.add(sc);
+    [-.19,.19].forEach(dx=>{const e=new TH.Mesh(new TH.CylinderGeometry(.065,.065,.04,10),W.M.red);e.rotation.z=Math.PI/2;e.position.x=dx;g.add(e);});
+    const gl=new TH.Mesh(new TH.SphereGeometry(.04,8,6),new TH.MeshBasicMaterial({color:0xfff0b0,transparent:true,opacity:0,fog:false}));gl.position.y=.12;g.add(gl);W.glint=gl;W.scroll=g;W.scrollSpot=s;
+    W.inter.push({x:s[0],z:s[1],r:1.1,auto:true,act:()=>{W.root.remove(g);W.scroll=null;W.glint=null;W.keys={};W.mv.x=W.mv.z=0;DW.claimScroll();}});}
 }
 function msg(t){const m=$('#wMsg');m.textContent=t;m.classList.add('show');clearTimeout(W.mt);W.mt=setTimeout(()=>m.classList.remove('show'),2600);}
 
@@ -299,7 +307,7 @@ function loop(){
   (W.flames||[]).forEach((f,i)=>{f.scale.y=1.6+Math.sin(t*13+i*2)*.35;});
   W.flick.forEach((L,i)=>L.intensity=1.1+.3*Math.sin(t*9+i)*Math.sin(t*3.3+i));
   if(W.bell&&W.bellSwing>0){W.bellSwing=Math.max(0,W.bellSwing-dt*.5);W.bell.rotation.x=Math.sin(t*9)*.25*W.bellSwing;}
-  if(W.scroll){W.scroll.rotation.y+=dt;W.scroll.position.y+=Math.sin(t*2)*.003;}
+  if(W.glint){const dd=Math.hypot(av.position.x-W.scrollSpot[0],av.position.z-W.scrollSpot[1]);W.glint.material.opacity=dd<5?Math.max(0,Math.sin(t*3))*.9*(1-dd/5):0;W.glint.scale.setScalar(1+Math.sin(t*6)*.4);}
   if(W.pts&&!RM){const a=W.pts.geometry.attributes.position.array;for(let i=0;i<a.length;i+=3){a[i+1]-=dt*.9;a[i]+=Math.sin(t+i)*.01;if(a[i+1]<0){a[i+1]=14;a[i]=av.position.x+(Math.random()-.5)*60;a[i+2]=av.position.z+(Math.random()-.5)*60;}}W.pts.geometry.attributes.position.needsUpdate=true;}
   // Interaktion
   let near=null;for(const it of W.inter){if(Math.hypot(av.position.x-it.x,av.position.z-it.z)<it.r){if(it.auto){it.act();W.inter=W.inter.filter(x=>x!==it);break;}near=it;}}
@@ -343,9 +351,9 @@ let G=null;
 function startPoles(){
   if(!DW.spendEnergy(1)){msg('Keine Energie mehr. Erledige Rituale, um neue zu bekommen.');return;}
   const cv=$('#gc'),x=cv.getContext('2d');$('#game').hidden=false;$('#gEnd').hidden=true;
-  const N=9,r=rng(Date.now()%100000);
-  G={cv,x,N,i:0,lives:3,t:0,phase:0,speed:1.6,zone:.34,needle:0,state:'ready',hops:null,wob:0,poles:Array.from({length:N},(_,k)=>.38+r()*.16),last:performance.now(),best:DW.best('poles')};
-  g3dStart();sizeG();$('#gInfo').textContent='Tippe, wenn die Nadel im hellen Bereich ist.';
+  const lv=DW.level('poles'),N=Math.min(15,7+lv),r=rng(Date.now()%100000),lives=lv<=2?3:lv<=5?2:1;
+  G={cv,x,N,lv,lives,lives0:lives,wind:0,windT:0,i:0,t:0,phase:0,speed:1.3+lv*.18,zone:Math.max(.13,.32-lv*.018),needle:0,state:'ready',hops:null,wob:0,poles:Array.from({length:N},(_,k)=>.38+r()*.16),last:performance.now(),best:DW.best('poles')};
+  g3dStart();sizeG();$('#gInfo').textContent=G.lv>=3?'Tippe im hellen Bereich. Achte auf den Wind.':'Tippe, wenn die Nadel im hellen Bereich ist.';
   G.raf=requestAnimationFrame(gLoop);
 }
 function g3dStart(){
@@ -394,8 +402,9 @@ function gTap(){
 }
 function gLoop(now){
   if(!G)return;G.raf=requestAnimationFrame(gLoop);const dt=Math.min(.05,(now-G.last)/1000);G.last=now;G.t+=dt;
-  if(G.state==='play'){G.phase+=dt*G.speed;G.needle=Math.sin(G.phase*2.2)*.75+Math.sin(G.phase*5.3)*.25*Math.min(1,G.i/4);}
-  if(G.state==='hop'){G.hop+=dt*2.4;if(G.hop>=1){G.i++;G.speed+=.32;G.zone=Math.max(.12,G.zone-.025);G.phase=Math.random()*3;if(G.i>=G.N-1){G.state='end';endPoles(true);}else G.state='play';}}
+  if(G.lv>=3){G.windT-=dt;if(G.windT<=0){G.windT=1.5+Math.random()*2.5;G.windTo=(Math.random()*2-1)*Math.min(.45,.1+G.lv*.035);}G.wind+=((G.windTo||0)-G.wind)*Math.min(1,dt*1.5);}
+  if(G.state==='play'){G.phase+=dt*G.speed;G.needle=Math.max(-1,Math.min(1,Math.sin(G.phase*2.2)*.75+Math.sin(G.phase*5.3)*.25*Math.min(1,G.i/4)+G.wind));}
+  if(G.state==='hop'){G.hop+=dt*2.4;if(G.hop>=1){G.i++;G.speed+=.22;G.zone=Math.max(.1,G.zone-.018);G.phase=Math.random()*3;if(G.i>=G.N-1){G.state='end';endPoles(true);}else G.state='play';}}
   if(G.state==='fall'){G.fall+=dt*1.6;if(G.fall>=1.2){G.state='end';endPoles(false);}}
   G.wob=Math.max(0,G.wob-dt*1.8);if(G.m3&&W&&W.mixer)W.mixer.update(dt);drawG();
 }
@@ -424,13 +433,18 @@ function drawG(){
   const zA=G.zone*.4*Math.PI;x.strokeStyle='rgba(255,220,150,.85)';x.beginPath();x.arc(cx,cy,R,Math.PI*1.5-zA,Math.PI*1.5+zA);x.stroke();
   const na=Math.PI*1.5+G.needle*.4*Math.PI;x.strokeStyle='#ff4b2b';x.lineWidth=4;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(na)*(R+8),cy+Math.sin(na)*(R+8));x.stroke();
   x.fillStyle='#ecebe6';x.beginPath();x.arc(cx,cy,6,0,7);x.fill();
-  x.font='700 15px Rubik,system-ui,sans-serif';x.textAlign='center';x.fillStyle='#ecebe6';x.fillText(`Pfahl ${Math.min(G.i+1,G.N)} / ${G.N}`,cx,cy+28);
-  for(let l=0;l<3;l++){x.fillStyle=l<G.lives?'#ff4b2b':'rgba(255,255,255,.2)';x.beginPath();x.arc(cx-18+l*18,cy+46,5,0,7);x.fill();}
+  x.font='700 15px Rubik,system-ui,sans-serif';x.textAlign='center';x.fillStyle='#ecebe6';x.fillText(`Stufe ${G.lv} · Pfahl ${Math.min(G.i+1,G.N)} / ${G.N}`,cx,cy+28);
+  if(G.lv>=3){const wx=cx,wy=cy+70,L=G.wind*120;x.strokeStyle='rgba(180,220,255,.85)';x.lineWidth=3;x.beginPath();x.moveTo(wx,wy);x.lineTo(wx+L,wy);x.stroke();if(Math.abs(L)>4){x.beginPath();x.moveTo(wx+L,wy);x.lineTo(wx+L-Math.sign(L)*8,wy-5);x.lineTo(wx+L-Math.sign(L)*8,wy+5);x.closePath();x.fillStyle='rgba(180,220,255,.85)';x.fill();}x.font='600 11px Rubik,system-ui,sans-serif';x.fillStyle='rgba(180,220,255,.8)';x.fillText('Wind',wx,wy+18);}
+  for(let l=0;l<G.lives0;l++){x.fillStyle=l<G.lives?'#ff4b2b':'rgba(255,255,255,.2)';x.beginPath();x.arc(cx-18+l*18,cy+46,5,0,7);x.fill();}
   if(G.state==='ready'){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,h*.45,w,70);x.fillStyle='#fff';x.font='800 22px Rubik,system-ui,sans-serif';x.fillText('Tippen zum Starten',cx,h*.45+44);}
 }
 function endPoles(win){
-  const reached=win?G.N:G.i;DW.day('_qp',Math.max(DW.day('_qp')||0,reached));const chi=reached*2+(win?10:0);const best=Math.max(G.best||0,reached);DW.setBest('poles',best);
-  $('#gEnd').hidden=false;$('#gEndT').textContent=win?'Gemeistert':'Gefallen';$('#gEndS').textContent=`${reached} von ${G.N} Pfählen · Bestwert ${best}`;$('#gEndC').textContent=`+${chi} Chi`;
+  const reached=win?G.N:G.i,perfect=win&&G.lives===G.lives0;DW.day('_qp',Math.max(DW.day('_qp')||0,reached));
+  let chi=0,sub;
+  if(win){chi=2*G.lv+(perfect?3:0);DW.setLevel('poles',G.lv+1);DW.day('_qlv',1);if(perfect)DW.day('_qpp',1);sub=`Stufe ${G.lv} bestanden${perfect?' · ohne Fehler':''} · Nächste: Stufe ${G.lv+1}`;}
+  else sub=`${reached} von ${G.N} Pfählen · Stufe ${G.lv} nicht bestanden`;
+  DW.setBest('poles',Math.max(G.best||0,G.lv-(win?0:1)));
+  $('#gEnd').hidden=false;$('#gEndT').textContent=win?'Gemeistert':'Gefallen';$('#gEndS').textContent=sub;$('#gEndC').textContent=win?`+${chi} Chi`:'Kein Chi. Nur wer besteht, wird belohnt.';
   G.reward=chi;if(win)DW.bell(1.3);
 }
 $('#game').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;gTap();});
