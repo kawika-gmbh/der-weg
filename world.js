@@ -319,10 +319,11 @@ function village(){
   const g=new TH.Group();W.root.add(g);
   const lamp=lvl>=3;
   for(let i=0;i<n;i++){const a=r()*6.28,d=4+r()*(8+lvl*4),x=Math.cos(a)*d,z=50+Math.sin(a)*d*.6,s=1.6+r()*1.1;
-    const hm=new TH.Mesh(new TH.BoxGeometry(2.2*s,1.6*s,1.8*s),M.plaster);hm.position.set(x,base+.8*s,z);g.add(hm);
-    const rf=new TH.Mesh(new TH.ConeGeometry(1.8*s,1.1*s,4),M.roof);rf.position.set(x,base+1.6*s+.5*s,z);rf.rotation.y=Math.PI/4;g.add(rf);
-    if(W.tod.night||lamp){const l=new TH.Mesh(new TH.BoxGeometry(.3,.3,.05),M.glow);l.position.set(x,base+.8*s,z+.92*s);g.add(l);}}
-  if(lvl>=1){const w=new TH.Mesh(new TH.CylinderGeometry(.8,.8,.6,12),M.stone);w.position.set(0,base+.3,60);g.add(w);for(let i=0;i<5;i++){const f=new TH.Mesh(new TH.PlaneGeometry(6,3),new TH.MeshStandardMaterial({color:i%2?'#8a8a3a':'#6f7a2e'}));f.rotation.x=-Math.PI/2;f.position.set(-16+i*6.5,base+.05,74);g.add(f);}}
+    const gb=groundH(x,z)-.1;const hm=new TH.Mesh(new TH.BoxGeometry(2.2*s,1.6*s,1.8*s),M.plaster);hm.position.set(x,gb+.8*s,z);hm.castShadow=true;g.add(hm);
+    const rf=new TH.Mesh(new TH.ConeGeometry(1.8*s,1.1*s,4),M.roof);rf.position.set(x,gb+1.6*s+.5*s,z);rf.rotation.y=Math.PI/4;g.add(rf);
+    if(W.tod.night||lamp){const l=new TH.Mesh(new TH.BoxGeometry(.3,.3,.05),M.glow);l.position.set(x,gb+.8*s,z+.92*s);g.add(l);}}
+  W.villageAt=[0,groundH(0,50),50];
+  if(lvl>=1){const w=new TH.Mesh(new TH.CylinderGeometry(.8,.8,.6,12),M.stone);w.position.set(0,groundH(0,50)+.3,50);g.add(w);for(let i=0;i<5;i++){const f=new TH.Mesh(new TH.PlaneGeometry(6,3),new TH.MeshStandardMaterial({color:i%2?'#8a8a3a':'#6f7a2e'}));f.rotation.x=-Math.PI/2;f.position.set(-16+i*6.5,base+.05,74);g.add(f);}}
   if(lvl>=2){const b=new TH.Mesh(new TH.BoxGeometry(8,.3,1.5),M.red);b.position.set(12,base+.6,58);g.add(b);const m=new TH.Mesh(new TH.BoxGeometry(4,2.4,3),M.plaster);m.position.set(-4,base+1.2,56);g.add(m);}
   if(lvl>=3)for(let i=0;i<12;i++){const l=new TH.Mesh(new TH.SphereGeometry(.25,8,6),M.paper);l.position.set(-12+i*2,base+4+Math.sin(i)*.5,62);g.add(l);}
   const smoke=new TH.Mesh(new TH.PlaneGeometry(70,30),new TH.MeshBasicMaterial({color:0xcfd6dc,transparent:true,opacity:.18,depthWrite:false}));smoke.position.set(0,base+6,48);g.add(smoke);
@@ -351,6 +352,7 @@ function roomDialog(id){
   if(DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
   r.arch.forEach(x=>{if(DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
   if(id==='halle')btns.push(['Verneigen',()=>{endTalk();pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
+  if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(3,4,27),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-14,W.villageAt[2]-4)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
     if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);}}]);}
   if(id==='tor')DW.pilgrims().forEach(p=>{if(p.open)btns.push(['Pilgerreise: '+p.n+(p.visited?' (diese Woche besucht)':''),()=>{endTalk();close();open({pilgrim:p.ch});}]);else text+=`\n· ${p.n}: ab Rang ${p.rankName}`;});
@@ -447,7 +449,7 @@ function greet(st){
   return a+b;
 }
 function dlg(text,btns){const d=$('#wDlg');$('#wDlgK').textContent='Meister Shen';$('#wDlgT').textContent=text;const B=$('#wDlgB');B.innerHTML='';btns.forEach(([l,f,pri])=>{const b=document.createElement('button');b.textContent=l;if(pri)b.className='pri';b.onclick=()=>{DW.tick();f();};B.appendChild(b);});d.hidden=false;$('#wPrompt').hidden=true;if(!W.talking)W.talkPos=W.av.position.clone();W.talking=true;}
-function endTalk(){$('#wDlg').hidden=true;if(W){W.talking=false;W.near=null;}}
+function endTalk(){$('#wDlg').hidden=true;if(W){W.talking=false;W.near=null;if(W.camOv){W.camOv=null;if(W.fogSave)W.scene.fog.density=W.fogSave;}}}
 function talk(st){
   const q=questToday(st),qs=DW.day('_qs')||0;// 0 offen, 1 angenommen, 2 erledigt
   const L=DW.lesson(),both=()=>q.a.ok()&&q.b.ok();
@@ -557,8 +559,9 @@ function loop(){
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut)W.inHut.roof.forEach(m=>m.visible=true);if(inHut)inHut.roof.forEach(m=>m.visible=false);W.inHut=inHut;}
   const dist=inHut?3.4:6.5,cx=av.position.x+Math.sin(W.yaw)*dist*Math.cos(W.pitch),cz=av.position.z+Math.cos(W.yaw)*dist*Math.cos(W.pitch),cyy=av.position.y+1.4+Math.sin(W.pitch)*dist;
   const sh=W.shake>0?(Math.random()-.5)*W.shake*.15:0;W.shake=Math.max(0,(W.shake||0)-dt);
-  if(inHut){const hx=(inHut.x0+inHut.x1)/2,hz=(inHut.z0+inHut.z1)/2;const tx=Math.max(inHut.x0+.4,Math.min(inHut.x1-.4,hx+(hx-av.position.x)*.6)),tz=Math.max(inHut.z0+.4,Math.min(inHut.z1-.4,hz+(hz-av.position.z)*.6));W.cam.position.lerp(new TH.Vector3(tx,3.15,tz),Math.min(1,dt*6));}
-  else W.cam.position.lerp(new TH.Vector3(cx+sh,Math.max(cyy,groundH(cx,cz)+.6),cz),Math.min(1,dt*6));W.cam.lookAt(av.position.x,av.position.y+1.5,av.position.z);
+  if(W.camOv){W.cam.position.lerp(W.camOv.p,Math.min(1,dt*2.5));W.cam.lookAt(W.camOv.t);}
+  else if(inHut){const hx=(inHut.x0+inHut.x1)/2,hz=(inHut.z0+inHut.z1)/2;const tx=Math.max(inHut.x0+.4,Math.min(inHut.x1-.4,hx+(hx-av.position.x)*.6)),tz=Math.max(inHut.z0+.4,Math.min(inHut.z1-.4,hz+(hz-av.position.z)*.6));W.cam.position.lerp(new TH.Vector3(tx,3.15,tz),Math.min(1,dt*6));}
+  else W.cam.position.lerp(new TH.Vector3(cx+sh,Math.max(cyy,groundH(cx,cz)+.6),cz),Math.min(1,dt*6));if(!W.camOv)W.cam.lookAt(av.position.x,av.position.y+1.5,av.position.z);
   W.dir.position.set(av.position.x+W.SUN.x*60,W.SUN.y*60,av.position.z+W.SUN.z*60);W.dir.target.position.set(av.position.x,0,av.position.z);
   (W.flames||[]).forEach((f,i)=>{f.scale.y=1.6+Math.sin(t*13+i*2)*.35;});
   W.flick.forEach((L,i)=>L.intensity=1.1+.3*Math.sin(t*9+i)*Math.sin(t*3.3+i));
@@ -598,7 +601,8 @@ function open(opts){opts=opts||{};
    if(room){W.autoRoom=room;W.spawnRoom=room;}}
   if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];}applyTod();avatar();interactables(5);meister(5);if(!ch)shadowFoe();controls();ptsHud();
   if(ch){const sp=[W.ch===2?3.6:0,12];W.inter.push({x:sp[0],z:sp[1]+1.5,r:1.4,label:'Heimweg ins Kloster',btn:'Zurück',act:()=>{close();open({room:'tor'});}});if(DW.pilgrimVisit(ch))setTimeout(()=>W&&msg('Pilgerreise: +20 Punkte'),1200);}
-  if(W.autoRoom)setTimeout(()=>{if(W)roomDialog(W.autoRoom);},900);
+  if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen. Hier hat jede Routine ihren Ort: Aufstehen am Bett, Essen am Herd.`,`Die Schlafzelle und die Küche stehen dir offen. Alle anderen Türen sind verschlossen. Mit jedem neuen Rang darfst du eine davon öffnen.`,`Trage deine Routinen dort ein, wo sie passieren. Jede bringt Punkte. Mit ihnen hilfst du dem Dorf unten im Tal.`,`Und nun geh. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);endTalk();if(W&&W.autoRoom)roomDialog(W.autoRoom);return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
+  else if(W.autoRoom)setTimeout(()=>{if(W)roomDialog(W.autoRoom);},900);
   $('#wDlgX').onclick=()=>endTalk();
   W.cam.position.set(0,6,22);W.yaw=0;
   W.onResize=()=>{R.setSize(window.innerWidth,window.innerHeight,false);W.cam.aspect=window.innerWidth/window.innerHeight;W.cam.fov=window.innerWidth<window.innerHeight?62:50;W.cam.updateProjectionMatrix();};window.addEventListener('resize',W.onResize);

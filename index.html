@@ -1497,6 +1497,7 @@ window.DW={
   avatarGroup:()=>avatarGroup(),
   applyLook:()=>applyLook(S.avatar),
   tod:()=>todNow(),
+  flag(k,v){S.flags=S.flags||{};if(v!==undefined){S.flags[k]=v;save();}return S.flags[k];},
   rooms:()=>Object.entries(ROOMS).map(([id,R])=>{const d=today(),tk=dk(new Date());return{id,n:R.n,d:R.d,cat:R.cat,open:S.doors.includes(id),
     rit:activeRituals().filter(r=>(r.room||roomOf(r))===id).map(r=>{const rec=d[r.id],due=dueToday(r);let label=r.type==='window'?'Aufwachen':r.type==='timer'?`Timer ${r.cfg.min} Min`:r.type==='amount'?`Eintragen (${r.cfg.unit})`:'Erledigt';
       return{id:r.id,name:r.name,type:r.type,done:recDone(r,rec),due,label,sub:r.type==='window'?`Ziel ${r.cfg.start} ±${r.cfg.win} Min`:r.type==='amount'?`${fmtNum(rec?rec.v:0)} / ${fmtNum(r.cfg.goal)} ${r.cfg.unit}`:freqLabel(r),editable:!(r.editLock&&r.editLock>tk)};}),
