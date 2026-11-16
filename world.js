@@ -558,7 +558,7 @@ function loop(){
   const dt=Math.min(.05,W.clock.getDelta()),t=W.clock.elapsedTime;
   let mx=W.mv.x,mz=W.mv.z;const K=W.keys;if(K.w||K.arrowup)mz=-1;if(K.s||K.arrowdown)mz=1;if(K.a||K.arrowleft)mx=-1;if(K.d||K.arrowright)mx=1;
   const ml=Math.min(1,Math.hypot(mx,mz)),av=W.av;
-  if(ml>.08){const sy=Math.sin(W.yaw),cy=Math.cos(W.yaw);const dx=(mx*cy+mz*sy),dz=(-mx*sy+mz*cy);const sp=4.6*ml*dt*((K.shift)?1.8:1);const nx=av.position.x+dx/ml*sp*ml,nz2=av.position.z+dz/ml*sp*ml;
+  if(ml>.08){const sy=Math.sin(W.yaw),cy=Math.cos(W.yaw);const dx=(mx*cy+mz*sy),dz=(-mx*sy+mz*cy);const sp=4.6*ml*dt*((K.shift)?1.8:1)*(W.inHut?.6:1);const nx=av.position.x+dx/ml*sp*ml,nz2=av.position.z+dz/ml*sp*ml;
     if(!blocked(nx,nz2,av.position.x,av.position.z)){av.position.x=nx;av.position.z=nz2;}else if(!blocked(nx,av.position.z,av.position.x,av.position.z))av.position.x=nx;else if(!blocked(av.position.x,nz2,av.position.x,av.position.z))av.position.z=nz2;
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
   else W.walk*=.9;
@@ -570,8 +570,8 @@ function loop(){
   const dist=inHut?3.4:(W.zoom||6.5),cx=av.position.x+Math.sin(W.yaw)*dist*Math.cos(W.pitch),cz=av.position.z+Math.cos(W.yaw)*dist*Math.cos(W.pitch),cyy=av.position.y+1.4+Math.sin(W.pitch)*dist;
   const sh=W.shake>0?(Math.random()-.5)*W.shake*.15:0;W.shake=Math.max(0,(W.shake||0)-dt);
   if(W.camOv){W.cam.position.lerp(W.camOv.p,Math.min(1,dt*2.5));W.cam.lookAt(W.camOv.t);}
-  else if(inHut){const hx=(inHut.x0+inHut.x1)/2,hz=(inHut.z0+inHut.z1)/2;const tx=Math.max(inHut.x0+.4,Math.min(inHut.x1-.4,hx+(hx-av.position.x)*.6)),tz=Math.max(inHut.z0+.4,Math.min(inHut.z1-.4,hz+(hz-av.position.z)*.6));W.cam.position.lerp(new TH.Vector3(tx,3.15,tz),Math.min(1,dt*6));}
-  else W.cam.position.lerp(new TH.Vector3(cx+sh,Math.max(cyy,groundH(cx,cz)+.6),cz),Math.min(1,dt*6));if(!W.camOv)W.cam.lookAt(av.position.x,av.position.y+1.5,av.position.z);
+  else if(inHut){const d=2.4,tx=Math.max(inHut.x0+.35,Math.min(inHut.x1-.35,av.position.x+Math.sin(W.yaw)*d)),tz=Math.max(inHut.z0+.35,Math.min(inHut.z1-.35,av.position.z+Math.cos(W.yaw)*d));W.cam.position.lerp(new TH.Vector3(tx,av.position.y+2.35,tz),Math.min(1,dt*8));W.cam.lookAt(av.position.x,av.position.y+1.05,av.position.z);}
+  else W.cam.position.lerp(new TH.Vector3(cx+sh,Math.max(cyy,groundH(cx,cz)+.6),cz),Math.min(1,dt*6));if(!W.camOv&&!inHut)W.cam.lookAt(av.position.x,av.position.y+1.5,av.position.z);
   W.dir.position.set(av.position.x+W.SUN.x*60,W.SUN.y*60,av.position.z+W.SUN.z*60);W.dir.target.position.set(av.position.x,0,av.position.z);
   (W.flames||[]).forEach((f,i)=>{f.scale.y=1.6+Math.sin(t*13+i*2)*.35;});
   W.flick.forEach((L,i)=>L.intensity=1.1+.3*Math.sin(t*9+i)*Math.sin(t*3.3+i));
