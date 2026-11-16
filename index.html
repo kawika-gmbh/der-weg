@@ -479,6 +479,16 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
 .g-info{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 30px);transform:translateX(-50%);font-size:14px;color:rgba(255,255,255,.8);text-align:center;width:90%}
 .g-end{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(8,8,10,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-align:center;padding:20px}
 .spr.mk img{width:100%;height:100%;object-fit:contain;filter:brightness(.6) saturate(.8) sepia(.15) drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+.scr-card{width:min(360px,calc(100vw - 40px));display:flex;flex-direction:column;align-items:center;animation:scrOpen .7s cubic-bezier(.2,.8,.2,1)}
+.scr-rod{width:104%;height:16px;border-radius:8px;background:linear-gradient(180deg,#9b3b25,#5e1d10);box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.scr-paper{width:100%;background:linear-gradient(180deg,#efe3c6,#e2d2ad);color:#2a1d12;padding:22px 22px 18px;text-align:center;box-shadow:inset 0 0 30px rgba(120,80,30,.25)}
+.scr-paper .eyebrow{color:#9b3b25}
+.scr-paper h2{font-size:24px;margin:6px 0 10px;color:#1e140c}
+.scr-paper p{font-size:16px;line-height:1.55;margin:0 0 14px}
+.scr-meta{font-size:12.5px;color:#6a5440;font-weight:600;letter-spacing:.02em}
+#scBonus:not(:empty){margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(155,59,37,.12);font-weight:700;font-size:14px;color:#7a2a17}
+@keyframes scrOpen{from{clip-path:inset(48% 0 48% 0);opacity:.4}to{clip-path:inset(0 0 0 0);opacity:1}}
+.ci.ws{cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -646,6 +656,10 @@ body{font-feature-settings:"tnum" 1;letter-spacing:0}
   <div class="g-info" id="gInfo"></div>
   <div class="g-end" id="gEnd" hidden><span class="eyebrow">Pflaumenblüten-Pfähle</span><div class="mega" id="gEndT">Gemeistert</div><p class="lead" id="gEndS"></p><div class="sp-s num" id="gEndC" style="font-size:18px"></div><div class="btnrow"><button class="big-act" id="gAgain">Nochmal · 1 Energie</button><button class="big-ghost" id="gDone">Fertig</button></div></div>
 </div>
+<div class="ov" id="scrollOv" hidden style="z-index:48;display:grid;place-items:center;background:rgba(8,8,10,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)">
+  <div class="scr-card"><div class="scr-rod"></div><div class="scr-paper"><span class="eyebrow" id="scK">Schriftrolle</span><h2 id="scT"></h2><p id="scX"></p><div class="scr-meta" id="scM"></div><div id="scBonus"></div></div><div class="scr-rod"></div>
+  <button class="big-act" id="scBtn" style="margin-top:16px">Aufbewahren</button></div>
+</div>
 <div class="dialog" id="dialog" hidden><div class="dbox cut"><h3 id="dlT"></h3><p id="dlP"></p><input class="txt norm" id="dlIn" hidden autocomplete="off"><div class="btnrow" style="justify-content:flex-start"><button class="big-act cut-s" id="dlOk" style="padding:11px 18px">Ja</button><button class="big-ghost" id="dlNo" style="padding:10px 16px">Abbrechen</button></div></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -795,6 +809,50 @@ const PRACTICE=[
   {t:'Drei gute Dinge',x:'An drei Abenden aufschreiben, was heute gut lief. Drei Punkte reichen.'},
   {t:'Wenn-dann-Plan',x:'Formuliere einen Wenn-dann-Plan für ein Ritual, das dir schwerfällt, und setz ihn um.'}
 ];
+const WSCROLLS=[
+ [ // Kapitel 1 · Der Tempel – Anfangen
+  ['Der erste Stein','Ein Tempel entsteht nicht an einem Tag, sondern aus einem Stein pro Tag. Wer nur auf das Ganze schaut, legt nie den ersten.'],
+  ['Zwei Minuten','Mach die kleinste Version deines Rituals. Wer an schlechten Tagen zwei Minuten schafft, verliert die Spur nie.'],
+  ['Der Ort','Gewohnheiten hängen an Orten. Leg die Laufschuhe an die Tür, das Buch aufs Kissen. Der Ort erinnert dich, bevor du es tust.'],
+  ['Nicht zweimal','Ein verpasster Tag ist ein Zufall. Zwei verpasste Tage sind der Anfang einer neuen Gewohnheit. Komm am nächsten Tag zurück.'],
+  ['Wer du wirst','Frag nicht «Was will ich erreichen?», sondern «Wer will ich sein?». Jedes Ritual ist eine Stimme für diese Person.'],
+  ['Der Morgen','Die erste Stunde gehört dir, nicht dem Handy. Wer den Morgen gewinnt, geht mit Rückenwind in den Tag.'],
+  ['Langsam ist schnell','Wer jeden Tag ein Prozent besser wird, ist nach einem Jahr ein anderer Mensch. Ungeduld zerstört mehr als Faulheit.'],
+  ['Der Schüler','Ein Meister ist ein Schüler, der nie aufgehört hat. Wer anfängt, ist dem Meister näher als der, der nur zuschaut.']],
+ [ // Kapitel 2 · Das Bergkloster – Körper und Ausdauer
+  ['Der Atem zuerst','Wenn der Atem ruhig ist, folgt der Körper. Atme länger aus als ein, und dein Herz schlägt langsamer.'],
+  ['Schlaf ist Training','Muskeln wachsen nicht im Training, sondern in der Nacht danach. Wer am Schlaf spart, trainiert für nichts.'],
+  ['Kälte','Kaltes Wasser lehrt, ruhig zu bleiben, wenn der Körper Alarm schlägt. Diese Ruhe nimmst du mit in den Tag.'],
+  ['Der Berg','Ein langer Aufstieg besteht aus kurzen Schritten. Schau auf den nächsten Stein, nicht auf den Gipfel.'],
+  ['Wasser','Schon wenig zu wenig Wasser macht müde und unkonzentriert. Trink, bevor der Durst kommt.'],
+  ['Pause','Ein Bogen, der immer gespannt ist, bricht. Ruhetage sind Teil des Weges, nicht eine Pause davon.'],
+  ['Haltung','Wie du stehst, so fühlst du dich. Richte dich auf, bevor du einen Raum betrittst.'],
+  ['Schmerz und Leid','Der Schmerz der Disziplin wiegt Gramm. Der Schmerz der Reue wiegt Tonnen.']],
+ [ // Kapitel 3 · Der Wasserfall – Geist und Gelassenheit
+  ['Wie Wasser','Wasser kämpft nicht gegen den Stein. Es fliesst weiter, und mit der Zeit formt es ihn.'],
+  ['Der Lärm','Der Geist ist wie ein See. Wenn du aufhörst, ihn aufzuwühlen, wird er von selbst klar.'],
+  ['Eine Sache','Wer zwei Hasen jagt, fängt keinen. Tu eine Sache, und tu sie ganz.'],
+  ['Dankbarkeit','Drei Dinge, für die du dankbar bist, lenken den Blick weg vom Mangel. Was du suchst, findest du.'],
+  ['Der Augenblick','Die Vergangenheit ist vorbei, die Zukunft noch nicht da. Trainieren kannst du nur jetzt.'],
+  ['Gedanken','Du bist nicht deine Gedanken. Du bist der, der sie bemerkt. Lass sie vorbeiziehen wie Wolken.'],
+  ['Kontrolle','Unterscheide, was in deiner Hand liegt und was nicht. Deine Kraft gehört nur dem Ersten.'],
+  ['Stille','Zehn Minuten Stille am Tag sind kein Luxus. Sie sind der Raum, in dem Entscheidungen reifen.']],
+ [ // Kapitel 4 · Der Gipfel – Meisterschaft
+  ['Kein Ziel','Der Gipfel ist nicht das Ende des Weges. Er ist der Ort, von dem aus du den nächsten siehst.'],
+  ['Identität','Wenn du nicht mehr darüber nachdenkst, ob du trainierst, bist du jemand, der trainiert.'],
+  ['Weitergeben','Wer lehrt, lernt zweimal. Zeig einem anderen deinen Weg, und du verstehst ihn selbst besser.'],
+  ['Demut','Je höher du steigst, desto mehr Berge siehst du. Meisterschaft macht nicht stolz, sondern still.'],
+  ['Das Jahr','Ein Jahr ist 365 Gelegenheiten, die gleiche Entscheidung zu treffen. Die Summe davon bist du.'],
+  ['Widerstand','Der Widerstand wird nie verschwinden. Du lernst nur, schneller an ihm vorbeizugehen.'],
+  ['Freude','Disziplin ohne Freude wird hart. Finde in jedem Ritual etwas, das dir gefällt, und halte es fest.'],
+  ['Der Weg','Es gibt keinen Weg zur Disziplin. Disziplin ist der Weg.']]
+];
+const STORY=[
+ 'Ich war nicht immer Meister. Als junger Mann kam ich an diesen Ort, und es gab nur Steine und Unkraut. Ich wollte ihn an einem Sommer aufbauen und gab nach zwei Wochen auf. Erst als ich beschloss, jeden Morgen nur einen einzigen Stein zu setzen, stand nach einem Jahr ein Tempel.',
+ 'Im Kloster oben am Berg lernte ich von einem alten Mönch, der jeden Tag bei Sonnenaufgang die Treppe hinaufstieg. 999 Stufen. Ich fragte ihn, wann er damit aufhöre. Er sagte: «Wenn die Stufen aufhören.» Mit 83 Jahren stieg er sie noch immer.',
+ 'Am Wasserfall verlor ich einmal alles: meinen Lehrer, meinen Weg, meinen Mut. Ich sass drei Tage am Wasser. Dann sah ich, dass der Wasserfall nicht stehen bleibt, wenn ein Stein ihn trifft. Er fliesst darum herum. Am vierten Tag stand ich auf und begann von vorn.',
+ 'Auf dem Gipfel habe ich nichts gefunden. Keine Erleuchtung, keinen Schatz. Nur Wind und Weite. Und da verstand ich: Der Gipfel hat mich nicht verändert. Die Jahre des Aufstiegs haben es getan. Darum bin ich hier, bei dir. Der Weg gehört jetzt dir.'
+];
 const WISDOM=['Der Berg wird nicht kleiner. Deine Schritte werden sicherer.','Wer um fünf aufsteht, hat den ersten Kampf schon gewonnen.','Langsamkeit ist keine Schwäche. Sie ist Kontrolle.','Ein ausgelassener Tag ist kein verlorener Weg.','Der Atem ist immer da. Du musst nur zu ihm zurückkehren.','Disziplin ist Freiheit, die du dir jeden Morgen neu verdienst.','Wer langsam geht, sieht mehr vom Weg.','In der Stille sammelt sich die Kraft.','Heute zählt nur heute.','Der Meister hat öfter neu angefangen, als der Schüler aufgegeben hat.','Auch der Winter gehört zum Jahr.','Kleine Rituale tragen grosse Ziele.'];
 
 /* =================== ZUSTAND =================== */
@@ -827,6 +885,7 @@ function migrate(){
   ['sound','hq','test','days','cycle','best','seals','learn','avatar'].forEach(k=>{if(S[k]===undefined)S[k]=D[k];});
   if(S.energy===undefined)S.energy=3;if(!S.games)S.games={};
   if(!S.inv)S.inv={scrolls:[],robes:[],animals:[],opened:0,since:0,first:false};
+  if(!S.inv.ws){S.inv.ws=[];S.inv.wsStreak={d:'',n:0};S.inv.story=[];}
   ['log','exams','practice','review'].forEach(k=>{if(!S.learn[k])S.learn[k]=D.learn[k];});
   S.rituals.forEach(r=>{if(!r.freq)r.freq=r.id==='run'?{mode:'week',n:3}:{mode:'daily'};});
   if((S.v||0)<5){S.rituals=S.rituals.filter(r=>r.id!=='slow'&&!/ultra-slow/i.test(r.name));if(!S.rituals.length)S.rituals=tplRituals('shaolin');}
@@ -1311,6 +1370,25 @@ $('#chBtn').onclick=()=>{
       if(it.type==='chi'){renderTop(before);}
     },550);},1250);
 };
+function wsChapter(){return Math.min(3,viewProg().ch);}
+function wsLeft(ch){return WSCROLLS[ch].map((_,i)=>ch+'-'+i).filter(id=>!S.inv.ws.includes(id));}
+function showScroll(id,extra){const [ch,i]=id.split('-').map(Number),w=WSCROLLS[ch][i],n=WSCROLLS[ch].filter((_,k)=>S.inv.ws.includes(ch+'-'+k)).length;
+  $('#scK').textContent=`Schriftrolle · Kapitel ${ch+1}`;$('#scT').textContent=w[0];$('#scX').textContent=w[1];$('#scM').textContent=`${n} von ${WSCROLLS[ch].length} in diesem Kapitel gefunden`;
+  $('#scBonus').innerHTML=extra||'';$('#scBtn').textContent=extra!=null?'Aufbewahren':'Schliessen';$('#scrollOv').hidden=false;}
+let scPending=null;
+$('#scBtn').onclick=()=>{$('#scrollOv').hidden=true;if(scPending){const f=scPending;scPending=null;f();}if(tab==='op')renderOp();};
+function claimWorldScroll(){
+  const ch=wsChapter(),left=wsLeft(ch);if(!left.length)return;
+  const id=left[Math.floor(Math.random()*left.length)];S.inv.ws.push(id);
+  const yd=dk(new Date(Date.now()-864e5)),td=dk(new Date()),st=S.inv.wsStreak;st.n=st.d===yd?st.n+1:st.d===td?st.n:1;st.d=td;
+  let bonus=`+5 Chi${st.n>1?` · Serie: ${st.n} Tage`:''}`;
+  if(st.n>0&&st.n%7===0){const pool=[...ANIMALS.filter(a=>!S.inv.animals.includes(a.id)).map(a=>({t:'animal',id:a.id,n:a.n})),...CROBES.filter(c=>!S.inv.robes.includes(c.id)).map(c=>({t:'robe',id:c.id,n:c.n}))];
+    if(pool.length){const it=pool[Math.floor(Math.random()*pool.length)];if(it.t==='animal')S.inv.animals.push(it.id);else S.inv.robes.push(it.id);bonus+=`<br>7 Tage in Folge! Neu: ${esc(it.n)}`;}
+    else{addBonus('_s7',30);bonus+='<br>7 Tage in Folge! +30 Chi';}}
+  if(!wsLeft(ch).length&&!S.inv.story.includes(ch)){S.inv.story.push(ch);bonus+=`<br>Kapitel vollständig: Meister Shen erzählt dir ein Stück seiner Geschichte.`;}
+  const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();today()._scroll=5;save();
+  scPending=()=>afterGain(before,pB,lvB,rB,seB,{kicker:'Welt',title:'Schriftrolle gefunden'});showScroll(id,bonus);
+}
 function collectionHTML(){
   const inv=S.inv;const cell=(type,id,name,r,own)=>`<div class="ci ${own?'':'lock'}" style="--rcol:${own?RAR[r].c+'88':'transparent'}">${itemIcon(type,id)}<span>${own?esc(name):'???'}</span></div>`;
   const total=ANIMALS.length+CROBES.length+WISDOM.length,have=inv.animals.length+inv.robes.length+inv.scrolls.length;
@@ -1318,6 +1396,8 @@ function collectionHTML(){
   h+=`<span class="lbl">Gefährten</span><div class="coll" style="margin:8px 0 12px">${ANIMALS.map(a=>cell('animal',a.id,a.n,a.r,inv.animals.includes(a.id))).join('')}</div>`;
   h+=`<span class="lbl">Roben</span><div class="coll" style="margin:8px 0 12px">${CROBES.map(c=>cell('robe',c.id,c.n.replace('Robe ',''),c.r,inv.robes.includes(c.id))).join('')}</div>`;
   h+=`<span class="lbl">Schriftrollen</span><div class="coll" style="margin:8px 0 4px">${WISDOM.map((w,i)=>cell('scroll',i,'Rolle '+(i+1),'common',inv.scrolls.includes(i))).join('')}</div>`;
+  const wsN=WSCROLLS.flat().length;h+=`<div class="ph" style="margin-top:16px"><div><span class="lbl">Schriftrollen der Welt · Serie ${inv.wsStreak.n} Tage</span><h2>${inv.ws.length} / ${wsN} gefunden</h2></div></div>`;
+  WSCROLLS.forEach((arr,ch)=>{h+=`<span class="lbl">Kapitel ${ch+1} · ${CH[ch].n}</span><div class="coll" style="margin:8px 0 12px">${arr.map((w,i)=>{const id=ch+'-'+i,own=inv.ws.includes(id);return `<div class="ci ${own?'ws':'lock'}" ${own?`data-ws="${id}"`:''} style="--rcol:${own?'#c9a24a88':'transparent'}">${itemIcon('scroll',0)}<span>${own?esc(w[0]):'???'}</span></div>`;}).join('')}</div>`;});
   return h;
 }
 
@@ -1356,7 +1436,9 @@ window.DW={
   spendEnergy(n){if(S.test)return true;if((S.energy||0)<n)return false;S.energy-=n;save();renderTop();return true;},
   best:k=>S.games[k]||0,setBest(k,v){S.games[k]=v;save();},
   scrollFound:()=>!!today()._scroll,
-  claimScroll(){const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();today()._scroll=5;save();afterGain(before,pB,lvB,rB,seB,{kicker:'Welt',title:'Schriftrolle gefunden'});},
+  claimScroll:()=>claimWorldScroll(),
+  scrollAvailable:()=>wsLeft(wsChapter()).length>0,
+  story:()=>S.inv.story.slice().sort().map(ch=>({ch,t:STORY[ch],n:CH[ch].n})),
   gameReward(chi,label){const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();addBonus('_g',chi);afterGain(before,pB,lvB,rB,seB,{kicker:label,title:'Prüfung beendet'});},
   refresh:()=>{renderAll();if(photoOn&&lastVp)renderSprites(lastVp);}
 };
@@ -1682,6 +1764,7 @@ function renderSettings(){
   $('#pvSe').innerHTML=opt(!pvSe,'Live','data-pv="se" data-v=""')+Object.entries(SEASONS).map(([k,v])=>opt(pvSe===k,v.n,`data-pv="se" data-v="${k}"`)).join('');
   $('#pvTod').innerHTML=opt(!pvTod,'Live','data-pv="tod" data-v=""')+TODS.map(([k,n])=>opt(pvTod===k,n,`data-pv="tod" data-v="${k}"`)).join('');
 }
+document.addEventListener('click',e=>{const c=e.target.closest('[data-ws]');if(c)showScroll(c.dataset.ws);});
 const ADMIN_CODE='dojo-kawika';
 $('#stAdmin').onclick=()=>{$('#dlIn').hidden=false;$('#dlIn').value='';$('#dlIn').placeholder='Admin-Code';ask('Admin-Zugang','Gib den Admin-Code ein. Danach siehst du Testmodus und Schnellvorlauf.',()=>{const v=($('#dlIn').value||'').trim().toLowerCase();$('#dlIn').hidden=true;if(v===ADMIN_CODE){S.admin=true;save();renderSettings();toast('Admin aktiv');}else toast('Code falsch');});setTimeout(()=>$('#dlIn').focus(),50);};
 let fbStar=0;

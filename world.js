@@ -197,12 +197,12 @@ function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(
 
 /* ---------- Meister Shen ---------- */
 const QUESTS=[
-  {id:'scroll',t:'Im Garten liegt heute eine Schriftrolle verborgen. Finde sie und bring mir Bescheid.',ok:()=>DW.scrollFound(),need:0},
+  {id:'scroll',t:'Im Garten liegt heute eine Schriftrolle verborgen. Finde sie und lies sie aufmerksam.',ok:()=>DW.scrollFound(),need:0,avail:()=>DW.scrollAvailable()||DW.scrollFound()},
   {id:'poles',t:'Geh zu den Pflaumenblüten-Pfählen und schaffe mindestens fünf Pfähle.',ok:()=>(DW.day('_qp')||0)>=5,need:0},
   {id:'bow',t:'Tritt vor den Altar und verneige dich. Ein Moment der Stille reicht.',ok:()=>!!DW.day('_qa'),need:3},
   {id:'bell',t:'Schlage die Tempelglocke dreimal. Lass den Klang ausklingen, bevor du wieder schlägst.',ok:()=>(DW.day('_qb')||0)>=3,need:4},
 ];
-function questToday(st){const av=QUESTS.filter(q=>st>=q.need);const d=new Date();return av[(d.getDate()*7+d.getMonth()*3)%av.length];}
+function questToday(st){const av=QUESTS.filter(q=>st>=q.need&&(!q.avail||q.avail()));const d=new Date();return av[(d.getDate()*7+d.getMonth()*3)%av.length];}
 function meister(st){
   if(!window.MonkKit)return;
   MonkKit.load(()=>{if(!W)return;const o=MonkKit.npc('#3a3633','#d6a37c','#c9c4bb');if(!o)return;
@@ -227,6 +227,7 @@ function talk(st){
     if(qs===0)btns.push(['Gib mir einen Auftrag',()=>{DW.day('_qs',1);DW.day('_qid',q.id);dlg(q.t,[['Ich mache es',()=>{endTalk();msg('Auftrag angenommen');}],['Zurück',()=>menu(greet(st))]]);},1]);
     else if(qs===1){const ok=q.ok();btns.push([ok?'Auftrag erfüllt':'Mein Auftrag?',()=>{if(ok){DW.day('_qs',2);endTalk();DW.questReward(8,'Auftrag erfüllt');pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1500);}else dlg('Noch nicht. '+q.t,[['Verstanden',()=>endTalk()]]);},ok]);}
     btns.push([L.done?'Merksatz des Tages':'Lektion des Tages',()=>{if(L.done)dlg(`«${L.m}»`,[['Danke, Meister',()=>endTalk()]]);else{endTalk();DW.openLesson();}}]);
+    const sto=DW.story();if(sto.length)btns.push(['Eure Geschichte, Meister',()=>{let i=sto.length-1;const show=()=>dlg(sto[i].t,[...(i>0?[['Früher',()=>{i--;show();}]]:[]),['Danke, Meister',()=>endTalk()]]);show();}]);
     btns.push(['Weisheit',()=>dlg(DW.wisdom(),[['Danke',()=>endTalk()],['Zurück',()=>menu(greet(st))]])]);
     dlg(text,btns);};
   if(qs===2)menu('Dein Auftrag für heute ist erfüllt. '+greet(st));else menu(greet(st));
@@ -237,12 +238,12 @@ function interactables(st){
   W.inter=(W.inter||[]).concat([{x:9,z:7,r:3.2,label:'Pflaumenblüten-Pfähle',btn:'Spielen · 1 Energie',act:()=>startPoles()}]);
   if(st>=4)W.inter.push({x:0,z:5.6,r:1.8,label:'Tempelglocke',btn:'Schlagen',act:()=>{DW.bell(1.4);W.shake=.6;DW.day('_qb',(DW.day('_qb')||0)+1);pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1600);if(W.bell)W.bellSwing=1;}});
   // Schriftrolle des Tages
-  if(!DW.scrollFound()){const d=new Date();const r=rng(d.getFullYear()*400+d.getMonth()*31+d.getDate());const spots=[[-12,-6],[14,-4],[-8,14],[16,12],[-18,4],[6,-12],[-4,-14],[12,18]];const s=spots[Math.floor(r()*spots.length)];
+  if(!DW.scrollFound()&&DW.scrollAvailable()){const d=new Date();const r=rng(d.getFullYear()*400+d.getMonth()*31+d.getDate());const spots=[[-12,-6],[14,-4],[-8,14],[16,12],[-18,4],[6,-12],[-4,-14],[12,18]];const s=spots[Math.floor(r()*spots.length)];
     const g=new TH.Group();g.position.set(s[0],groundH(s[0],s[1])+.9,s[1]);W.root.add(g);
     const sc=new TH.Mesh(new TH.CylinderGeometry(.09,.09,.6,12),new TH.MeshStandardMaterial({color:'#e9dcc0',emissive:new TH.Color('#ffcc66'),emissiveIntensity:.8}));sc.rotation.z=Math.PI/2;g.add(sc);
     [-.32,.32].forEach(dx=>{const e=new TH.Mesh(new TH.CylinderGeometry(.12,.12,.06,12),W.M.red);e.rotation.z=Math.PI/2;e.position.x=dx;g.add(e);});
     const L=new TH.PointLight(0xffc860,1.6,6,2);g.add(L);W.scroll=g;
-    W.inter.push({x:s[0],z:s[1],r:1.4,auto:true,act:()=>{DW.claimScroll();W.root.remove(g);W.scroll=null;msg('Schriftrolle des Tages gefunden · +5 Chi');}});}
+    W.inter.push({x:s[0],z:s[1],r:1.4,auto:true,act:()=>{W.root.remove(g);W.scroll=null;W.keys={};W.mv.x=W.mv.z=0;DW.claimScroll();}});}
 }
 function msg(t){const m=$('#wMsg');m.textContent=t;m.classList.add('show');clearTimeout(W.mt);W.mt=setTimeout(()=>m.classList.remove('show'),2600);}
 
