@@ -355,6 +355,7 @@ function roomDialog(id){
   if(r.open&&DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
   r.arch.forEach(x=>{if(r.open&&DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
   if(id==='zelle'&&new Date().getHours()>=18&&!DW.day('_eve'))btns.unshift(['Abendritual',()=>{endTalk();evening();},1]);
+  if(id==='zelle')btns.push(['Tagebuch',()=>{endTalk();journalUI();}]);
   if(id==='halle')btns.unshift(['Meditieren',()=>{endTalk();medChoose();},1]);
   if(id==='halle')btns.push(['Verneigen',()=>{endTalk();playOnce('Bow');DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
   if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
@@ -388,7 +389,8 @@ function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name()
   if(h>=18&&!DW.day('_eve'))btns.unshift(['Abendritual in der Zelle',()=>{endTalk();goRoom('zelle');setTimeout(()=>{if(W){endTalk();evening();}},700);},!nx]);
   btns.push(['Übersicht im Menü',()=>{endTalk();DW.openMenu('missions');}]);
   btns.push([first?'Ich schaue mich erst um':'Danke',()=>{endTalk();beacon();}]);
-  dlgK(first?'Tagesbeginn':'Heute',t+extra+`\n\n«${spruch()}»`,btns);}
+  const wx={regen:'Draussen regnet es. Ein guter Tag für die Halle.',nebel:'Nebel liegt über dem Kloster.',schnee:'Es schneit. Die Welt ist still.'}[W.weather];
+  dlgK(first?'Tagesbeginn':'Heute',t+extra+(wx?'\n'+wx:'')+`\n\n«${spruch()}»`,btns);}
 /* ---------- Leuchtfeuer zum nächsten Ziel ---------- */
 function beacon(force){if(!W||W.ch)return;const L=DW.todayList().filter(r=>!r.done);if(!W.bcn){const g=new TH.Group();const m=new TH.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:.35,depthWrite:false,blending:TH.AdditiveBlending,side:TH.DoubleSide});
     const c=new TH.Mesh(new TH.CylinderGeometry(.35,.6,7,20,1,true),m);c.position.y=3.5;g.add(c);const ring=new TH.Mesh(new TH.RingGeometry(.55,.75,32),m.clone());ring.rotation.x=-Math.PI/2;ring.position.y=.05;g.add(ring);W.root.add(g);W.bcn=g;}
@@ -670,7 +672,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
@@ -683,7 +685,7 @@ function open(opts){opts=opts||{};
   W.scene=new TH.Scene();W.cam=new TH.PerspectiveCamera(window.innerWidth<window.innerHeight?62:50,window.innerWidth/window.innerHeight,.1,700);W.root=new TH.Group();W.scene.add(W.root);
   W.tod=TOD[DW.tod()]||TOD.dusk;W.M=mats();W.pilgrim=opts.pilgrim||0;W.ch=W.pilgrim;window._worldCh=W.ch;const se=W.ch===3?Object.assign({},DW.season(),DW.seasonData('winter')||{},{winter:true}):DW.season();W.se=se;env(se);
   const st=5,ch=W.pilgrim;W.ch=ch;W.noGo=[];W.rects=[];W.flagsArr=[];
-  if(ch>0){BUILD[ch](5);W.meisterPos=W.meisterPos||[-3,0,4];}else{W.ch=0;W.rects=[];temple(5);path();poles();kloster();rewards();dayGlow(true);life();beacon();}
+  if(ch>0){BUILD[ch](5);W.meisterPos=W.meisterPos||[-3,0,4];}else{W.ch=0;W.rects=[];temple(5);path();poles();kloster();rewards();dayGlow(true);life();beacon();weather();}
   W.noGo.push([ch===2?3.6:0,12,5],[ch===2?3.6:0,18,4]);
   const ng=(x,z,m)=>W.noGo.some(n=>Math.hypot(x-n[0],z-n[1])<n[2]+(m||0))||(W.edgeZ&&z>W.edgeZ-3);
   const r=rng(21);let c=0,tries=0;while(c<(ch===3?0:ch===1?6:14)&&tries<500){tries++;const a=r()*6.28,d=11+r()*20,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ng(x,z,3))continue;if(Math.abs(x)<3.2&&z>3)continue;if(Math.hypot(x-9,z-7)<8)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<4))continue;maple(x,z,.8+r()*.5,r()*6);c++;}
@@ -819,6 +821,23 @@ $('#gAgain').onclick=()=>{const c=G&&G.reward;finishG(true);startPoles();};
 function finishG(again){if(!G)return;cancelAnimationFrame(G.raf);g3dEnd();const chi=G.state==='end'?G.reward:0;G=null;$('#game').hidden=true;if(chi){DW.gameReward(chi,'Pflaumenblüten-Pfähle');if(W)msg('+'+chi+' Chi gutgeschrieben');}}
 window.addEventListener('resize',()=>{if(G)sizeG();});
 
+/* ---------- Wetter ---------- */
+function weatherToday(){const d=new Date(),x=(d.getFullYear()*372+d.getMonth()*31+d.getDate())*9301%233280/233280;if(W.se.winter)return x<.3?'schnee':x<.4?'nebel':'klar';return x<.2?'regen':x<.3?'nebel':'klar';}
+function weather(){if(W.ch)return;let fw=null;try{fw=localStorage.getItem('dw.weather');}catch(e){}const w=fw||weatherToday();W.weather=w;if(w==='klar')return;
+  if(w==='nebel'){W.scene.fog.density*=3.6;W.scene.fog.color.lerp(new TH.Color('#c8ccd0'),.5);W.hemi.intensity*=.85;W.dir.intensity*=.45;return;}
+  if(W.flies){W.flies.forEach(F=>W.root.remove(F.b));W.flies=null;}
+  W.dir.intensity*=.45;W.hemi.intensity*=.8;W.scene.fog.density*=1.5;if(W.sky&&W.sky.material.color)W.sky.material.color.multiplyScalar(.75);
+  const rain=w==='regen',n=rain?2600:1600,pos=new Float32Array(n*3),sp=new Float32Array(n);for(let i=0;i<n;i++){pos[i*3]=(Math.random()-.5)*24;pos[i*3+1]=Math.random()*12;pos[i*3+2]=(Math.random()-.5)*24;sp[i]=.7+Math.random()*.6;}
+  const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pos,3));
+  const m=rain?new TH.PointsMaterial({color:0xdde6f0,size:.06,transparent:true,opacity:.8,depthWrite:false}):new TH.PointsMaterial({color:0xffffff,size:.11,map:softTex(),transparent:true,opacity:.9,depthWrite:false});
+  if(rain){const tc=document.createElement('canvas');tc.width=4;tc.height=32;const x=tc.getContext('2d');const gr=x.createLinearGradient(0,0,0,32);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(255,255,255,1)');x.fillStyle=gr;x.fillRect(1,0,2,32);m.map=new TH.CanvasTexture(tc);m.size=.6;}
+  const P=new TH.Points(g,m);P.frustumCulled=false;W.scene.add(P);W.wP={P,sp,rain};}
+function weatherUpdate(dt){const w=W.wP;if(!w)return;const p=w.P.geometry.attributes.position,c=W.av?W.av.position:{x:0,z:0},t=performance.now()/1000;w.P.visible=!W.inHut;
+  for(let i=0;i<p.count;i++){let y=p.getY(i)-(w.rain?11:1.1)*w.sp[i]*dt;let x=p.getX(i),z=p.getZ(i);if(!w.rain){x+=Math.sin(t*.7+i)*.004;}
+    if(y<0){y=12;x=c.x+(Math.random()-.5)*24;z=c.z+(Math.random()-.5)*24;}p.setXYZ(i,x,y,z);}p.needsUpdate=true;}
+/* ---------- Tagebuch ---------- */
+function journalUI(){const J=DW.journal();const ks=Object.keys(J).sort().reverse().slice(0,30);const fmt=k=>k.split('-').reverse().join('.');
+  const o=ovl('wJour',`<div><h3>Tagebuch der Dankbarkeit</h3><p>${ks.length?'Was du an deinen Abenden festgehalten hast.':'Noch leer. Beim Abendritual kannst du jeden Tag einen Satz festhalten.'}</p><div class="sl">${ks.map(k=>`<div class="fr"><span><small>${fmt(k)}</small>${J[k].replace(/</g,'&lt;')}</span></div>`).join('')}</div><div class="row"><button class="btn" data-x>Schliessen</button></div></div>`);o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};}
 /* ---------- Training mit Bruder Tao ---------- */
 function trainForm(N){if(!W||!W.av||W.training)return;const o=N.o,av=W.av;const fx=o.position.x-1.3,fz=o.position.z+.2;av.position.set(fx,groundH(fx,fz),fz);av.rotation.y=o.rotation.y;W.training=1;
   const cx=(o.position.x+fx)/2;W.camOv={p:new TH.Vector3(cx-2.2,1.9,o.position.z-3.4),t:new TH.Vector3(cx,1,o.position.z)};
@@ -883,9 +902,9 @@ function sndUpdate(dt,moving){if(!W.snd){if(DW.soundOn()&&W.av&&!W.ch)sndInit();
   const night=W.tod&&W.tod.night,inH=!!W.inHut,P=W.av?W.av.position:{x:0,z:0};
   S0.wg.gain.value=(inH?.04:.11)*(1+.5*Math.sin(t*.13)*Math.sin(t*.07));S0.wf.frequency.value=inH?220:300+180*Math.sin(t*.09);
   const G=RPOS.garten.c,dp=Math.hypot(P.x-(G[0]-1),P.z-G[1]);S0.qg.gain.value=inH?0:Math.max(0,.07*(1-dp/11));
-  S0.cg.gain.value=night&&!W.se.winter?(inH?.004:.012):0;
+  S0.cg.gain.value=night&&!W.se.winter&&W.weather!=='regen'?(inH?.004:.012):0;if(W.weather==='regen'){S0.qg.gain.value=Math.max(S0.qg.gain.value,inH?.05:.11);}
   const K=RPOS.kueche.c,dk=Math.hypot(P.x-K[0],P.z-K[1]);S0.fg.gain.value=Math.max(0,.05*(1-dk/6));if(dk<5&&t>S0.nextCrack){blip(S0,2500+Math.random()*2000,.04,.12*(1-dk/5),'highpass');S0.nextCrack=t+.08+Math.random()*.5;}
-  if(!night&&!W.se.winter&&t>S0.nextBird){chirp(S0,Math.random()*2-1);S0.nextBird=t+(inH?6:1.5)+Math.random()*(inH?8:4);}
+  if(!night&&!W.se.winter&&W.weather!=='regen'&&t>S0.nextBird){chirp(S0,Math.random()*2-1);S0.nextBird=t+(inH?6:1.5)+Math.random()*(inH?8:4);}
   if(moving&&t>S0.nextStep){if(inH)blip(S0,500,.09,.25,'lowpass');else blip(S0,2600,.07,.18,'bandpass',.7);S0.nextStep=t+(W.run?.29:.42);}}
 /* ---------- Markt, Münzen, Einrichten ---------- */
 const SLOTS={z1:{n:'Zelle · beim Fenster',room:'zelle',u:.9,v:-2.6},z2:{n:'Zelle · neben der Tür',room:'zelle',u:2.0,v:1.3},z3:{n:'Zelle · hinten',room:'zelle',u:-.4,v:-2.7},z4:{n:'Zelle · am Kleiderständer',room:'zelle',u:.9,v:2.4},
