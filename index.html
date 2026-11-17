@@ -791,7 +791,7 @@ function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
 const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
 const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
-const APPV='0.29 Beta · 17.11.2026';
+const APPV='0.30 Beta · 17.11.2026';
 const ERRLOG=[];window.addEventListener('error',e=>{ERRLOG.push((e.message||'')+' @'+((e.filename||'').split('/').pop())+':'+(e.lineno||''));if(ERRLOG.length>6)ERRLOG.shift();});window.addEventListener('unhandledrejection',e=>{ERRLOG.push('P '+String(e.reason&&e.reason.message||e.reason).slice(0,120));if(ERRLOG.length>6)ERRLOG.shift();});
 const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:7,pct:.7,win:7,slots:3},{n:'Bruder · Schwester',days:14,pct:.75,win:10,slots:4},{n:'Hüter',days:21,pct:.8,win:14,slots:5},{n:'Lehrer',days:30,pct:.85,win:21,slots:6},{n:'Meister',days:45,pct:.85,win:30,slots:7},{n:'Grossmeister',days:75,pct:.9,win:45,slots:8}];
 const TRIALS={med10:'Meditiere einmal mindestens 10 Minuten in der Halle',tc:'Lauf die ganze Tai-Chi-Form mit Bruder Tao im Hof',perf3:'Schaffe 3 perfekte Tage in Folge',perf5:'Schaffe 5 perfekte Tage in Folge',perf7:'Schaffe 7 perfekte Tage in Folge'};
@@ -989,7 +989,7 @@ function wakeFactor(r){const[h,m]=r.cfg.start.split(':').map(Number);const now=n
 function freqLabel(r){const f=freqOf(r);if(f.mode==='days')return (f.days||[]).slice().sort().map(i=>DOW[i]).join(' ');if(f.mode==='week')return f.n+'× pro Woche';return 'Täglich';}
 function restThisWeek(){const mk=mondayKey(new Date());return Object.keys(S.days).some(k=>k>=mk&&S.days[k]._rest);}
 function recDone(r,rec){return !!(rec&&rec.d);}
-const NOCHI={_bx:1,_bxMsg:1,_nq:1,_qs:1,_qa:1,_qb:1,_qb2:1,_wk:1,_qp:1,_qpp:1,_qlv:1};function dayChi(d){let c=0;if(!d)return 0;for(const k in d){if(k==='_n'||k==='_steps'||k==='_brief'||k==='_eve'||NOCHI[k])continue;const v=d[k];c+=(typeof v==='number')?v:(v&&v.c||0);}return c;}
+const NOCHI={_benchv:1,_ratd:1,_bx:1,_bxMsg:1,_nq:1,_qs:1,_qa:1,_qb:1,_qb2:1,_wk:1,_qp:1,_qpp:1,_qlv:1};function dayChi(d){let c=0;if(!d)return 0;for(const k in d){if(k==='_n'||k==='_steps'||k==='_brief'||k==='_eve'||NOCHI[k])continue;const v=d[k];c+=(typeof v==='number')?v:(v&&v.c||0);}return c;}
 function dayDone(d){if(!d)return 0;let n=0;for(const k in d){if(k[0]!=='_'&&d[k]&&d[k].d)n++;}return n;}
 function dayFrac(d){if(!d)return 0;if(d._rest||d._n===0)return 1;const n=d._n||S.rituals.length;return Math.min(1,dayDone(d)/n);}
 function totalChi(){return Object.values(S.days).reduce((a,d)=>a+dayChi(d),0);}
@@ -1779,7 +1779,7 @@ function lessonIdx(){return (Math.max(1,dayN())-1+(S.cycle-1)*7)%LESSONS.length;
 function lessonToday(){return S.learn.log[dk(new Date())];}
 function weekLessons(){const mk=mondayKey(new Date());return Object.entries(S.learn.log).filter(([k])=>k>=mk).map(([k,v])=>v);}
 function practiceIdx(){return Math.floor((pk(mondayKey(new Date()))-pk(mondayKey(pk(S.cycleStart))))/(7*DAY))%PRACTICE.length;}
-const BCAT={_fox:'weisheit',_ghost:'ruhe',_lore:'weisheit',_help:'nahrung',_herb:'ruhe',_teach:'weisheit',_tea:'ruhe',_cook:'nahrung',_shr:'weisheit',_work:'kraft',_fish:'ruhe',_t:'kraft',_m:'ruhe',_f:'kraft',_e:'ruhe',_l:'weisheit',_x:'weisheit',_p:'weisheit',_q:'ruhe',_g:'kraft',_s7:'ordnung',_ws:'weisheit'};
+const BCAT={_bench:'ruhe',_riddle:'weisheit',_rat:'weisheit',_fox:'weisheit',_ghost:'ruhe',_lore:'weisheit',_help:'nahrung',_herb:'ruhe',_teach:'weisheit',_tea:'ruhe',_cook:'nahrung',_shr:'weisheit',_work:'kraft',_fish:'ruhe',_t:'kraft',_m:'ruhe',_f:'kraft',_e:'ruhe',_l:'weisheit',_x:'weisheit',_p:'weisheit',_q:'ruhe',_g:'kraft',_s7:'ordnung',_ws:'weisheit'};
 const BONUSCAP=25;function addBonus(key,chi){const d=today();if(chi>0){const room=Math.max(0,BONUSCAP-(d._bx||0));if(chi>room){if(!d._bxMsg){d._bxMsg=1;setTimeout(()=>toast('Bonus-Chi für heute ausgeschöpft. Deine Routinen zählen weiter voll.'),1600);}chi=room;}d._bx=(d._bx||0)+chi;}d[key]=(d[key]||0)+chi;const c=BCAT[key];if(c&&chi>0){addPts(c,chi);window._lastBonus={cat:c,n:chi};}save();return chi;}
 function renderDojo(){
   const L=LESSONS[lessonIdx()],lt=lessonToday(),wk=mondayKey(new Date()),wl=weekLessons(),ex=S.learn.exams[wk],pr=PRACTICE[practiceIdx()],prDone=S.learn.practice[wk];

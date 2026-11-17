@@ -388,17 +388,17 @@ function village(){
      [-1,1].forEach(sd=>cyl(.07,2,M.wood,sd*.85,y,52,6));box(2.2,.08,1.4,M.roof,0,y+2.05,52,1);cyl(.05,1.7,M.wood,0,y+1.5,52,6).rotation.z=Math.PI/2;const bk=cyl(.14,.25,M.wood,0,y+.9,52,10,.11);}
    else{cyl(.95,.45,M.stone,0,y,52,10);box(.6,.3,.4,M.stone,1.3,y,52.6,1).rotation.y=.6;}W.vbox.push([0,52,1.05,1.05]);}
   // ---- Markt
-  if(has('ernte')||lvl>=2){[[-3.8,56.6],[3.8,56.6]].forEach(([x,z],i)=>{const sg=new TH.Group();sg.position.y=gh(x,z);g.add(sg);const r1=W.root;W.root=sg;try{stall(x,z);}finally{W.root=r1;}
+  if(has('ernte')||lvl>=2){[[-3.8,56.6],[3.8,56.6]].forEach(([x,z],i)=>{W.vbox.push([x,z,.65,1.25],[x+1.4,z-.2,.35,.7]);const sg=new TH.Group();sg.position.y=gh(x,z);g.add(sg);const r1=W.root;W.root=sg;try{stall(x,z);}finally{W.root=r1;}
      const crate=(cx,cz,col)=>{box(.5,.3,.4,beam,cx,gh(cx,cz),cz,1);for(let k=0;k<6;k++){const f=new TH.Mesh(new TH.SphereGeometry(.07,8,6),new TH.MeshStandardMaterial({color:col}));f.position.set(cx-.15+(k%3)*.15,gh(cx,cz)+.34,cz-.08+Math.floor(k/3)*.16);g.add(f);}};crate(x+1.4,z-.6,i?'#e8a02a':'#c83a2a');crate(x+1.4,z+.2,i?'#6a9a3a':'#e8d24a');});}
   // ---- Laternenketten
   if(has('laternen')||lvl>=3){const chain=(a,b,n)=>{for(let i=0;i<=n;i++){const t=i/n,x=a[0]+(b[0]-a[0])*t,z=a[2]+(b[2]-a[2])*t,y=a[1]+(b[1]-a[1])*t-Math.sin(t*Math.PI)*.6;const l=new TH.Mesh(new TH.SphereGeometry(.17,10,8),new TH.MeshStandardMaterial({color:i%2?'#e04a2a':'#f2b23a',emissive:i%2?'#e04a2a':'#f2b23a',emissiveIntensity:night?1.6:.35}));l.scale.y=1.25;l.position.set(x,y,z);g.add(l);}};
-    for(let z=40;z<=60;z+=5){const y=gh(0,z);[-2.3,2.3].forEach(sx=>cyl(.06,3.6,beam,sx,gh(sx,z),z,6));chain([-2.3,y+3.5,z],[2.3,y+3.5,z],6);}
-    for(let i=0;i<8;i++){const a=i/8*6.28,b=(i+1)/8*6.28,y=gh(0,52)+3.8;chain([Math.cos(a)*6,y,52+Math.sin(a)*6],[Math.cos(b)*6,y,52+Math.sin(b)*6],4);cyl(.07,3.9,beam,Math.cos(a)*6,gh(Math.cos(a)*6,52+Math.sin(a)*6),52+Math.sin(a)*6,6);}}
+    for(let z=40;z<=60;z+=5){const y=gh(0,z);[-2.3,2.3].forEach(sx=>{cyl(.06,3.6,beam,sx,gh(sx,z),z,6);W.solids.push([sx,z,.18]);});chain([-2.3,y+3.5,z],[2.3,y+3.5,z],6);}
+    for(let i=0;i<8;i++){const a=i/8*6.28,b=(i+1)/8*6.28,y=gh(0,52)+3.8;chain([Math.cos(a)*6,y,52+Math.sin(a)*6],[Math.cos(b)*6,y,52+Math.sin(b)*6],4);cyl(.07,3.9,beam,Math.cos(a)*6,gh(Math.cos(a)*6,52+Math.sin(a)*6),52+Math.sin(a)*6,6);W.solids.push([Math.cos(a)*6,52+Math.sin(a)*6,.18]);}}
   // ---- Wassermühle
   if(lvl>=2){const x=11,z=62.6,y=Math.min(gh(x,62.9),gh(x,65.1))-.1;const wh=new TH.Group();wh.position.set(x,y+.9,z+.2);g.add(wh);const rm=new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#5a3e28'});
     const tor=new TH.Mesh(new TH.TorusGeometry(1.1,.07,6,24),rm);tor.rotation.y=Math.PI/2;wh.add(tor);for(let i=0;i<10;i++){const p=new TH.Mesh(new TH.BoxGeometry(.5,.08,.35),rm);const a=i/10*6.28;p.position.set(0,Math.sin(a)*1.05,Math.cos(a)*1.05);p.rotation.x=-a;wh.add(p);}const ax=new TH.Mesh(new TH.CylinderGeometry(.08,.08,1.2,8),rm);ax.rotation.z=Math.PI/2;wh.add(ax);W.vU.wheels.push(wh);}
   // ---- Pagode & Fest
-  if(lvl>=3){const pg=new TH.Group();pg.position.y=gh(0,76);g.add(pg);const r1=W.root;W.root=pg;try{pagoda(0,76,4,3.2);stoneLantern(-3,73,true);stoneLantern(3,73,true);}finally{W.root=r1;}
+  if(lvl>=3){W.vbox.push([0,76,2.5,2.5]);const pg=new TH.Group();pg.position.y=gh(0,76);g.add(pg);const r1=W.root;W.root=pg;try{pagoda(0,76,4,3.2);stoneLantern(-3,73,true);stoneLantern(3,73,true);}finally{W.root=r1;}
     if(night)for(let i=0;i<22;i++){const sp=new TH.Sprite(new TH.SpriteMaterial({map:softTex(),color:0xffa040,transparent:true,depthWrite:false,blending:TH.AdditiveBlending}));sp.scale.setScalar(.5);sp.userData={x:(Math.random()-.5)*14,z:52+(Math.random()-.5)*10,t:Math.random()};g.add(sp);W.vU.sky.push(sp);}}
   if(lvl>=1)flags([-6,gh(-6,52)+4.5,52],[6,gh(6,52)+4.5,52],18,.6);
   // ---- Hühner
@@ -420,7 +420,11 @@ function nextStep(){const g=DW.flag('guide'),L=DW.todayList(),open_=L.filter(r=>
   if(g===1&&open_.length)return{k:'Erster Schritt',t:`Geh zu «${open_[0].name}» (${open_[0].roomN}) und trag sie ein`,go:()=>goRoom(open_[0].room)};
   if(g===2)return{k:'Gut gemacht',t:'Sprich mit Meister Shen über dein Chi',go:()=>toMeister()};
   if(open_.length)return{k:`Heute ${L.length-open_.length}/${L.length}`,t:`${open_[0].name} · ${open_[0].roomN}`,go:()=>goRoom(open_[0].room)};
+  const T=DW.trial();if(T&&T.done)return{k:'Prüfung erfüllt',t:'Geh zu Meister Shen und leg die Rangprüfung ab',go:()=>toMeister()};
+  if(T&&!T.done&&T.left>0)return{k:`Prüfungsaufgabe · noch ${T.left} T.`,t:T.need,go:T.type==='med10'?()=>goRoom('halle'):T.type==='tc'?()=>goRoom('hof'):null};
   if(ri.eligible&&!ri.max)return{k:'Rang',t:'Meister Shen erwartet dich zur Rangprüfung',go:()=>toMeister()};
+  {const v=DW.village(),U2=DW.unlocks();if(U2.village&&v.ev&&!v.ok&&v.daysLeft<=2)return{k:`Dorf in Not · noch ${v.daysLeft} Tag${v.daysLeft>1?'e':''}`,t:`${v.ev.n}. Hilf, sonst verliert das Dorf etwas!`,go:()=>goRoom('tor')};}
+  {const h=new Date().getHours();if(W.fox&&h>=5&&h<7)return{k:'Seltener Moment',t:'Ein weisser Fuchs ist im Garten. Geh leise hin.',go:null};}
   const nq=DW.day('_nq')||0,{q}=nqToday();if(nq===0)return{k:'Jemand braucht dich',t:`${q.who} hat etwas auf dem Herzen`,go:()=>{const N=(W.npcs||[]).find(n=>n.name===q.who);if(N){const p=N.o.position;W.av.position.set(p.x+1.2,heightAt(p.x+1.2,p.z),p.z);}}};
   if(nq===2)return{k:'Auftrag',t:`Bring ${q.who} die ${q.item}`,go:null};
   const v=DW.village();if(U.village&&v.ev&&!v.ok)return{k:'Das Dorf',t:`${v.ev.n} · hilf am Klostertor`,go:()=>goRoom('tor')};
@@ -434,9 +438,10 @@ function questUpdate(){if(!W||W.ch)return;const now=performance.now();if(W._qT&&
 function markTex(ok){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=ok?'#7fbf8a':'#f2c46a';x.beginPath();x.arc(32,32,26,0,6.28);x.fill();x.strokeStyle='#1a1410';x.lineWidth=3;x.stroke();x.fillStyle='#1a1410';x.font='bold 40px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(ok?'✓':'!',32,35);return new TH.CanvasTexture(c);}
 function marksUpdate(){W.marks=W.marks||{};const want={},L=DW.todayList(),ri=DW.rankInfo(),U=DW.unlocks();
   L.filter(r=>!r.done).forEach(r=>{const sp=(W.roomSpot&&W.roomSpot[r.room])?[W.roomSpot[r.room][0],0,W.roomSpot[r.room][1]]:spotOf(r.room);want['r_'+r.room]=[sp[0],(sp[1]||0)+2.9,sp[2]];});
-  if(W.npc&&((ri.eligible&&!ri.max)||DW.flag('guide')===2)){const p=W.npc.position;want.m=[p.x,p.y+2.35,p.z];}
+  const T3=DW.trial();if(W.npc&&((ri.eligible&&!ri.max&&!(T3&&!T3.done))||(T3&&T3.done)||DW.flag('guide')===2)){const p=W.npc.position;want.m=[p.x,p.y+2.35,p.z];}
   const nq=DW.day('_nq')||0,{q}=nqToday();if(nq!==1&&nq<3)(W.npcs||[]).forEach(N=>{if(N.name===q.who&&(nq===0||nq===2)){const p=N.o.position;want['n_'+N.name]=[p.x,p.y+2.3,p.z];}});
   const v=DW.village();if(U.village&&v.ev&&!v.ok){(W.npcs||[]).forEach(N=>{if(N.name==='Älteste Mei'){const p=N.o.position;want.mei=[p.x,p.y+2.3,p.z];}});const sp=spotOf('tor');want.tor=[sp[0],2.9,sp[2]];}
+  if(W.seeker&&W.inVillage){const p=W.seeker.o.position;want.seek=[p.x,p.y+2.3,p.z];}
   Object.keys(W.marks).forEach(k=>{if(!want[k]){W.marks[k].visible=false;}});
   Object.entries(want).forEach(([k,p])=>{let m=W.marks[k];if(!m){W._mT=W._mT||new TH.SpriteMaterial({map:markTex(),depthTest:false,transparent:true,fog:false,toneMapped:false});m=new TH.Sprite(W._mT);m.scale.setScalar(.55);m.renderOrder=20;W.root.add(m);W.marks[k]=m;}const ap=W.av?W.av.position:null;m.visible=!(ap&&Math.hypot(ap.x-p[0],ap.z-p[2])<3.5);m.userData.p=p;});}
 function marksAnim(t){if(!W.marks)return;Object.values(W.marks).forEach(m=>{if(!m.visible||!m.userData.p)return;const p=m.userData.p;m.position.set(p[0],p[1]+Math.sin(t*3)*.08,p[2]);});}
@@ -444,6 +449,103 @@ function lockedMsg(what){msg(`${what} öffnet sich ab Rang «Schüler». Bleib d
 function unlockNews(){const U=DW.unlocks(),out=[];if(U.village&&!DW.flag('u_village')){DW.flag('u_village',1);out.push('Neu: Das Dorf im Tal. Steig über die Drachentreppe hinab. Deine Punkte helfen den Menschen dort.');}
   if(U.market&&!DW.flag('u_market')){DW.flag('u_market',1);out.push('Neu: Kupfer und Markt. Für erledigte Routinen bekommst du Kupfer. Am Tor kaufst du davon Dinge für dein Kloster.');}
   if(U.extras&&!DW.flag('u_extras')){DW.flag('u_extras',1);out.push('Neu: Im Dorf öffnen Teehaus, Schmiede, Schrein, Fischersteg und die Häuser. Dort gibt es kleine Tagesaufgaben.');}return out;}
+
+
+/* ---------- Spannung: Rangprüfung mit Aufgabe, Dorf-Frist, Karte, Rivale, Schatten, seltene Momente ---------- */
+function trialFlow(ri){const T=DW.trial();
+  if(!T){const n=DW.trialStart(),need=DW.trial().need;dlgK('Meister Shen',`Du bist bereit für die Prüfung zum ${ri.nextName}. Doch Worte allein genügen nicht.\n\nDeine Aufgabe: ${need}.\nDu hast 7 Tage Zeit. Komm zu mir, wenn du sie erfüllt hast.`,[['Ich nehme sie an',()=>{endTalk();msg('Prüfungsaufgabe angenommen');DW.bell(.9);},1]]);return true;}
+  if(T.left<=0&&!T.done){DW.trialClear();dlgK('Meister Shen',`Die sieben Tage sind vorbei, die Aufgabe ist nicht erfüllt. Das ist kein Scheitern, nur ein Hinweis. Morgen darfst du es neu versuchen.`,[['Verstanden',()=>endTalk(),1]]);return true;}
+  if(!T.done){dlgK('Meister Shen',`Deine Prüfungsaufgabe: ${T.need}.\nNoch ${T.left} Tag${T.left>1?'e':''}. Ich warte auf dich.`,[['Ich gehe',()=>endTalk(),1]]);return true;}
+  return false;}
+function rivalDialog(){const r=DW.rival(),lead=r.mine-r.his;const line=lead>0?`Diese Woche liegst du vorne, ${r.mine} zu ${r.his}. Geniess es, solange es dauert.`:lead<0?`Diese Woche stehe ich bei ${r.his} perfekten Tagen, du bei ${r.mine}. Holst du mich noch ein?`:`Gleichstand diese Woche: ${r.mine} zu ${r.his}. Spannend.`;
+  dlgK('Bruder Ren',`«Meine Serie: ${r.streak} Tage am Stück. Deine: ${r.myStreak}.»\n\n${line}\n\nWer am Sonntag mehr perfekte Tage hat, gewinnt. Gewinnst du, gibt es 15 Kupfer.`,[['Die Herausforderung steht',()=>{endTalk();msg('Bruder Ren nickt dir knapp zu.');},1]]);}
+function sealedGate(){if(W.ch)return;const M=W.M,x=0,z=-13.4,mp=DW.mapState(),g=new TH.Group();g.position.set(x,groundH(x,z),z);W.root.add(g);const R0=W.root;W.root=g;
+  try{const st=W.M.stone;box(5.4,3.6,1.2,st,0,0,-.4,1.5);box(6,.4,1.6,st,0,3.6,-.4,1.5);roof(6.6,2.4,.7,0,4,-.4);
+    const disk=new TH.Mesh(new TH.CylinderGeometry(1.25,1.25,.3,32),new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#8a8478',roughness:.95}));disk.rotation.x=Math.PI/2;disk.position.set(mp.open?1.9:0,1.4,.35);g.add(disk);
+    for(let i=0;i<4;i++){const a=i/4*6.28+.785,on=i<mp.n;const sl=new TH.Mesh(new TH.CylinderGeometry(.16,.16,.08,16),on?new TH.MeshStandardMaterial({color:'#e8b84a',emissive:'#ffb030',emissiveIntensity:1.2,metalness:.6}):new TH.MeshStandardMaterial({color:'#2a2622'}));sl.rotation.x=Math.PI/2;sl.position.set(Math.cos(a)*.75,Math.sin(a)*.75,.17);disk.add(sl);}
+    const ce=new TH.Mesh(new TH.TorusGeometry(.3,.05,6,20),M.gold);ce.position.set(0,0,.17);disk.add(ce);
+    if(mp.open){const gl=new TH.Mesh(new TH.PlaneGeometry(2.2,2.6),new TH.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:.75}));gl.position.set(0,1.3,.12);g.add(gl);const L=new TH.PointLight(0xffc060,1.2,6,2);L.position.set(0,1.5,1);g.add(L);}
+    [-2.2,2.2].forEach(s=>{const q=new TH.Group();q.position.x=s;g.add(q);const r1=W.root;W.root=q;try{stoneLantern(0,.9,mp.n>0);}finally{W.root=r1;}});
+  }finally{W.root=R0;}W.solids.push([x,z-.3,2.6]);
+  W.inter.push({x,z:z+1.6,r:1.8,label:mp.open?'Der verborgene Schrein':'Versiegeltes Tor',btn:mp.open?'Eintreten':'Untersuchen',act:()=>{const m=DW.mapState();
+    if(m.open){dlgK('Der verborgene Schrein','Hinter dem Tor liegt ein stiller Raum aus Gold und Stein. In der Mitte schwebt eine Perle aus Licht. Hier haben die alten Meister gesessen, als niemand mehr ins Kloster kam.\n\nDu hast den Weg gefunden, weil du jeden Tag zurückgekommen bist.',[['Verneigen',()=>{endTalk();DW.bell(1.2);msg('Stille.');},1]]);return;}
+    if(m.n>=4){dlgK('Versiegeltes Tor','Vier Kartenstücke glühen im Stein. Langsam rollt die Scheibe zur Seite…',[['Eintreten',()=>{DW.mapOpen();endTalk();DW.bell(1.5);W.shake=.8;msg('Das Tor ist offen! Robe «Mitternacht» und 100 Kupfer erhalten.');setTimeout(()=>{if(W){const k={room:null};close();open(k);}},2200);},1]]);return;}
+    dlgK('Versiegeltes Tor',`Eine runde Steinscheibe mit vier Mulden. ${m.n} von 4 glühen.\n\nMeister Shen sagt: «Für jede Woche ohne Lücke, sieben perfekte Tage in Folge, findest du ein Kartenstück. Mit allen vier öffnet sich der Weg.»`,[['Verstanden',()=>endTalk(),1]]);}});}
+function rivalNpc(){if(!window.MonkKit||W.ch)return;MonkKit.load(()=>{if(!W||W.ch)return;const o=MonkKit.npc('#2a3a5a','#c99a72','#1a1614');if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});const x=10.6,z=14.4;o.position.set(x,groundH(x,z),z);o.rotation.y=-2.3;W.root.add(o);
+  const mx=new TH.AnimationMixer(o);let ac=null;xclip('Form',c=>{ac=mx.clipAction(c);ac.play();});W.renMix=mx;W.inter.push({x,z,r:1.7,label:'Bruder Ren · dein Rivale',btn:'Herausfordern',act:()=>rivalDialog()});});}
+function rareMoments(){if(W.ch)return;const h=new Date().getHours();
+  if(h>=5&&h<7&&!DW.day('_fox')){const f=new TH.Group(),wm=new TH.MeshStandardMaterial({color:'#f6f3ec',roughness:.8,emissive:'#fff2d8',emissiveIntensity:.25});const b=new TH.Mesh(new TH.SphereGeometry(.22,14,10),wm);b.scale.set(.75,.8,1.6);b.position.y=.42;f.add(b);
+    const hd=new TH.Mesh(new TH.SphereGeometry(.15,12,10),wm);hd.position.set(0,.62,.36);f.add(hd);const sn=new TH.Mesh(new TH.ConeGeometry(.07,.22,10),wm);sn.rotation.x=Math.PI/2;sn.position.set(0,.58,.53);f.add(sn);[-1,1].forEach(s=>{const e=new TH.Mesh(new TH.ConeGeometry(.06,.17,6),wm);e.position.set(s*.08,.8,.32);f.add(e);});
+    [[-.08,.2],[.08,.2],[-.08,-.22],[.08,-.22]].forEach(([a,c])=>{const l=new TH.Mesh(new TH.CylinderGeometry(.03,.03,.32,6),wm);l.position.set(a,.16,c);f.add(l);});
+    const tl=new TH.Mesh(new TH.SphereGeometry(.14,12,8),wm);tl.scale.set(1,1,3);tl.position.set(0,.55,-.55);tl.rotation.x=-.6;f.add(tl);const sp=new TH.Sprite(new TH.SpriteMaterial({map:softTex(),color:0xfff0c8,transparent:true,opacity:.6,depthWrite:false,blending:TH.AdditiveBlending}));sp.scale.setScalar(1.8);sp.position.y=.5;f.add(sp);
+    const x=-7.2,z=16.2;f.position.set(x,groundH(x,z),z);f.rotation.y=2.4;W.root.add(f);W.fox=f;
+    W.inter.push({x,z,r:2.2,label:'Ein weisser Fuchs',btn:'Still nähern',act:()=>{if(!W.fox)return;const ok=DW.vact('_fox',3,'Der weisse Fuchs');W.fox.userData.run=1;msg(ok?'Der Fuchs schaut dich lange an und verschwindet im Nebel. Ein seltener Moment · +3 Chi':'Der Fuchs verschwindet im Nebel.');DW.bell(.5);}});}
+  if((h>=22||h<4)&&!DW.day('_ghost')){MonkKit&&MonkKit.load(()=>{if(!W||W.ch)return;const o=MonkKit.npc('#9ab8d8','#c8d8e8','#e8f0f8');if(!o)return;o.traverse(c=>{if(c.isMesh){c.material=c.material.clone();c.material.transparent=true;c.material.opacity=.32;c.material.emissive=new TH.Color('#6a9ad8');c.material.emissiveIntensity=.6;c.material.depthWrite=false;}});
+    const x=-9.5,z=8.6;o.position.set(x,groundH(x,z)+.15,z);o.rotation.y=.8;W.root.add(o);W.ghost=o;const L=new TH.PointLight(0x8ab8ff,.8,5,2);L.position.y=1.4;o.add(L);
+    W.inter.push({x,z,r:2,label:'Eine Gestalt aus Licht',btn:'Zuhören',act:()=>{const ok=DW.vact('_ghost',3,'Der Nachtgeist');dlgK('Ein alter Mönch aus Licht','«Ich habe hier gefegt, jeden Morgen, vierzig Jahre lang. Niemand hat es gesehen. Aber der Hof war immer sauber.»\n\nDann löst er sich auf wie Atem in kalter Luft.'+(ok?'\n\n+3 Chi · seltener Moment':''),[['Danke',()=>{endTalk();if(W.ghost){W.ghost.userData.fade=1;}},1]]);}});});}}
+function tensionUpdate(dt,t){if(W.renMix)W.renMix.update(dt);
+  if(W.fox){const f=W.fox;if(f.userData.run){f.position.x-=dt*4;f.position.z+=dt*2;f.scale.multiplyScalar(1-dt*.8);if(f.scale.x<.05){W.root.remove(f);W.fox=null;}}else{f.position.y=groundH(f.position.x,f.position.z)+Math.abs(Math.sin(t*1.2))*.02;}}
+  if(W.ghost){const g=W.ghost;g.position.y+=Math.sin(t*1.3)*.002;if(g.userData.fade){g.traverse(c=>{if(c.isMesh)c.material.opacity*=1-dt*1.5;});g.position.y+=dt*.4;if(g.position.y>6){W.root.remove(g);W.ghost=null;}}}
+  if(W.foe&&W.foeRoam&&W.av){const o=W.foe,R=W.foeRoam,p=R.pts[R.i],ap=W.av.position,da=Math.hypot(ap.x-o.position.x,ap.z-o.position.z);let tx=p[0],tz=p[1],sp=.7;
+    if(da<3){tx=o.position.x+(o.position.x-ap.x);tz=o.position.z+(o.position.z-ap.z);sp=2.4;}const dx=tx-o.position.x,dz=tz-o.position.z,d=Math.hypot(dx,dz);if(d<.3&&da>=3){R.i=(R.i+1)%R.pts.length;}else if(d>.01){const nx=o.position.x+dx/d*sp*dt,nz=o.position.z+dz/d*sp*dt;if(Math.hypot(nx,nz)<30&&nz<24){o.position.x=nx;o.position.z=nz;o.position.y=groundH(nx,nz);}}
+    if(W.smoke)W.smoke.position.copy(o.position);if(W.foeIt){W.foeIt.x=o.position.x;W.foeIt.z=o.position.z;}}}
+
+
+/* ---------- Dorfbewohner bitten um Rat ---------- */
+const RAT=[
+{w:'Bauer Jun',q:'Mein Sohn will jeden Tag gleich das ganze Feld umgraben. Nach zwei Tagen gibt er auf. Was soll ich ihm sagen?',o:['Er soll es weiter versuchen, bis er es schafft','Jeden Tag nur eine Reihe – aber jeden Tag','Er ist zu jung, lass ihn spielen'],a:1,y:'Kleine Schritte, die man jeden Tag schafft, tragen weiter als grosse, die man nach zwei Tagen aufgibt.'},
+{w:'Händlerin Yu',q:'Ich will morgens früher aufstehen, aber abends sitze ich lange beim Licht. Was rätst du mir?',o:['Einfach stärker sein am Morgen','Den Abend ändern: früher das Licht löschen','Mittags schlafen'],a:1,y:'Der Morgen beginnt am Abend. Wer früher zur Ruhe kommt, steht leichter auf.'},
+{w:'Fischer Bo',q:'Drei Tage hab ich nichts gefangen. Soll ich das Fischen aufgeben?',o:['Ja, es lohnt sich nicht','Weiterfischen, aber prüfen, was ich anders machen kann','Nur noch an Glückstagen fischen'],a:1,y:'Ausdauer heisst nicht, blind weiterzumachen. Bleib dran und lerne aus jedem Tag.'},
+{w:'Weberin Sun',q:'Gestern habe ich meine Arbeit liegen lassen. Jetzt fühle ich mich schlecht und will gar nicht mehr anfangen.',o:['Heute einfach wieder anfangen, ohne mich zu bestrafen','Doppelt so viel arbeiten zur Strafe','Bis Montag warten und neu starten'],a:0,y:'Ein verpasster Tag ist kein Scheitern. Zwei verpasste Tage werden zur Gewohnheit. Fang heute wieder an.'},
+{w:'Kind Ling',q:'Ich will stark werden wie die Mönche. Wie viele Liegestütze muss ich am ersten Tag machen?',o:['So viele wie möglich, bis es wehtut','Ein paar, die du jeden Tag schaffst','Gar keine, Stärke ist angeboren'],a:1,y:'Wer am ersten Tag übertreibt, hört am dritten auf. Beginne so leicht, dass du morgen wiederkommen willst.'},
+{w:'Älteste Mei',q:'Die Leute im Dorf streiten, wer den Brunnen reparieren muss. Was würdest du tun?',o:['Den Schuldigen suchen','Selbst anfangen, ein Eimer nach dem anderen','Warten, bis jemand anderes es tut'],a:1,y:'Wer anfängt, zieht andere mit. Ein Beispiel wiegt mehr als hundert Worte.'},
+{w:'Bauer Jun',q:'Mein Nachbar hat schon geerntet, ich noch nicht. Mache ich etwas falsch?',o:['Ja, ich muss schneller werden','Jedes Feld hat seine Zeit – ich schaue auf mein Feld','Ich ernte jetzt, egal ob reif'],a:1,y:'Vergleiche dich mit dir von gestern, nicht mit deinem Nachbarn.'},
+{w:'Händlerin Yu',q:'Ich habe so viele Pläne für den Markt, dass ich gar nicht weiss, wo anfangen.',o:['Alles gleichzeitig beginnen','Einen Plan wählen und ihn zu Ende bringen','Erst warten, bis die Zeit perfekt ist'],a:1,y:'Wer zwei Hasen jagt, fängt keinen. Eins nach dem anderen.'},
+{w:'Fischer Bo',q:'Ich bin so müde, aber heute ist doch Markttag. Soll ich trotzdem gehen?',o:['Ruhe ist auch Arbeit – heute schlafen, morgen frisch','Immer weitermachen, Müdigkeit ist Schwäche','Gehen, aber schlecht gelaunt'],a:0,y:'Auch die Mönche ruhen. Erholung gehört zum Weg, sie ist kein Abweg.'},
+{w:'Kind Pei',q:'Warum fegt Bruder Wei jeden Tag den Hof, wenn morgen wieder Blätter fallen?',o:['Weil er nichts Besseres zu tun hat','Weil das Fegen ihn selbst ordnet, nicht nur den Hof','Damit es immer sauber ist, für immer'],a:1,y:'Die tägliche Übung formt den, der sie tut. Das Ergebnis ist nicht das Ziel, sondern der Weg.'},
+{w:'Weberin Sun',q:'Ich habe mir vorgenommen, mehr zu lesen. Aber ich vergesse es immer.',o:['Mehr Willenskraft','Das Buch dorthin legen, wo ich abends sitze, und nach dem Tee lesen','Lesen ist nicht so wichtig'],a:1,y:'Verbinde die neue Gewohnheit mit einer alten: nach dem Tee kommt das Buch. Der Ort erinnert dich.'},
+{w:'Älteste Mei',q:'Ein junger Mann sagt, er beginnt erst, wenn er alles weiss. Was sagst du ihm?',o:['Er hat recht, Wissen kommt zuerst','Man lernt den Weg, indem man ihn geht','Er soll einen Lehrer bezahlen'],a:1,y:'Kein Mensch wurde je durchs Lesen über das Schwimmen zum Schwimmer.'}];
+function ratToday(){const d=new Date(),i=d.getFullYear()*372+d.getMonth()*31+d.getDate();return RAT[(i*5)%RAT.length];}
+function ratDialog(N){const R=ratToday();N.face=true;N.wait=99;
+  dlgK(R.w+' bittet um Rat',`«${R.q}»`,R.o.map((o,i)=>[o,()=>{DW.day('_ratd',1);W.seeker=null;N.wait=3;
+    if(i===R.a){const ok=DW.vact('_rat',3,'Guter Rat');if(ok)DW.addCoins(2,'Dank für deinen Rat');dlgK(R.w,`Sein Gesicht hellt sich auf. «Danke. Genau das brauchte ich.»\n\n${R.y}`+(ok?'\n\n+3 Weisheit · +2 Kupfer':''),[['Gern',()=>{endTalk();DW.bell(.8);},1]]);}
+    else dlgK(R.w,`Er nickt langsam, aber er wirkt nicht überzeugt und geht nachdenklich davon.\n\nMeister Shen würde sagen: «${R.y}»`,[['Ich denke darüber nach',()=>endTalk(),1]]);}]));}
+function seekerUpdate(dt){const N=W.seeker;if(!N||!W.av||!W.inVillage||W.talking)return;const o=N.o.position,a=W.av.position,d=Math.hypot(a.x-o.x,a.z-o.z);
+  if(d<14&&d>1.7){const ux=(o.x-a.x)/d,uz=(o.z-a.z)/d,t=[a.x+ux*1.4,a.z+uz*1.4];N.pts=[t,t];N.wait=0;N.sp=1.3;}
+  if(d<=1.9&&!N.asked){N.asked=1;N.face=true;N.wait=99;setTimeout(()=>{if(W&&W.seeker===N&&!W.talking)ratDialog(N);},500);}}
+
+
+/* ---------- Auf der Bank sitzen: manchmal kommt jemand vorbei ---------- */
+const BTIPS=[
+{w:'Ein Wanderer',q:'«Was wird grösser, je mehr man davon wegnimmt?»',o:['Ein Loch','Ein Berg','Ein Schatten'],a:0,y:'Ein Loch. Manchmal wächst etwas gerade dadurch, dass man weglässt.'},
+{w:'Eine alte Teehändlerin',q:'«Ich habe Städte, aber keine Häuser. Wälder, aber keine Bäume. Wasser, aber keine Fische. Was bin ich?»',o:['Ein Traum','Eine Landkarte','Ein Gemälde'],a:1,y:'Eine Landkarte. Sie zeigt den Weg, aber gehen musst du ihn selbst.'},
+{w:'Ein Pilger',q:'«Was gehört dir, wird aber von anderen viel öfter benutzt als von dir?»',o:['Dein Name','Dein Schatten','Deine Zeit'],a:0,y:'Dein Name. Achte darauf, was andere mit ihm verbinden.'},
+{w:'Mönch Hui',q:'«Ein Mönch steigt bei Sonnenaufgang auf den Berg und am nächsten Tag zur gleichen Zeit hinab. Gibt es einen Ort, an dem er an beiden Tagen zur gleichen Uhrzeit war?»',o:['Nein, unmöglich','Ja, ganz sicher','Nur wenn er gleich schnell geht'],a:1,y:'Ja. Stell dir zwei Mönche vor, die am selben Tag gehen, einer hinauf, einer hinab. Irgendwo begegnen sie sich. Manchmal hilft ein anderer Blick.'},
+{w:'Ein Kind mit Drachen',q:'«Je mehr du davon hast, desto weniger siehst du. Was ist es?»',o:['Licht','Dunkelheit','Geld'],a:1,y:'Dunkelheit. Und ein bisschen auch Ablenkung.'},
+{w:'Eine alte Teehändlerin',t:'«Wenn du etwas Neues lernen willst, verknüpfe es mit etwas, das du schon jeden Tag tust. Nach dem Zähneputzen kommt die Atemübung. So vergisst du es nicht.»'},
+{w:'Ein Pilger',t:'«Stell die Laufschuhe am Abend vor die Tür. Morgens musst du dann nicht entscheiden, nur hineinschlüpfen.»'},
+{w:'Mönch Hui',t:'«Die Zwei-Minuten-Regel: Wenn du keine Lust hast, mach nur zwei Minuten. Fast immer machst du danach weiter.»'},
+{w:'Ein Kind mit Drachen',t:'«Mein Opa sagt: Wenn du einen Tag verpasst, ist das Pech. Wenn du zwei verpasst, ist das der Anfang einer neuen Gewohnheit.»'},
+{w:'Ein Wanderer',t:'«Schreib am Abend auf, was morgen das Wichtigste ist. Dann wacht dein Kopf schon mit einem Plan auf.»'},
+{w:'Eine alte Teehändlerin',t:'«Trink ein Glas Wasser, bevor du zum Handy greifst. Klingt klein, verändert den ganzen Morgen.»'}];
+function benchSpots(){return W.inVillage!=null&&W.av&&W.av.position.z>37?[]:[];}
+function addBench(x,z,ry,y,M){const g=new TH.Group();g.position.set(x,y,z);g.rotation.y=ry;W.root.add(g);const R0=W.root;W.root=g;try{box(1.6,.08,.42,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#8a6a44'}),0,.42,0,1);box(1.6,.36,.06,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#7a5a3a'}),0,.62,-.2,1);[-.65,.65].forEach(s=>box(.12,.42,.36,W.M.stone,s,0,0,1));}finally{W.root=R0;}
+  W.solids.push([x,z,.55]);const fx=Math.sin(ry),fz=Math.cos(ry);W.inter.push({x:x+fx*.9,z:z+fz*.9,r:1.3,label:'Bank',btn:'Hinsetzen',act:()=>sitDown(x,z,ry,y)});}
+function sitDown(x,z,ry,y){if(!W||!W.av)return;endTalk();const av=W.av;av.position.set(x+Math.sin(ry)*.08,y+.42,z+Math.cos(ry)*.08);av.rotation.y=ry;W.yaw=ry+Math.PI;
+  W.sit={x,z,ry,y:y+.42,t:0,next:5+Math.random()*7,vis:null,done:false};msg('Du setzt dich und atmest durch. Bewege dich, um aufzustehen.');}
+function standUp(){if(!W.sit)return;const S=W.sit;if(S.vis&&S.vis.o){S.vis.leave=1;}W.sit=null;}
+function sitUpdate(dt){const S=W.sit;if(!S)return;S.t+=dt;if(W.av){W.av.position.y=S.y;}
+  if(!S.vis&&!S.done&&S.t>S.next){S.done=true;const first=!DW.day('_benchv');if(first||Math.random()<.55){spawnVisitor(S);}else{msg('Niemand kommt vorbei. Nur der Wind. Auch das ist gut.');}}
+  const V=S.vis;if(V&&V.o){V.mx.update(dt);const o=V.o,tx=S.x+Math.sin(S.ry)*1.5,tz=S.z+Math.cos(S.ry)*1.5,dx=tx-o.position.x,dz=tz-o.position.z,d=Math.hypot(dx,dz);
+    if(d>.1&&!V.arrived){o.position.x+=dx/d*Math.min(d,dt*1.1);o.position.z+=dz/d*Math.min(d,dt*1.1);o.position.y=heightAt(o.position.x,o.position.z);o.rotation.y=Math.atan2(dx,dz);V.w.setEffectiveWeight(1);V.i.setEffectiveWeight(0);}
+    else if(!V.arrived){V.arrived=1;V.w.setEffectiveWeight(0);V.i.setEffectiveWeight(1);o.rotation.y=S.ry+Math.PI;setTimeout(()=>W&&W.sit===S&&tipDialog(S,V),300);}}}
+function spawnVisitor(S){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.sit!==S)return;const cols=[['#6a4a3a','#c9926a','#2a2420'],['#3a4a5a','#e0b896','#c9c4bb'],['#7a6a3a','#a8784f','#1a1614'],['#5a3a4a','#c99a72','#d8d4cc']];const c=cols[Math.floor(Math.random()*cols.length)];const o=MonkKit.npc(c[0],c[1],c[2]);if(!o)return;
+  const a=S.ry+(Math.random()<.5?1.2:-1.2),sx=S.x+Math.sin(a)*9,sz=S.z+Math.cos(a)*9;o.position.set(sx,heightAt(sx,sz),sz);o.traverse(m=>{if(m.isMesh)m.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(cl=>A[cl.name]=mx.clipAction(cl));A.Walk.play();A.Idle.play();A.Idle.setEffectiveWeight(0);
+  S.vis={o,mx,w:A.Walk,i:A.Idle,tip:BTIPS[Math.floor(Math.random()*BTIPS.length)]};});}
+function tipDialog(S,V){const T=V.tip;DW.day('_benchv',1);const bye=()=>{endTalk();V.leave=1;setTimeout(()=>{if(W&&V.o){W.root.remove(V.o);V.o=null;}},6000);};
+  if(T.t){const ok=DW.vact('_bench',1,'Rast auf der Bank');dlgK(T.w+' setzt sich kurz zu dir',T.t+(ok?'\n\n+1 Ruhe':''),[['Danke für den Tipp',bye,1]]);return;}
+  dlgK(T.w+' bleibt stehen',T.q+'\n\nEr lächelt: «Na, weisst du es?»',T.o.map((o,i)=>[o,()=>{if(i===T.a){const ok=DW.vact('_riddle',2,'Rätsel gelöst');dlgK(T.w,'«Richtig!»\n\n'+T.y+(ok?'\n\n+2 Weisheit':''),[['Schön',bye,1]]);DW.bell(.7);}else dlgK(T.w,'«Knapp daneben.»\n\n'+T.y,[['Ach so',bye,1]]);}]));}
+function visitorsUpdate(dt){if(!W.sit)return;}
 
 /* ---------- Begehbare Dorfhäuser ---------- */
 const VLORE=['Vor hundert Jahren stand das Kloster leer. Ein einziger Mönch fegte jeden Morgen den Hof – bis andere kamen, um zu sehen, warum.','Der Bach heisst «Stiller Bach», weil er im Winter unter dem Eis weiterfliesst. Man hört ihn nur, wenn man still ist.','Die Drachen an der Treppe wurden von Steinmetzen aus dem Tal gehauen. Für jede Stufe ein Tag Arbeit.','Wer im Dorf geboren wird, pflanzt einen Kirschbaum. Die ältesten stehen schon lange nicht mehr – aber die Wurzeln sind noch da.','Mei sagt: «Ein Dorf ist wie ein Körper. Wenn eine Hand hilft, wird das ganze Dorf stärker.»','Früher kamen die Mönche jeden Markttag herunter. Dann kam der lange Winter, und niemand stieg mehr hinab. Bis jetzt.'];
@@ -547,7 +649,7 @@ function villageMore(C){const{lvl,has,night,beam,strip,pathM}=C,M=W.M,gh=groundH
      box(.5,.3,.3,dark,0,.5,.55,1);[[-.3,.6],[.3,.6]].forEach(([a,b])=>{const c=new TH.Mesh(new TH.CylinderGeometry(.03,.03,.16,8),mat('#f2ead8',{emissive:'#ffb860',emissiveIntensity:night?1.2:.2}));c.position.set(a,.88,b);q.add(c);});
      [-1.1,1.1].forEach(s=>cyl(.1,2.6,red,s,0,2.4,10));box(3.2,.16,.2,red,0,2.55,2.4,1);box(2.6,.12,.16,red,0,2.15,2.4,1);
      const bx=new TH.Mesh(new TH.BoxGeometry(.5,.3,.35),mat('#6a3a1e',{map:W.tex.woodD}));bx.position.set(0,.65,1.2);q.add(bx);});
-   solidBox(x,z,1.3,1.4);[[-24.4,42.2],[-24.4,47]].forEach(([a,b])=>{const q2=new TH.Group();q2.position.y=gh(a,b);W.root.add(q2);inG(q2,()=>stoneLantern(a,b,true));});
+   solidBox(x,z,1.3,1.4);W.solids.push([-24,43.5,.18],[-24,45.7,.18]);[[-24.4,42.2],[-24.4,47]].forEach(([a,b])=>{const q2=new TH.Group();q2.position.y=gh(a,b);W.root.add(q2);inG(q2,()=>stoneLantern(a,b,true));});
    W.inter.push({x:-24.2,z:44.6,r:1.8,label:'Dorfschrein',btn:'Verneigen',act:()=>dlgK('Dorfschrein','Ein kleiner Schrein für den Berggeist. Die Dorfleute legen hier Reis und Münzen ab.',[
      ['Opfergabe · 1 Kupfer',()=>vBuy(1,'_shr',2,'Opfergabe am Schrein','Die Glocke klingt lange nach. Du fühlst dich leicht.')],['Still verneigen',()=>{endTalk();if(W.av)playOnce&&playOnce('Bow');DW.bell(.6);msg('Du verneigst dich vor dem Schrein.');},1]])});}
 
@@ -575,19 +677,19 @@ function villageMore(C){const{lvl,has,night,beam,strip,pathM}=C,M=W.M,gh=groundH
     const fence=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),n=Math.ceil(L/.18);for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n,z=z0+(z1-z0)*i/n;cyl(.035,.8+(i%2)*.1,mat('#a89a5a'),x,gh(x,z),z,5);}[.3,.65].forEach(h=>{const b=new TH.Mesh(new TH.CylinderGeometry(.025,.025,L,5),mat('#8a7a4a'));b.rotation.x=Math.PI/2;b.rotation.y=Math.atan2(x1-x0,z1-z0);b.position.set((x0+x1)/2,gh((x0+x1)/2,(z0+z1)/2)+h,(z0+z1)/2);W.root.add(b);});};
     fence(cx-w/2,cz-d/2,cx+w/2,cz-d/2);fence(cx-w/2,cz+d/2,cx+w/2,cz+d/2);fence(cx-w/2,cz-d/2,cx-w/2,cz+d/2);solidBox(cx,cz,w/2+.1,d/2+.1);};
   garden(-16.6,44.3,3.4,3.6);garden(16.6,44.3,3.4,3.6);if(lvl>=1){garden(-25.5,52.5,3,4.4);}
-  const line=(x0,z0,x1,z1)=>{[[x0,z0],[x1,z1]].forEach(([x,z])=>cyl(.05,2.2,beam,x,gh(x,z),z,6));const y0=gh(x0,z0)+2.1,y1=gh(x1,z1)+2.1,n=6;for(let i=0;i<n;i++){const t=(i+.5)/n,x=x0+(x1-x0)*t,z=z0+(z1-z0)*t,y=y0+(y1-y0)*t-Math.sin(t*Math.PI)*.18;const c=new TH.Mesh(new TH.PlaneGeometry(.55,.75+R()*.3),cloth[Math.floor(R()*5)]);c.geometry.translate(0,-.4,0);c.position.set(x,y,z);c.rotation.y=Math.atan2(x1-x0,z1-z0)+Math.PI/2;W.root.add(c);(U.cloth=U.cloth||[]).push(c);}};
+  const line=(x0,z0,x1,z1)=>{[[x0,z0],[x1,z1]].forEach(([x,z])=>{cyl(.05,2.2,beam,x,gh(x,z),z,6);W.solids.push([x,z,.15]);});const y0=gh(x0,z0)+2.1,y1=gh(x1,z1)+2.1,n=6;for(let i=0;i<n;i++){const t=(i+.5)/n,x=x0+(x1-x0)*t,z=z0+(z1-z0)*t,y=y0+(y1-y0)*t-Math.sin(t*Math.PI)*.18;const c=new TH.Mesh(new TH.PlaneGeometry(.55,.75+R()*.3),cloth[Math.floor(R()*5)]);c.geometry.translate(0,-.4,0);c.position.set(x,y,z);c.rotation.y=Math.atan2(x1-x0,z1-z0)+Math.PI/2;W.root.add(c);(U.cloth=U.cloth||[]).push(c);}};
   line(-9,44.6,-9,50.6);line(9,44.6,9,50.6);
-  const wood=(x,z,ry)=>{const q=grp(x,z,ry);inG(q,()=>{for(let r=0;r<4;r++)for(let i=0;i<5-r%2;i++){const l=new TH.Mesh(new TH.CylinderGeometry(.11,.11,1.1,7),mat(['#7a5a3a','#8a6a44','#6a4a2e'][(i+r)%3]));l.rotation.x=Math.PI/2;l.position.set(-.45+i*.23+(r%2)*.11,.12+r*.2,0);q.add(l);}box(1.4,.08,1.3,mat('#4a3424'),0,.95,0,1);});};
+  const wood=(x,z,ry)=>{W.vbox.push([x,z,.8,.8]);const q=grp(x,z,ry);inG(q,()=>{for(let r=0;r<4;r++)for(let i=0;i<5-r%2;i++){const l=new TH.Mesh(new TH.CylinderGeometry(.11,.11,1.1,7),mat(['#7a5a3a','#8a6a44','#6a4a2e'][(i+r)%3]));l.rotation.x=Math.PI/2;l.position.set(-.45+i*.23+(r%2)*.11,.12+r*.2,0);q.add(l);}box(1.4,.08,1.3,mat('#4a3424'),0,.95,0,1);});};
   wood(-14.1,56.6,Math.PI/2);wood(14.1,56.6,Math.PI/2);wood(25,56.2,0);
-  const barrel=(x,z)=>{const b=cyl(.32,.75,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#8a5a34'}),x,gh(x,z),z,12);[.15,.6].forEach(h=>{const r=new TH.Mesh(new TH.TorusGeometry(.33,.025,4,16),mat('#3a3a3a',{metalness:.6}));r.rotation.x=Math.PI/2;r.position.set(x,gh(x,z)+h,z);W.root.add(r);});};
+  const barrel=(x,z)=>{W.solids.push([x,z,.4]);const b=cyl(.32,.75,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#8a5a34'}),x,gh(x,z),z,12);[.15,.6].forEach(h=>{const r=new TH.Mesh(new TH.TorusGeometry(.33,.025,4,16),mat('#3a3a3a',{metalness:.6}));r.rotation.x=Math.PI/2;r.position.set(x,gh(x,z)+h,z);W.root.add(r);});};
   [[3.0,45.7],[3.5,46.3],[-12.2,58.3],[18.6,49.6],[23.2,49.2]].forEach(([x,z])=>barrel(x,z));
   {const x=-13.8,z=54.3,q=grp(x,z,.4);inG(q,()=>{box(1.2,.12,2,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#7a5a3a'}),0,.55,0,1);[-1,1].forEach(s=>{box(.06,.35,2,beam,s*.6,.67,0,1);const wh=new TH.Mesh(new TH.TorusGeometry(.42,.06,6,14),beam);wh.rotation.y=Math.PI/2;wh.position.set(s*.7,.42,.1);q.add(wh);});const h=new TH.Mesh(new TH.CylinderGeometry(.04,.04,1.6,5),beam);h.rotation.x=1.25;h.position.set(0,.4,-1.6);q.add(h);
      for(let i=0;i<5;i++){const s=new TH.Mesh(new TH.CylinderGeometry(.22,.26,.45,8),straw);s.position.set(-.3+(i%3)*.3,.85,-.5+Math.floor(i/3)*.6);q.add(s);}});solidBox(x,z,.9,1.3);}
   // Kakis an den Vordächern
   [[-6,42.6,1,0],[6,47.5,-1,3],[-12,48,1,6],[12,41.5,-1,13]].filter(h=>h[3]<C.nH).forEach(([hx,hz,f])=>{const fx=hx+f*2.15;for(let k=0;k<4;k++){const z=hz-1+k*.65;for(let j=0;j<5;j++){const p=new TH.Mesh(new TH.SphereGeometry(.07,8,6),mat('#e86a1a',{roughness:.5}));p.position.set(fx,gh(hx,hz)+2.2-j*.17,z);W.root.add(p);}}});
   // Bänke & Blumentöpfe am Platz
-  [[-4.4,54.9,0],[4.4,54.9,0]].forEach(([x,z,r])=>{const q=grp(x,z,r);inG(q,()=>{box(1.6,.08,.42,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#8a6a44'}),0,.42,0,1);[-.65,.65].forEach(s=>box(.12,.42,.36,W.M.stone,s,0,0,1));});});
-  [[-6.8,50.7],[6.8,50.7],[-6.8,53.3],[6.8,53.3]].forEach(([x,z],i)=>{cyl(.22,.35,mat('#7a3a24'),x,gh(x,z),z,10,.17);const f=new TH.Mesh(new TH.SphereGeometry(.28,10,8),mat(['#c84a6a','#e8c03a','#d8d0f0','#c86a2a'][i%4],{roughness:.9}));f.scale.y=.7;f.position.set(x,gh(x,z)+.5,z);W.root.add(f);});
+  [[-4.4,55.1,Math.PI],[4.4,55.1,Math.PI],[-6,61.7,0],[19.5,61.9,0]].forEach(([x,z,r])=>addBench(x,z,r,gh(x,z)));
+  [[-6.8,50.7],[6.8,50.7],[-6.8,53.3],[6.8,53.3]].forEach(([x,z],i)=>{W.solids.push([x,z,.32]);cyl(.22,.35,mat('#7a3a24'),x,gh(x,z),z,10,.17);const f=new TH.Mesh(new TH.SphereGeometry(.28,10,8),mat(['#c84a6a','#e8c03a','#d8d0f0','#c86a2a'][i%4],{roughness:.9}));f.scale.y=.7;f.position.set(x,gh(x,z)+.5,z);W.root.add(f);});
 
   // ---- Bäume, Büsche, Bambus, Kirschbäume rund ums Dorf
   [[-28,40],[-27,49],[-28.5,57],[28,40],[27,48.5],[28.5,59],[-27,76],[27,76],[-12,79],[12,79]].forEach(([x,z],i)=>maple(x,z,.8+R()*.4,R()));
@@ -616,7 +718,7 @@ function villageMore(C){const{lvl,has,night,beam,strip,pathM}=C,M=W.M,gh=groundH
    U.dog.it={x:4,z:50,r:1.3,label:'Hund Momo',btn:'Streicheln',act:()=>{U.dog.wait=4;U.dog.happy=2.5;msg('Momo wedelt begeistert mit dem Schwanz.');DW.bell(.4);}};W.inter.push(U.dog.it);}
 
   // ---- Laternen entlang der Querstrasse
-  [[-14,50.4],[14,50.4],[-22.5,50.4],[22.5,50.4],[-22.5,53.6],[22.5,53.6]].forEach(([x,z])=>{{const q=grp(x,z,0);inG(q,()=>{box(.3,.4,.3,W.M.stone,0,0,0,1);box(.22,.7,.22,W.M.stone,0,.4,0,1);box(.42,.08,.42,W.M.stone,0,1.1,0,1);box(.3,.3,.3,M.glow,0,1.18,0,1);box(.5,.1,.5,W.M.stone,0,1.48,0,1);});}});
+  [[-14,50.4],[14,50.4],[-22.5,50.4],[22.5,50.4],[-22.5,53.6],[22.5,53.6]].forEach(([x,z])=>{{W.solids.push([x,z,.32]);const q=grp(x,z,0);inG(q,()=>{box(.3,.4,.3,W.M.stone,0,0,0,1);box(.22,.7,.22,W.M.stone,0,.4,0,1);box(.42,.08,.42,W.M.stone,0,1.1,0,1);box(.3,.3,.3,M.glow,0,1.18,0,1);box(.5,.1,.5,W.M.stone,0,1.48,0,1);});}});
 }
 function vUpdate2(dt,t){const U=W.vU;if(!U)return;
   if(U.forge){const f=.8+Math.sin(t*7)*.25+Math.sin(t*13.1)*.15;U.forge.material.emissiveIntensity=1.3*f;if(U.forgeL)U.forgeL.intensity=1.2*f;}
@@ -743,6 +845,7 @@ function vnpcs(lvl){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)retu
   const V=[['#4a5a6a','#c9926a','#2a2420','Bauer Jun',(has=>has?[[-3,44],[-1.2,58],[0,61],[0,67.4],[-13,67.4],[-13,67.6],[0,67.6],[0,61],[1.2,58],[4,44]]:[[-3,44],[-3,58],[4,58],[4,44]])((DW.village().got||[]).includes('bruecke')),.8],['#7a4a3a','#a8784f','#1a1614','Händlerin Yu',[[-8,53],[8,53],[8,51],[-8,51]],.7],['#3a4a3a','#e0b896','#3a2a20','Fischer Bo',[[-20,61],[20,61]],.6],
     ['#6a5a3a','#8a5a3a','#1a1614','Weberin Sun',[[-14,44],[-14,56],[-8,56]],.7],['#4a3a5a','#c99a72','#2a2420','Kind Ling',[[-4,48],[4,48],[4,55],[-4,55]],1.2,.7],['#3a5a6a','#a8784f','#1a1614','Kind Pei',[[10,48],[3,54],[10,58]],1.3,.68]];
   mk('#7a3a3a','#d8a882','#1a1614',{name:'Wirtin Hua',pts:[[-22.4,60.1]],sp:.2});mk('#3a3430','#a8784f','#2a2420',{name:'Schmied Gang',pts:[[24.4,53.7]],sp:.2});
+  if(!DW.day('_ratd')&&DW.unlocks().extras){const R=ratToday();const ex=W.npcs.find(n=>n.name===R.w);if(ex){W.seeker=ex;}else{mk('#5a5a4a','#c9926a','#2a2420',{name:R.w,pts:[[-1.6,49.2],[-1.6,49.2]],sp:1.2});W.seeker=W.npcs.find(n=>n.name===R.w);}if(W.seeker){W.seeker.it.btn='Zuhören';const S0=W.seeker;W.seeker.it.act=()=>ratDialog(S0);}}
   V.slice(0,[2,3,5,6][lvl]).forEach(([r,s,h,n,pts,sp,sc])=>mk(r,s,h,{name:n,pts,sp,sc}));});}
 function goVillage(){if(!W||!W.av)return;endTalk();W.inVillage=1;const z=39.6,y=groundH(0,z);W.av.position.set(0,y,z);W.av.rotation.y=0;W.yaw=Math.PI;W.cam.position.set(0,y+3,z-5);W.camOv=null;
   if(W.fogSave)W.scene.fog.density=W.fogSave;const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);DW.bell(.8);}
@@ -824,6 +927,13 @@ function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name()
   {const st=DW.day('_nq')||0,{q}=nqToday();if(st===0)extra+=`\n${q.who} scheint etwas auf dem Herzen zu haben.`;else if(st===2)extra+=`\nBring ${q.who} die ${q.item}.`;}
   const wx={regen:'Draussen regnet es. Ein guter Tag für die Halle.',nebel:'Nebel liegt über dem Kloster.',schnee:'Es schneit. Die Welt ist still.'}[W.weather];
   {const nw=unlockNews();if(nw.length)extra='\n\n✦ '+nw.join('\n✦ ')+extra;}
+  {const L2=[];const v2=DW.village(),U2=DW.unlocks();if(U2.village&&v2.lost&&!DW.flag('lost_'+v2.lost.week)){DW.flag('lost_'+v2.lost.week,1);L2.push(`Das Dorf hat «${v2.lost.n}» verloren, weil «${v2.lost.from}» nicht rechtzeitig gelöst wurde. Ihr könnt es wieder aufbauen.`);}
+   if(U2.village&&v2.ev&&!v2.ok&&v2.daysLeft<=3)L2.push(`⚠ Noch ${v2.daysLeft} Tag${v2.daysLeft>1?'e':''} für «${v2.ev.n}». Sonst geht im Dorf etwas verloren.`);
+   const T2=DW.trial();if(T2)L2.push(T2.done?'Deine Prüfungsaufgabe ist erfüllt. Meister Shen wartet.':`Prüfungsaufgabe: ${T2.need} (noch ${T2.left} Tage).`);
+   const mp=DW.mapState();if(mp.fresh){mp.fresh=0;L2.push(`Ein Kartenstück gefunden! (${mp.n}/4) Es passt in das versiegelte Tor hinter dem Tempel.`);}
+   const rw=DW.rivalWeek();if(rw)L2.push(rw.won?`Wochensieg gegen Bruder Ren: ${rw.mine} zu ${rw.his} perfekte Tage. +15 Kupfer.`:`Bruder Ren hat die Woche gewonnen, ${rw.his} zu ${rw.mine}. Neue Woche, neue Chance.`);
+   if(W.fox)L2.push('Im Morgennebel wurde ein weisser Fuchs im Garten gesehen…');if(W.ghost)L2.push('Beim Teich schimmert ein bläuliches Licht…');
+   if(L2.length)extra+='\n\n'+L2.join('\n');}
   dlgK(first?'Tagesbeginn':'Heute',t+extra+(wx?'\n'+wx:'')+`\n\n«${spruch()}»`,btns);}
 /* ---------- Leuchtfeuer zum nächsten Ziel ---------- */
 function beacon(force){if(!W||W.ch)return;const L=DW.todayList().filter(r=>!r.done);if(!W.bcn){const g=new TH.Group();const bc=document.createElement('canvas');bc.width=4;bc.height=128;const bx=bc.getContext('2d'),bg=bx.createLinearGradient(0,0,0,128);bg.addColorStop(0,'rgba(255,220,140,0)');bg.addColorStop(.6,'rgba(255,220,140,.35)');bg.addColorStop(1,'rgba(255,220,140,.9)');bx.fillStyle=bg;bx.fillRect(0,0,4,128);
@@ -977,7 +1087,7 @@ function talk(st){if(DW.flag('guide')===2){DW.flag('guide',9);const U=DW.unlocks
     {const ri=DW.rankInfo();btns.unshift([ri.max?'Mein Rang':ri.eligible?'Rangprüfung ablegen':'Mein Rang',()=>{
       if(ri.max){dlg(`Du bist ${ri.name}. Höher geht es nicht. Jetzt gibst du weiter, was du gelernt hast.`,[['Danke',()=>endTalk()]]);return;}
       if(!ri.eligible){dlg(`Du bist ${ri.name}. Für ${ri.nextName} brauchst du ${ri.next.days} Tage im Rang (jetzt ${ri.days}) und ${Math.round(ri.next.pct*100)} % erfüllte Tage in den letzten ${ri.next.win} Tagen (jetzt ${Math.round(ri.pct*100)} %). Geduld. Eine Gewohnheit braucht Zeit.`,[['Verstanden',()=>endTalk()]]);return;}
-      const q=DW.examQ();dlg('Bevor ich dir den Schlüssel gebe, eine Frage:\n'+q.q,q.o.map((o,i)=>[o,()=>{if(i===q.a){DW.rankUp();const L=DW.lockedRooms();const ri2=DW.rankInfo();
+      if(trialFlow(ri))return;const q=DW.examQ();dlg('Bevor ich dir den Schlüssel gebe, eine Frage:\n'+q.q,q.o.map((o,i)=>[o,()=>{if(i===q.a){DW.trialClear();DW.rankUp();const L=DW.lockedRooms();const ri2=DW.rankInfo();
         if(!L.length){dlg(`Du bist jetzt ${ri2.name}. Alle Türen stehen dir offen.`,[['Danke, Meister',()=>endTalk(),1]]);return;}
         dlg(`Richtig. Du bist jetzt ${ri2.name}. Welche Tür willst du öffnen? Dahinter wartet eine neue Routine.`,L.map(r=>[r.n,()=>{DW.openDoor(r.id);endTalk();msg(r.n+' ist offen. Geh hin und lege deine neue Routine an.');setTimeout(()=>{if(W){const keep={room:r.id};close();open(keep);}},1600);}]));}
         else dlg('Nicht ganz. Lies die Lektionen im Dojo noch einmal und komm morgen wieder.',[['Verstanden',()=>endTalk()]]);}]));},ri.eligible]);}
@@ -1002,11 +1112,11 @@ function shadowFoe(){
     // Rauch
     const n=60,pp=new Float32Array(n*3);for(let i=0;i<n;i++){pp[i*3]=(Math.random()-.5)*1.2;pp[i*3+1]=Math.random()*2.2;pp[i*3+2]=(Math.random()-.5)*1.2;}
     const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pp,3));W.smoke=new TH.Points(g,new TH.PointsMaterial({color:0x08060a,size:.55,transparent:true,opacity:.7,depthWrite:false}));W.smoke.position.copy(o.position);W.root.add(W.smoke);
-    if(sh.duel!=null)W.solids.push([p[0],p[2],.6]);
-    W.inter.push({x:p[0],z:p[2],r:2.4,label:'Der Schatten',btn:'Ansehen',act:()=>{
+    if(sh.duel!=null)W.solids.push([p[0],p[2],.6]);else{W.foeRoam={pts:[[3.2,9],[-5,12],[-9,6],[-6,-1],[6,-1],[9,6],[5,15]],i:0};if(W.M.glow&&!W.M.glow.userData.dim){W.M.glow.userData.dim=1;W.M.glow.emissiveIntensity*=Math.max(.35,1-.22*(sh.dmg||1));}}
+    W.foeIt={x:p[0],z:p[2],r:2.4,label:'Der Schatten',btn:'Ansehen',act:()=>{
       const t=TAUNT[Math.floor(Math.random()*TAUNT.length)];
       const why=sh.duel!=null?`Hier endet dein Kapitel. Sieben perfekte Tage in Folge, dann lasse ich dich vorbei. Du stehst bei ${sh.duel} von 7.`:sh.dmg>0?`Ich habe mir genommen, was du liegen liessest. Jeder perfekte Tag nimmt mir wieder etwas weg.`:`Gestern warst du nicht da. Noch ein Tag, und ich nehme mir deinen Tempel.`;
-      dlg('«'+t+'»\n\n'+why,[['Wer bist du?',()=>dlg('Ich bin jede Ausrede, die du dir je erzählt hast. Ich werde nie ganz verschwinden. Aber ich weiche denen, die jeden Tag zurückkommen.',[['Ich komme wieder',()=>endTalk()]])],['Ich komme wieder',()=>endTalk(),1]]);$('#wDlgK').textContent='Der Schatten';}});});
+      dlg('«'+t+'»\n\n'+why,[['Wer bist du?',()=>dlg('Ich bin jede Ausrede, die du dir je erzählt hast. Ich werde nie ganz verschwinden. Aber ich weiche denen, die jeden Tag zurückkommen.',[['Ich komme wieder',()=>endTalk()]])],['Ich komme wieder',()=>endTalk(),1]]);$('#wDlgK').textContent='Der Schatten';}};W.inter.push(W.foeIt);});
 }
 
 /* ---------- Interaktion ---------- */
@@ -1028,6 +1138,7 @@ function msg(t){const m=$('#wMsg');m.textContent=t;m.classList.add('show');clear
 
 /* ---------- Bewegung & Kollision ---------- */
 function blocked(x,z,px,pz){
+  if(W.npcs&&px!=null){for(const N of W.npcs){const o=N.o.position,dn=Math.hypot(x-o.x,z-o.z);if(dn<.45&&dn<Math.hypot(px-o.x,pz-o.z))return true;}}
   if(!W.pilgrim&&stairY(x,z,1)!=null){if(!W.gateOpen&&z>25.1&&z<25.9)return true;if(!W.vOpen&&z>28.2&&z<36){if(!W._fogMsg||performance.now()-W._fogMsg>4000){W._fogMsg=performance.now();msg('Nebel liegt auf der Treppe. Ab Tag 3 öffnet sich der Weg ins Dorf.');}return true;}for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}return false;}
   if(!W.pilgrim&&z>34){for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}return vBlocked(x,z);}
   if(Math.hypot(x,z)>40)return true;if(!W.pilgrim&&z>25)return true;
@@ -1076,13 +1187,13 @@ function loop(){
   const dt=Math.min(.05,W.clock.getDelta()),t=W.clock.elapsedTime;
   let mx=W.mv.x,mz=W.mv.z;const K=W.keys;if(K.w||K.arrowup)mz=-1;if(K.s||K.arrowdown)mz=1;if(K.a||K.arrowleft)mx=-1;if(K.d||K.arrowright)mx=1;
   const ml=(W.med||W.tc||W.training)?0:Math.min(1,Math.hypot(mx,mz)),av=W.av;
-  W.moving=ml>.08;W.run=!!K.shift;if(W.moving)W.kneel=0;
+  if(ml>.08&&W.sit)standUp();W.moving=ml>.08;W.run=!!K.shift;if(W.moving)W.kneel=0;
   if(ml>.08){const sy=Math.sin(W.yaw),cy=Math.cos(W.yaw);const dx=(mx*cy+mz*sy),dz=(-mx*sy+mz*cy);const sp=4.6*ml*dt*((K.shift)?1.8:1)*(W.inHut?.6:1);const nx=av.position.x+dx/ml*sp*ml,nz2=av.position.z+dz/ml*sp*ml;
     if(!blocked(nx,nz2,av.position.x,av.position.z)){av.position.x=nx;av.position.z=nz2;}else if(!blocked(nx,av.position.z,av.position.x,av.position.z))av.position.x=nx;else if(!blocked(av.position.x,nz2,av.position.x,av.position.z))av.position.z=nz2;
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
   else W.walk*=.9;
-  const gy=heightAt(av.position.x,av.position.z);av.position.y+=(gy+Math.abs(Math.sin(W.walk))*.06*ml-av.position.y)*Math.min(1,dt*14);
-  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+((W.med&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);W.tw=(W.tw||0)+((W.tc&&A.TaiChi?1:0)-(W.tw||0))*Math.min(1,dt*2);if(A.TaiChi)A.TaiChi.setEffectiveWeight(W.tw);const mw=Math.max(W.mw*W.mw*(3-2*W.mw),W.tw),ow=W.onceN&&A[W.onceN]?A[W.onceN].getEffectiveWeight():0,rest=(1-kw)*(1-mw)*(1-ow);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
+  const gy=W.sit?W.sit.y:heightAt(av.position.x,av.position.z);av.position.y+=(gy+Math.abs(Math.sin(W.walk))*.06*ml-av.position.y)*Math.min(1,dt*14);
+  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+(((W.med||W.sit)&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);W.tw=(W.tw||0)+((W.tc&&A.TaiChi?1:0)-(W.tw||0))*Math.min(1,dt*2);if(A.TaiChi)A.TaiChi.setEffectiveWeight(W.tw);const mw=Math.max(W.mw*W.mw*(3-2*W.mw),W.tw),ow=W.onceN&&A[W.onceN]?A[W.onceN].getEffectiveWeight():0,rest=(1-kw)*(1-mw)*(1-ow);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
   if(av.userData.torso){const b=1+Math.sin(t*1.3)*.012;av.userData.torso.scale.set(b,1,b);av.rotation.z=Math.sin(W.walk)*.04*ml;}
   // Kamera
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut&&!inHut&&W.av){W.yawTo=W.av.rotation.y+Math.PI;}W.M.hid=W.M.hid||new TH.MeshBasicMaterial({colorWrite:false,depthWrite:false});if(W.inHut)W.inHut.roof.forEach(m=>{if(m.userData.mat)m.material=m.userData.mat;});if(inHut)inHut.roof.forEach(m=>{if(!m.userData.mat)m.userData.mat=m.material;m.material=W.M.hid;});W.inHut=inHut;if(W.vIntL){if(inHut&&inHut.lp){W.vIntL.position.set(...inHut.lp);W.vIntL.intensity=1.1;}else W.vIntL.intensity=0;}}
@@ -1109,7 +1220,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);tensionUpdate(.016,W.clock.elapsedTime);seekerUpdate(.016);sitUpdate(.016);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
@@ -1130,7 +1241,7 @@ function open(opts){opts=opts||{};
   if(ch!==3)grassField();
   {let room=opts.room;const h=new Date().getHours();if(!room&&h>=4&&h<12){const z=DW.rooms().find(r=>r.id==='zelle');if(z&&z.rit.some(x=>x.type==='window'&&x.due&&!x.done))room='zelle';}
    if(room){W.autoRoom=room;W.spawnRoom=room;}}
-  if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];if(!ch&&id==='zelle'&&!DW.flag('tut')){const P2=RPOS.zelle;W.meisterPos=[P2.c[0]+P2.f[0]*1.5,.35,P2.c[1]+1.3];W.spawnAt[3]=W.meisterPos[0]-sp[0];W.spawnAt[4]=W.meisterPos[2]-sp[2];W.tutZelle=1;}}applyTod();avatar();interactables(5);meister(5);if(W.tutZelle&&W.npc){W.npc.rotation.y=Math.atan2(W.spawnAt[0]-W.meisterPos[0],W.spawnAt[2]-W.meisterPos[2]);}if(!ch)shadowFoe();controls();ptsHud();
+  if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];if(!ch&&id==='zelle'&&!DW.flag('tut')){const P2=RPOS.zelle;W.meisterPos=[P2.c[0]+P2.f[0]*1.5,.35,P2.c[1]+1.3];W.spawnAt[3]=W.meisterPos[0]-sp[0];W.spawnAt[4]=W.meisterPos[2]-sp[2];W.tutZelle=1;}}applyTod();avatar();interactables(5);meister(5);if(W.tutZelle&&W.npc){W.npc.rotation.y=Math.atan2(W.spawnAt[0]-W.meisterPos[0],W.spawnAt[2]-W.meisterPos[2]);}if(!ch){shadowFoe();sealedGate();rivalNpc();rareMoments();addBench(-6.6,16.8,Math.PI/2,groundH(-6.6,16.8));addBench(6.6,16.8,-Math.PI/2,groundH(6.6,16.8));}controls();ptsHud();
   if(ch){const sp=[W.ch===2?3.6:0,12];W.inter.push({x:sp[0],z:sp[1]+1.5,r:1.4,label:'Heimweg ins Kloster',btn:'Zurück',act:()=>{close();open({room:'tor'});}});if(DW.pilgrimVisit(ch))setTimeout(()=>W&&msg('Pilgerreise: +20 Punkte'),1200);}
   if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen.\n\nSo funktioniert der Weg: Du erledigst deine Routinen im echten Leben und trägst sie hier ein. Dafür bekommst du Chi. Mit Chi wächst dein Kloster, und das Dorf im Tal blüht auf.`,`Jede Routine hat ihren Raum: Aufstehen in der Zelle, Essen in der Küche. Oben links siehst du immer deinen nächsten Schritt. Tipp ihn an, und du gehst direkt hin.`,`Die anderen Türen sind noch verschlossen. Mit jedem neuen Rang darfst du eine öffnen. Fang klein an. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);DW.flag('guide',1);endTalk();if(W)setTimeout(()=>W&&beacon(true),400);return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
   else if(!ch&&!opts.room&&!DW.day('_brief'))setTimeout(()=>{if(!W)return;if(new Date().getDay()===0&&!DW.day('_wk')&&DW.flag('tut'))weekReview();briefing(true);},1100);
