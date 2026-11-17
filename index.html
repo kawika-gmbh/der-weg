@@ -477,6 +477,10 @@ body.menuOver #hud::before{content:"";position:fixed;inset:0;background:linear-g
 .w-float{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font-weight:800;font-size:20px;letter-spacing:.02em;pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,.6);white-space:nowrap;z-index:3}
 .w-steps{position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,8,10,.55);z-index:6}.w-steps[hidden]{display:none}.w-steps>div{background:#141518;border:1px solid var(--stroke);border-radius:22px;padding:20px;width:min(340px,88vw)}.w-steps h3{margin:0 0 4px;font-size:18px}.w-steps p{margin:0 0 14px;color:rgba(236,235,230,.65);font-size:13.5px;line-height:1.45}.w-steps input{width:100%;font:600 28px 'IBM Plex Mono',ui-monospace,monospace;background:#0c0d0f;color:#ecebe6;border:1px solid var(--stroke);border-radius:14px;padding:12px 14px;margin-bottom:12px}.w-steps .row{display:flex;gap:8px}.w-steps button{flex:1;padding:13px;border-radius:14px;font-weight:700}
 .rlib{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rlib button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:11px 12px;background:rgba(255,255,255,.04);border:1px solid var(--stroke);border-radius:14px}.rlib button svg{width:20px;height:20px;opacity:.85}.rlib button b{font-size:14px}.rlib button small{font-size:11.5px;color:rgba(236,235,230,.55)}.rlib button.on{border-color:#e9c46a;background:rgba(233,196,106,.1)}.rlib button:disabled{opacity:.35}
+.w-mkt>div{width:min(460px,92vw)!important;max-height:84vh;overflow:auto}.w-mkt .mh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.w-mkt .coin{font:600 14px 'IBM Plex Mono',monospace;color:#e0a96a;background:rgba(201,138,74,.12);border:1px solid rgba(201,138,74,.35);padding:6px 10px;border-radius:999px;white-space:nowrap}
+.w-mkt .mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px;margin:12px 0}.w-mkt .mc{display:flex!important;flex-direction:column;align-items:center;gap:3px;padding:10px 8px!important;background:rgba(255,255,255,.04);border:1px solid var(--stroke);border-radius:16px;text-align:center;flex:none!important}.w-mkt .mc img{width:84px;height:84px;object-fit:contain}.w-mkt .mc b{font-size:13px;line-height:1.2}.w-mkt .mc small{font:500 12px 'IBM Plex Mono',monospace;color:#e0a96a}.w-mkt .mc:disabled{opacity:.4}
+.w-mkt .mf{font-size:12px!important;margin:0 0 10px!important}.w-mkt .sl{display:flex;flex-direction:column;gap:7px;margin:10px 0}.w-mkt .sl .btn{text-align:left;flex:none}.w-mkt .sl small{opacity:.6}.w-mkt .fr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--stroke);border-radius:14px}.w-mkt .fr span{display:flex;flex-direction:column;font-size:14px}.w-mkt .fr small{font-size:12px;opacity:.6}.w-mkt .fr .btn{flex:none;padding:8px 12px}
+.w-pts .cu b{color:#e0a96a}
 .w-l{display:flex;gap:8px;align-items:center}.w-rank{display:flex;align-items:center;gap:8px;background:rgba(14,15,18,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:999px;padding:4px 14px 4px 4px;text-align:left}.w-rank b{display:block;font-size:13.5px}.w-rank small{display:block;font-size:11px;color:rgba(236,235,230,.6)}.w-por{width:34px;height:34px;border-radius:50%;overflow:hidden;background:#222;display:block}.w-por img{width:100%;height:100%;object-fit:cover}
 .w-pts{position:absolute;top:calc(env(safe-area-inset-top) + 64px);left:12px;right:12px;display:flex;flex-wrap:nowrap;overflow:hidden;gap:4px;pointer-events:none}.w-pts span{display:flex;align-items:center;gap:4px;background:rgba(14,15,18,.7);padding:3px 7px;border-radius:999px;font-size:11px;white-space:nowrap}.w-pts i{width:7px;height:7px;border-radius:50%;display:block}
 .w-dlg-b button{text-align:left}
@@ -771,7 +775,7 @@ function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
 const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
 const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
-const APPV='0.11 Beta · 17.11.2026';
+const APPV='0.12 Beta · 17.11.2026';
 const ERRLOG=[];window.addEventListener('error',e=>{ERRLOG.push((e.message||'')+' @'+((e.filename||'').split('/').pop())+':'+(e.lineno||''));if(ERRLOG.length>6)ERRLOG.shift();});window.addEventListener('unhandledrejection',e=>{ERRLOG.push('P '+String(e.reason&&e.reason.message||e.reason).slice(0,120));if(ERRLOG.length>6)ERRLOG.shift();});
 const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:7,pct:.7,win:7,slots:3},{n:'Bruder · Schwester',days:14,pct:.75,win:10,slots:4},{n:'Hüter',days:21,pct:.8,win:14,slots:5},{n:'Lehrer',days:30,pct:.85,win:21,slots:6},{n:'Meister',days:45,pct:.85,win:30,slots:7},{n:'Grossmeister',days:75,pct:.9,win:45,slots:8}];
 const EVENTS=[{id:'brunnen',n:'Der Brunnen ist versandet',cost:{nahrung:30,kraft:20},rw:'Brunnen auf dem Dorfplatz',me:'Wasserkrug für deine Zelle'},{id:'medizin',n:'Fieber im Dorf: Medizin holen',cost:{schritte:4000,ruhe:30},rw:'Eine Heilerin zieht ins Dorf',me:'Teekanne mit Kräutertee in der Küche'},{id:'bruecke',n:'Die Brücke über den Bach ist gebrochen',cost:{kraft:60,ordnung:20},rw:'Der Weg zum Markt ist offen',me:'Gefährte: ein Esel am Tor'},{id:'schule',n:'Die Kinder wollen lesen lernen',cost:{weisheit:50},rw:'Eine Dorfschule',me:'Leuchtende Schriftrollen in der Bibliothek'},{id:'ernte',n:'Erntefest vorbereiten',cost:{nahrung:50,ruhe:30,schritte:6000},rw:'Markttag einmal pro Woche',me:'Seltene Robe «Ahorn»'},{id:'dach',n:'Sturm: Dächer flicken',cost:{kraft:40,ordnung:30},rw:'Neue Dächer',me:'Gebetsfahnen über dem Hof'},{id:'laternen',n:'Laternen für das Lichterfest',cost:{ruhe:40,weisheit:20},rw:'Laternen über dem Tal',me:'Laternen entlang des Hofwegs'},{id:'pfad',n:'Den Bergpfad freiräumen',cost:{schritte:8000,kraft:30},rw:'Pilger finden den Weg',me:'Pilgerstab am Klostertor'}];
@@ -937,6 +941,7 @@ function migrate(){
   ['sound','hq','test','days','cycle','best','seals','learn','avatar'].forEach(k=>{if(S[k]===undefined)S[k]=D[k];});
   if(S.energy===undefined)S.energy=3;if(!S.games)S.games={};
   if(!S.inv)S.inv={scrolls:[],robes:[],animals:[],opened:0,since:0,first:false};
+  if(S.coins==null)S.coins=20;if(!S.inv.items)S.inv.items=[];if(!S.decor)S.decor={};if(S.inv.koi==null)S.inv.koi=0;
   if(!S.decay)S.decay={last:dk(new Date(Date.now()-864e5)),miss:0,dmg:0};if(!S.duels)S.duels={};
   if(!S.inv.ws){S.inv.ws=[];S.inv.wsStreak={d:'',n:0};S.inv.story=[];}
   ['log','exams','practice','review'].forEach(k=>{if(!S.learn[k])S.learn[k]=D.learn[k];});
@@ -1390,6 +1395,18 @@ const CHEST_SVG=`<svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg"><
 <rect x="52" y="50" width="16" height="18" rx="3" fill="url(#cg)"/><circle cx="60" cy="58" r="3" fill="#4a2a14"/></svg>`;
 const RAR={common:{n:'Gewöhnlich',c:'#c9c6bd',w:55,chi:20},rare:{n:'Selten',c:'#5aa9ff',w:30,chi:35},epic:{n:'Episch',c:'#b57cff',w:12,chi:60},legendary:{n:'Legendär',c:'#f2c14e',w:3,chi:100}};
 const ANIMALS=[{id:'kranich',n:'Kraniche',r:'rare',d:'Ziehen ab jetzt über den Himmel deiner Welt.'},{id:'fuchs',n:'Fuchs',r:'rare',d:'Ein neugieriger Fuchs wohnt jetzt am Weg.'},{id:'reh',n:'Reh',r:'epic',d:'Ein Reh grast in der Nähe deines Tempels.'},{id:'eule',n:'Eule',r:'epic',d:'Eine Eule wacht vom Dach aus über deine Welt.'},{id:'tiger',n:'Weisser Tiger',r:'legendary',d:'Der seltenste Wächter. Er ruht vor deinem Tempel.'}];
+const MKT=[
+ {k:'tea_set_01',n:'Teeservice',p:40,t:'prop'},{k:'brass_candleholders',n:'Messing-Kerzenständer',p:35,t:'prop'},{k:'chinese_tea_table',n:'Teetisch',p:30,t:'prop'},
+ {k:'antique_ceramic_vase_01',n:'Antike Vase',p:25,t:'prop'},{k:'ceramic_pot',n:'Vorratstopf',p:18,t:'prop'},{k:'chinese_stool',n:'Hocker',p:16,t:'prop'},
+ {k:'brass_pot_02',n:'Messingtopf',p:14,t:'prop'},{k:'brass_vase_03',n:'Räuchergefäss',p:12,t:'prop'},{k:'brass_pan_01',n:'Messingpfanne',p:12,t:'prop'},
+ {k:'wooden_candlestick',n:'Kerzenständer',p:10,t:'prop'},{k:'carved_wooden_plate',n:'Geschnitzter Teller',p:9,t:'prop'},{k:'wicker_basket_01',n:'Weidenkorb',p:9,t:'prop'},
+ {k:'wooden_bowl_01',n:'Holzschale',p:8,t:'prop'},{k:'wooden_bucket_01',n:'Holzeimer',p:8,t:'prop'},{k:'planter_pot_clay',n:'Tontopf',p:5,t:'prop'},
+ {k:'pflanze',n:'Strauch im Topf',p:15,t:'plant'},{k:'laterne',n:'Steinlaterne',p:28,t:'lantern'},{k:'koi',n:'Koi-Futter (3×)',p:4,t:'food'},
+ {k:'robe_nebel',n:'Robe «Nebel»',p:60,t:'robe',robe:'nebel'},{k:'robe_kirsch',n:'Robe «Kirschblüte»',p:90,t:'robe',robe:'kirsch'},{k:'robe_mitternacht',n:'Robe «Mitternacht»',p:140,t:'robe',robe:'mitternacht'}];
+function mktToday(){const d=new Date(),seed=d.getFullYear()*400+d.getMonth()*32+d.getDate();let x=seed;const r=()=>(x=(x*9301+49297)%233280)/233280;
+  const pool=MKT.filter(m=>m.t!=='robe'||!S.inv.robes.includes(m.robe));const out=[MKT.find(m=>m.k==='koi')];const rest=pool.filter(m=>m.k!=='koi');
+  while(out.length<7&&rest.length){out.push(rest.splice(Math.floor(r()*rest.length),1)[0]);}return out;}
+function addCoins(n,why){if(!n)return;S.coins=(S.coins||0)+n;save();toast(`+${n} Kupfer${why?' · '+why:''}`);if(window.DWWorld&&DWWorld.refreshRoom)DWWorld.refreshRoom();}
 const CROBES=[{id:'ahorn',n:'Robe «Ahorn»',r:'rare'},{id:'nebel',n:'Robe «Nebel»',r:'rare'},{id:'kirsch',n:'Robe «Kirschblüte»',r:'epic'},{id:'mitternacht',n:'Robe «Mitternacht»',r:'legendary'}];
 const SIL={
  fuchs:'<svg viewBox="0 0 100 100"><path d="M30 94C27 80 29 66 37 57C33 49 33 41 37 33L33 17L44 26C48 24 52 24 56 26L67 17L63 33C67 41 66 50 59 57C67 65 70 80 68 94ZM67 92C80 94 93 88 96 76C91 83 80 86 69 84Z" fill="#1c140f"/></svg>',
@@ -1518,6 +1535,12 @@ window.DW={
   avatarGroup:()=>avatarGroup(),
   applyLook:()=>applyLook(S.avatar),
   tod:()=>todNow(),
+  coins:()=>S.coins||0,market:()=>mktToday().map(m=>({...m,own:m.t==='robe'?S.inv.robes.includes(m.robe):false})),
+  buy(k){const m=MKT.find(x=>x.k===k);if(!m||(S.coins||0)<m.p)return false;S.coins-=m.p;if(m.t==='robe'){if(!S.inv.robes.includes(m.robe))S.inv.robes.push(m.robe);}else if(m.t==='food')S.inv.koi+=3;else S.inv.items.push(k);save();renderAll();return m;},
+  items:()=>S.inv.items.slice(),decor:()=>Object.assign({},S.decor),itemName:k=>(MKT.find(m=>m.k===k)||{n:k}).n,itemType:k=>(MKT.find(m=>m.k===k)||{t:'prop'}).t,
+  place(slot,k){const i=S.inv.items.indexOf(k);if(i<0)return false;S.inv.items.splice(i,1);if(S.decor[slot])S.inv.items.push(S.decor[slot]);S.decor[slot]=k;save();return true;},
+  unplace(slot){if(S.decor[slot]){S.inv.items.push(S.decor[slot]);delete S.decor[slot];save();}},
+  koiFood:()=>S.inv.koi||0,feedKoi(){if(!S.inv.koi)return false;S.inv.koi--;save();return true;},
   todayList:()=>{const d=today();return dueList().map(r=>{const rm=r.room||roomOf(r);return{id:r.id,name:r.name,room:rm,roomN:ROOMS[rm].n,type:r.type,cfg:r.cfg,done:!!recDone(r,d[r.id])};});},
   portrait:()=>portraitURL,doneToday:()=>{const d=today(),l=dueList();return{done:l.filter(r=>recDone(r,d[r.id])).length,n:l.length};},
   openMenu:t=>openMenu(t),closeMenu:()=>closeMenu(),
@@ -1545,7 +1568,7 @@ window.DW={
   village:()=>{const ev=curEvent(),V=S.village;return{ev,paid:V.paid,ok:V.ok,done:V.done,lvl:vLevel(),stufe:VSTUFE[vLevel()].n,got:V.got||[]};},
   stepsToday:()=>today()._steps||0,
   logSteps(n){n=Math.max(0,Math.min(40000,Math.round(+n||0)));const d=today(),old=d._steps||0;if(n<=old)return 0;const add=n-old;d._steps=n;addPts('schritte',add);save();renderAll();if(window.DWWorld)DWWorld.checkin('schritte',add);return add;},
-  invest(){const ev=curEvent(),V=S.village;if(V.ok)return{ok:true};let any=false;for(const [k,v] of Object.entries(ev.cost)){const need=v-(V.paid[k]||0),give=Math.min(need,S.pts[k]||0);if(give>0){V.paid[k]=(V.paid[k]||0)+give;S.pts[k]-=give;any=true;}}
+  invest(){const ev=curEvent(),V=S.village;if(V.ok)return{ok:true};let any=false,tot=0;for(const [k,v] of Object.entries(ev.cost)){const need=v-(V.paid[k]||0),give=Math.min(need,S.pts[k]||0);if(give>0){V.paid[k]=(V.paid[k]||0)+give;S.pts[k]-=give;any=true;tot+=k==='schritte'?Math.round(give/100):give;}}const earn=Math.floor(tot/4)+(Object.entries(ev.cost).every(([k,v])=>(V.paid[k]||0)>=v)?20:0);if(earn)setTimeout(()=>addCoins(earn,'Lohn vom Dorf'),900);
     const full=Object.entries(ev.cost).every(([k,v])=>(V.paid[k]||0)>=v);if(full){V.ok=true;V.done++;V.got=V.got||[];if(!V.got.includes(ev.id))V.got.push(ev.id);if(ev.id==='ernte'&&!S.inv.robes.includes('ahorn'))S.inv.robes.push('ahorn');}save();renderAll();if(full)playSplashes([{k:'Das Dorf dankt dir',t:ev.rw,s:'DORF: '+VSTUFE[vLevel()].n.toUpperCase()},{k:'Dein Geschenk',t:ev.me,s:'IM KLOSTER SICHTBAR'}],()=>{});return{any,full,ev};},
   name:()=>S.name||'Novize',
   day(k,v){const d=today();if(v!==undefined){d[k]=v;save();}return d[k];},
@@ -1670,7 +1693,7 @@ function complete(r,val){
   let gain=null;if(rec.d&&!rec.p){rec.p=1;const cat=r.cat||catOf(r);const n=(cat==='schritte'&&r.type==='amount')?Math.round(rec.v):Math.round(10*(rec.f!=null?rec.f:1));addPts(cat,n);gain={cat,n};}
   if(r.type==='amount'&&(r.cat||catOf(r))==='schritte'&&rec.p){rec.ps=rec.ps||0;}
   d[r.id]=rec;const dl=dueList();d._n=dl.length;
-  const perfect=!d._b&&dl.length>0&&dl.every(x=>recDone(x,d[x.id]));if(perfect){d._b=15;if(!d._chest)d._chest='ready';}
+  const perfect=!d._b&&dl.length>0&&dl.every(x=>recDone(x,d[x.id]));if(perfect){const first=!d._b;d._b=15;if(!d._chest)d._chest='ready';if(first){let wk=true;for(let i=1;i<7;i++){const dd=S.days[dk(new Date(Date.now()-i*864e5))];if(!dd||!dd._b){wk=false;break;}}setTimeout(()=>addCoins(wk?23:3,wk?'Eine ganze Woche vollendet':'Vollendeter Tag'),2600);}}
   if(rec.d&&!rec.e){rec.e=1;S.energy=Math.min(6,(S.energy||0)+1);}if(perfect)S.energy=Math.min(6,S.energy+1);
   let firstChest=false;if(!S.inv.first&&rec.d){S.inv.first=true;if(!d._chest){d._chest='ready';firstChest=true;}}
   save();if(window.DWWorld&&DWWorld.refreshRoom){DWWorld.refreshRoom();if(gain&&gain.n&&DWWorld.checkin)DWWorld.checkin(gain.cat,gain.n);}afterGain(before,pB,lvB,rB,seB,{gain,title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
@@ -1760,7 +1783,7 @@ function openExam(){
   const step=()=>{
     if(k>=ids.length){
       const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();
-      const perfect=score===ids.length;const chi=score*5+(perfect?10:0);S.learn.exams[wk]={score,total:ids.length};addBonus('_x',chi);
+      const perfect=score===ids.length;const chi=score*5+(perfect?10:0);S.learn.exams[wk]={score,total:ids.length};addBonus('_x',chi);setTimeout(()=>addCoins(score*2+(perfect?6:0),'Wochenprüfung'),1800);
       $('#lessonIn').innerHTML=`<div class="ov-c" style="display:flex;flex-direction:column;gap:16px;align-items:center;margin-top:10vh"><span class="eyebrow">Wochenprüfung</span><div class="mega">${score} / ${ids.length}</div><p class="lead">${perfect?'Volle Punktzahl. Das sitzt.':'Was noch nicht sass, kommt später wieder.'}</p><button class="big-act cut-s" id="exDone">+${chi} Chi einsammeln</button></div>`;
       $('#exDone').onclick=()=>{$('#lesson').hidden=true;afterGain(before,pB,lvB,rB,seB,{kicker:'Wochenprüfung',title:perfect?'Perfekt':'Bestanden'});};return;}
     const i=ids[k],L=LESSONS[i];$('#lessonIn').innerHTML=quizHTML(L,k,ids.length);

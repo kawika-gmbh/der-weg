@@ -357,6 +357,8 @@ function roomDialog(id){
   if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
     if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);}}]);}
+  if(id==='tor')btns.unshift(['Zum Markt',()=>{endTalk();market();},1]);
+  if(id==='zelle'||(id==='garten'&&r.open))btns.push(['Einrichten',()=>{endTalk();furnishUI(id);}]);
   if(id==='tor'){const st=DW.stepsToday();btns.splice(Math.max(0,btns.length),0,[st?`Schritte heute: ${st} (anpassen)`:'Schritte von heute eintragen',()=>{endTalk();stepsDlg();},!st]);}
   if(id==='tor')DW.pilgrims().forEach(p=>{if(p.open&&r.open)btns.push(['Pilgerreise: '+p.n+(p.visited?' (diese Woche besucht)':''),()=>{endTalk();close();open({pilgrim:p.ch});}]);else text+=`\n· ${p.n}: ab Rang ${p.rankName}`;});
   btns.push(['Gehen',()=>endTalk()]);
@@ -427,7 +429,7 @@ function rewards(){const got=DW.village().got||[],M=W.M,y=.35;if(!got.length)ret
 function goRoom(id){if(!W||W.pilgrim){close();open({room:id});return;}const ins=W.roomSpot&&W.roomSpot[id],P=RPOS[id];const sp=ins?[ins[0],.35,ins[1]]:spotOf(id);const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];
   W.av.position.set(sp[0],sp[1],sp[2]);W.av.rotation.y=Math.atan2(tx-sp[0],tz-sp[2]);W.yaw=W.av.rotation.y+Math.PI;W.cam.position.set(sp[0]+Math.sin(W.yaw)*3,sp[1]+3,sp[2]+Math.cos(W.yaw)*3);endTalk();setTimeout(()=>{if(W)roomDialog(id);},350);}
 function rankHud(){const ri=DW.rankInfo(),dt=DW.doneToday();$('#wRankN').textContent=ri.name;$('#wRankS').textContent=`Heute ${dt.done}/${dt.n} · Rang ${ri.rank+1}`;const u=DW.portrait(),im=$('#wPor').firstChild;if(u&&(!im||im.getAttribute('src')!==u))$('#wPor').innerHTML=`<img src="${u}" alt="">`;}
-function ptsHud(){rankHud();let el=$('#wPts');if(!el){el=document.createElement('div');el.id='wPts';el.className='w-pts';$('#world').appendChild(el);}el.innerHTML=DW.pts().map(p=>`<span><i style="background:${p.c}"></i>${p.n.slice(0,3)} <b>${p.v}</b></span>`).join('');}
+function ptsHud(){rankHud();let el=$('#wPts');if(!el){el=document.createElement('div');el.id='wPts';el.className='w-pts';$('#world').appendChild(el);}el.innerHTML=`<span class="cu"><i style="background:#c98a4a;border-radius:50%"></i>Kupfer <b>${DW.coins()}</b></span>`+DW.pts().map(p=>`<span><i style="background:${p.c}"></i>${p.n.slice(0,3)} <b>${p.v}</b></span>`).join('');}
 
 /* ---------- Tageszeit ---------- */
 const TOD={
@@ -805,19 +807,60 @@ $('#gAgain').onclick=()=>{const c=G&&G.reward;finishG(true);startPoles();};
 function finishG(again){if(!G)return;cancelAnimationFrame(G.raf);g3dEnd();const chi=G.state==='end'?G.reward:0;G=null;$('#game').hidden=true;if(chi){DW.gameReward(chi,'Pflaumenblüten-Pfähle');if(W)msg('+'+chi+' Chi gutgeschrieben');}}
 window.addEventListener('resize',()=>{if(G)sizeG();});
 
+/* ---------- Markt, Münzen, Einrichten ---------- */
+const SLOTS={z1:{n:'Zelle · beim Fenster',room:'zelle',u:.9,v:-2.6},z2:{n:'Zelle · neben der Tür',room:'zelle',u:2.0,v:1.3},z3:{n:'Zelle · hinten',room:'zelle',u:-.4,v:-2.7},z4:{n:'Zelle · am Kleiderständer',room:'zelle',u:.9,v:2.4},
+  h1:{n:'Hof · links am Weg',x:-7.3,z:12.5},h2:{n:'Hof · rechts am Weg',x:7.3,z:12.5},
+  g1:{n:'Garten · am Teich',x:-9.6,z:9.8,g:1},g2:{n:'Garten · links',x:-14.6,z:9.4,g:1},g3:{n:'Garten · hinten',x:-9.3,z:14.8,g:1},g4:{n:'Garten · Ecke',x:-14.8,z:14.8,g:1}};
+function slotOk(s){return !SLOTS[s].g||(DW.rooms().find(r=>r.id==='garten')||{}).open;}
+function slotPos(id){const S0=SLOTS[id];if(S0.room){const P=RPOS[S0.room];return[P.c[0]+P.f[0]*S0.u,.35,P.c[1]+S0.v];}return[S0.x,groundH(S0.x,S0.z),S0.z];}
+function decorPlace(){if(!W||W.ch)return;if(W.decorG){W.root.remove(W.decorG);W.solids=W.solids.filter(x=>!x.deco);(W.imps||[]).filter(i=>i.deco).forEach(i=>i.m.visible=false);}const g=new TH.Group();W.decorG=g;W.root.add(g);
+  const D=DW.decor();Object.entries(D).forEach(([sl,k],i)=>{if(!SLOTS[sl])return;const[x,y,z]=slotPos(sl),t=DW.itemType(k);const sv=W.solids.length;
+    const root0=W.root;W.root=g;
+    try{if(t==='plant'){W.put&&W.put('planter_pot_clay',x,y,z,i,1.9);W.root=root0;imp('bush_c',x,z,1.05,i*.31+.2);const it=W.imps[W.imps.length-1];it.m.position.y=y+.36;it.deco=1;W.solids.push(Object.assign([x,z,.3],{deco:1}));}
+      else if(t==='lantern'){const st=W.M.stone;cyl(.16,.5,st,x,y,z,8,.22);box(.42,.08,.42,st,x,y+.5,z,1);lantern(x,y+.8,z,true);const cap=new TH.Mesh(new TH.ConeGeometry(.38,.3,4),st);cap.position.set(x,y+1.15,z);cap.rotation.y=Math.PI/4;g.add(cap);W.solids.push(Object.assign([x,z,.35],{deco:1}));}
+      else if(W.put){const o=W.put(k,x,y,z,i*.7);if(o)W.solids.push(Object.assign([x,z,.3],{deco:1}));}}finally{W.root=root0;}
+  });}
+function thumb(k){W.thumbs=W.thumbs||{};if(W.thumbs[k])return W.thumbs[k];const t=DW.itemType(k);
+  const icon={plant:'<svg viewBox="0 0 64 64"><path d="M20 40h24l-3 16H23z" fill="#b5653a"/><circle cx="32" cy="28" r="12" fill="#3f6a2e"/><circle cx="24" cy="32" r="8" fill="#4f7a36"/><circle cx="40" cy="32" r="8" fill="#355e26"/></svg>',
+    lantern:'<svg viewBox="0 0 64 64"><path d="M30 44h4v14h-4z" fill="#8a8580"/><path d="M18 22h28l-14-10z" fill="#8a8580"/><rect x="22" y="22" width="20" height="18" rx="4" fill="#f2c96a"/><rect x="22" y="40" width="20" height="4" fill="#8a8580"/></svg>',
+    food:'<svg viewBox="0 0 64 64"><ellipse cx="32" cy="34" rx="18" ry="9" fill="#f27a2a"/><path d="M14 34l-8-7v14z" fill="#f27a2a"/><circle cx="44" cy="32" r="2" fill="#111"/><circle cx="20" cy="50" r="3" fill="#c9a45a"/><circle cx="30" cy="54" r="3" fill="#c9a45a"/></svg>',
+    robe:'<svg viewBox="0 0 64 64"><path d="M22 10l10 8 10-8 12 10-6 8-4-3v31H20V25l-4 3-6-8z" fill="#8a3a2a"/><path d="M32 18v38" stroke="#2a1a14" stroke-width="2"/></svg>'}[t];
+  if(icon)return W.thumbs[k]='data:image/svg+xml;utf8,'+encodeURIComponent(icon.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));
+  const gl=window._propsGL;if(!gl)return '';let src=null;gl.scene.traverse(o=>{if(!src&&o.name===k)src=o;});if(!src)return '';
+  if(!W.tr){W.tr=new TH.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});W.tr.setSize(160,160);W.tr.outputEncoding=TH.sRGBEncoding;W.ts=new TH.Scene();W.ts.add(new TH.HemisphereLight(0xffffff,0x554433,1.1));const dl=new TH.DirectionalLight(0xfff0dd,1.6);dl.position.set(2,3,2);W.ts.add(dl);W.tc=new TH.PerspectiveCamera(30,1,.01,50);}
+  const o=src.clone();o.position.set(0,0,0);W.ts.add(o);const bb=new TH.Box3().setFromObject(o),c=bb.getCenter(new TH.Vector3()),sz=bb.getSize(new TH.Vector3()).length();
+  W.tc.position.set(c.x+sz*.9,c.y+sz*.75,c.z+sz*1.25);W.tc.lookAt(c);W.tr.render(W.ts,W.tc);const url=W.tr.domElement.toDataURL();W.ts.remove(o);return W.thumbs[k]=url;}
+function ovl(id,html){let o=$('#'+id);if(!o){o=document.createElement('div');o.id=id;o.className='w-steps w-mkt';$('#world').appendChild(o);}o.innerHTML=html;o.hidden=false;o.onclick=e=>{if(e.target===o)o.hidden=true;};return o;}
+function market(){const M=DW.market(),c=DW.coins();
+  const o=ovl('wMkt',`<div><div class="mh"><div><h3>Markt im Dorf</h3><p>Das Angebot wechselt jeden Tag.</p></div><span class="coin">${c} Kupfer</span></div><div class="mg">${M.map(m=>`<button class="mc" data-k="${m.k}" ${m.own||c<m.p?'disabled':''}><img src="${thumb(m.k)}" alt=""><b>${m.n}</b><small>${m.own?'Besitzt du':m.p+' Kupfer'}</small></button>`).join('')}</div><p class="mf">Kupfer verdienst du, wenn du dem Dorf hilfst, für vollendete Tage und Wochen und für die Wochenprüfung im Dojo.</p><div class="row"><button class="btn" data-x>Schliessen</button></div></div>`);
+  o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};
+  o.querySelectorAll('.mc').forEach(b=>b.onclick=()=>{const m=DW.buy(b.dataset.k);if(!m)return;DW.bell(1);o.hidden=true;
+    if(m.t==='robe'){msg(`${m.n} gehört jetzt dir. Wechseln kannst du sie im Avatar-Editor.`);}
+    else if(m.t==='food'){msg('Koi-Futter gekauft. Füttere die Koi am Teich im Garten.');}
+    else{slotPick(m.k,`${m.n} gekauft. Wo soll es stehen?`);}ptsHud();});}
+function slotPick(k,title){const D=DW.decor();const tt=DW.itemType(k),free=Object.keys(SLOTS).filter(s=>slotOk(s)&&(tt==='lantern'?!SLOTS[s].room:true));
+  const o=ovl('wSlot',`<div><h3>${title}</h3><p>Wähle einen Platz. Besetzte Plätze tauschen den Gegenstand aus.</p><div class="sl">${free.map(s=>`<button class="btn" data-s="${s}">${SLOTS[s].n}${D[s]?` <small>(${DW.itemName(D[s])})</small>`:''}</button>`).join('')}</div><div class="row"><button class="btn" data-x>Später</button></div></div>`);
+  o.querySelector('[data-x]').onclick=()=>{o.hidden=true;msg('Liegt in deinem Lager. Aufstellen kannst du es in der Zelle oder im Garten unter «Einrichten».');};
+  o.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{DW.place(b.dataset.s,k);o.hidden=true;decorPlace();DW.bell(.9);const[x,,z]=slotPos(b.dataset.s);msg(`Aufgestellt: ${SLOTS[b.dataset.s].n}`);});}
+function furnishUI(room){const D=DW.decor(),items=DW.items(),mine=Object.keys(SLOTS).filter(slotOk);
+  const o=ovl('wFur',`<div><h3>Einrichten</h3><p>Deine Plätze hier und was in deinem Lager liegt.</p><div class="sl">${mine.map(s=>`<div class="fr"><span>${SLOTS[s].n}<small>${D[s]?DW.itemName(D[s]):'leer'}</small></span>${D[s]?`<button class="btn" data-u="${s}">Wegräumen</button>`:''}</div>`).join('')}</div>
+    <h3 style="margin-top:14px;font-size:15px">Lager</h3><div class="mg">${items.length?items.map((k,i)=>`<button class="mc" data-i="${k}"><img src="${thumb(k)}" alt=""><b>${DW.itemName(k)}</b><small>Aufstellen</small></button>`).join(''):'<p>Leer. Neues gibt es auf dem Markt im Dorf.</p>'}</div><div class="row"><button class="btn" data-x>Fertig</button></div></div>`);
+  o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};
+  o.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{DW.unplace(b.dataset.u);decorPlace();furnishUI(room);});
+  o.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{o.hidden=true;slotPick(b.dataset.i,`${DW.itemName(b.dataset.i)} aufstellen`);});}
 /* ---------- Echte Objekte (Poly Haven, CC0) ---------- */
 function props(){if(W.ch||!TH.GLTFLoader)return;const go=gl=>{if(!W)return;const L={};gl.scene.traverse(o=>{if(o.isMesh||o.isObject3D&&o.parent===gl.scene)L[o.name]=L[o.name]||o;});
   const at=(room,u,v)=>{const P=RPOS[room];return[P.c[0]+P.f[0]*u,P.c[1]+v];},open=DW.rooms().reduce((a,r)=>(a[r.id]=r.open,a),{});
   const PR={ceramic_pot:.42,wicker_basket_01:.25,wooden_bucket_01:.25,antique_ceramic_vase_01:.2,chinese_stool:.35,chinese_tea_table:.5,planter_pot_clay:.25};const put=(k,x,y,z,ry,s)=>{const src=L[k];if(!src)return;if(PR[k]&&y<.4)W.solids.push([x,z,PR[k]*(s||1)]);const o=src.clone();o.position.set(x,y,z);o.rotation.set(0,ry||0,0);if(s)o.scale.setScalar(s);o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});W.root.add(o);return o;};
   const room=(r,list)=>{if(!open[r])return;const f=RPOS[r].f[0];list.forEach(([k,u,v,y,ry,s])=>{const[x,z]=at(r,u,v);put(k,x,.35+y,z,(ry||0)*(f>0?1:-1)+(f<0?Math.PI:0),s);});};
   room('kueche',[['ceramic_pot',-1.5,0,.9,0,.62],['brass_pan_01',-1.5,.42,.9,-1.2],['brass_pot_02',-1.5,-.35,.9,0],['wooden_bowl_01',.35,1.05,.75,0],['carved_wooden_plate',.25,2.05,.75,0],['ceramic_pot',1.85,-2.55,0,.4],['wicker_basket_01',-.9,-2.7,0,.3],['wooden_bucket_01',-.6,.95,0,0]].concat(W.teaReward?[['tea_set_01',.3,1.65,.75,Math.PI/2]]:[]));
-  room('zelle',[['wooden_candlestick',-1.5,.6,.5,0],['antique_ceramic_vase_01',1.95,-2.6,0,0],['chinese_stool',-.2,2.2,0,0]]);
+  room('zelle',[['wooden_candlestick',-1.5,.6,.5,0]]);
   room('bibliothek',[['chinese_tea_table',1.1,1.5,0,0],['brass_vase_03',1.1,1.5,.5,0,1.4],['brass_candleholders',-.5,-2.75,0,0],['wooden_candlestick',.4,.35,.75,0]]);
   room('bad',[['wooden_bucket_01',-1.3,1.25,0,0],['wooden_bowl_01',-.6,2.4,0,0]]);
   (W.plantSpots||[]).forEach(([x,z],i)=>{put('planter_pot_clay',x,.35,z,i,1.9);imp('bush_c',x,z,1.05,i*.31+.2);const it=W.imps[W.imps.length-1];it.m.position.y=.35+.36;W.solids.push([x,z,.3]);});
   const G=RPOS.garten.c;[[2.6,1.2],[2.9,2],[-3.2,-1.8]].forEach(([a,b],i)=>put('planter_pot_clay',G[0]+a,0,G[1]+b,i,1.6+i*.3));
   put('wooden_broom',2.7,0,24.9,0,1).rotation.z=.25;put('brass_vase_03',0,0,4.6,0,3.2);
-  W.propsOk=1;};
+  W.put=put;W.propsOk=1;decorPlace();};
   if(window._propsGL)go(window._propsGL);else new TH.GLTFLoader().load('props.glb',gl=>{window._propsGL=gl;go(gl);},undefined,e=>console.warn('props',e));}
 /* ---------- Leben & Details ---------- */
 function softTex(){if(W.softT)return W.softT;const cv=document.createElement('canvas');cv.width=cv.height=64;const x=cv.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.5,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);W.softT=new TH.CanvasTexture(cv);return W.softT;}
@@ -867,6 +910,7 @@ function koi(cx,cz){const g=new TH.Group();W.root.add(g);
   const ring=[];for(let i=0;i<16;i++){const a=i/16*6.28,r=new TH.Mesh(new TH.DodecahedronGeometry(.28+((i*7)%3)*.06,0),W.M.stone);r.position.set(cx+Math.cos(a)*1.72,.08,cz+Math.sin(a)*1.72);r.scale.y=.55;r.rotation.y=i;r.castShadow=true;W.root.add(r);}
   const water=new TH.Mesh(new TH.CircleGeometry(1.6,32),new TH.MeshStandardMaterial({color:'#123a40',roughness:.05,metalness:.35,transparent:true,opacity:.78}));water.rotation.x=-Math.PI/2;water.position.set(cx,.09,cz);W.root.add(water);
   const pad=new TH.MeshStandardMaterial({color:'#3f7a3a',roughness:.8});[[.6,.4],[-.5,.7],[.2,-.8]].forEach(([a,b],i)=>{const p=new TH.Mesh(new TH.CircleGeometry(.22,12,0,5.6),pad);p.rotation.x=-Math.PI/2;p.rotation.z=i*2;p.position.set(cx+a,.1,cz+b);W.root.add(p);if(i!==1){const f=new TH.Mesh(new TH.ConeGeometry(.07,.1,6),new TH.MeshStandardMaterial({color:'#f2a6c0'}));f.position.set(cx+a,.15,cz+b);W.root.add(f);}});
+  W.inter.push({x:cx,z:cz+2,r:2.4,label:'Koi-Teich',btn:'Füttern',act:()=>{if(!DW.feedKoi()){msg('Du hast kein Koi-Futter. Es gibt welches auf dem Markt im Dorf.');return;}W.koiFeed=6;DW.bell(.7);msg('Die Koi kommen zu dir. Noch '+DW.koiFood()+' Portionen Futter.');}});
   W.kois=[];const cols=['#f27a2a','#f2f0ea','#e85a2a','#f2c84a'];for(let i=0;i<4;i++){const f=new TH.Group();const b=new TH.Mesh(new TH.SphereGeometry(.09,10,8),new TH.MeshStandardMaterial({color:cols[i],roughness:.4}));b.scale.set(.8,.5,2.2);f.add(b);const t=new TH.Mesh(new TH.ConeGeometry(.06,.14,6),b.material);t.rotation.x=Math.PI/2;t.position.z=-.24;f.add(t);f.position.y=.04;W.root.add(f);W.kois.push({f,c:[cx,cz],r:.5+i*.25,s:(.25+i*.07)*(i%2?1:-1),o:i*1.7});}}
 function smoke(x,y,z,n,col){const arr=[];const m0=new TH.SpriteMaterial({map:softTex(),color:col||0xd8d4cc,transparent:true,opacity:0,depthWrite:false});for(let i=0;i<n;i++){const s=new TH.Sprite(m0.clone());s.userData={x,y,z,t:i/n};W.root.add(s);arr.push(s);}(W.smokes=W.smokes||[]).push(arr);}
 function birds(){const g=new TH.Group();W.scene.add(g);W.birds=[];const m=new TH.MeshBasicMaterial({color:'#2a2622',side:TH.DoubleSide});const wg=new TH.BufferGeometry();wg.setAttribute('position',new TH.Float32BufferAttribute([0,0,0,.45,0,-.1,0,0,-.22],3));
@@ -901,7 +945,8 @@ function life(){if(W.ch)return;
   birds();flutter();fireflies();npcs();props();}
 function lifeUpdate(){const now=performance.now()/1000,dt=Math.min(.05,now-(W.lt||now));W.lt=now;const t=now;
   if(W.bcn&&W.bcn.visible){const c=W.bcn.children[0],r=W.bcn.children[1];c.rotation.y=t*.5;const near=W.av&&Math.hypot(W.av.position.x-W.bcn.position.x,W.av.position.z-W.bcn.position.z)<2.2;const tgt=near?.08:(W.bcnPulse>0?.6:.32);if(W.bcnPulse>0)W.bcnPulse-=dt;c.material.opacity+=(tgt+Math.sin(t*2.4)*.06-c.material.opacity)*.08;r.scale.setScalar(1+Math.sin(t*2.4)*.12);r.material.opacity=c.material.opacity*1.4;}
-  if(W.kois)W.kois.forEach(k=>{const a=t*k.s+k.o,x=k.c[0]+Math.cos(a)*k.r,z=k.c[1]+Math.sin(a)*k.r*.8;k.f.position.x=x;k.f.position.z=z;k.f.rotation.y=Math.atan2(-Math.sin(a)*k.s,Math.cos(a)*k.s*.8)+(k.s>0?0:0);k.f.children[1].rotation.y=Math.sin(t*8+k.o)*.4;});
+  if(W.koiFeed>0)W.koiFeed-=dt;
+  if(W.kois)W.kois.forEach(k=>{const fr=W.koiFeed>0?.35:1,a=t*k.s*(W.koiFeed>0?2:1)+k.o,x=k.c[0]+Math.cos(a)*k.r*fr,z=k.c[1]+(W.koiFeed>0?.9:0)+Math.sin(a)*k.r*.8*fr;k.f.position.x=x;k.f.position.z=z;k.f.rotation.y=Math.atan2(-Math.sin(a)*k.s,Math.cos(a)*k.s*.8)+(k.s>0?0:0);k.f.children[1].rotation.y=Math.sin(t*8+k.o)*.4;});
   if(W.smokes)W.smokes.forEach(arr=>arr.forEach(s=>{const u=s.userData;u.t=(u.t+dt*.12)%1;s.position.set(u.x+Math.sin(u.t*5+t*.3)*.4*u.t+u.t*1.2,u.y+u.t*4,u.z+u.t*.5);const k=.4+u.t*2.2;s.scale.set(k,k,k);s.material.opacity=Math.sin(u.t*Math.PI)*.32;}));
   if(W.birds)W.birds.forEach(B=>{const a=t*.12+B.o,R=26+B.d*2;B.b.position.set(Math.cos(a)*R,20+B.h+Math.sin(t*.7+B.o)*.8,-4+Math.sin(a)*R*.7);B.b.rotation.y=-a;const f=Math.sin(t*9+B.o*3)*.7;B.l.rotation.z=f;B.r.rotation.z=-f;});
   if(W.flies)W.flies.forEach(F=>{const a=t*.6+F.o;F.b.position.set(F.base[0]+Math.sin(a)*1.4+Math.sin(a*2.3)*.4,.5+Math.abs(Math.sin(a*1.7))*.9,F.base[1]+Math.cos(a*.8)*1.2);F.b.rotation.y=a;const f=Math.sin(t*22+F.o)*1.1;F.l.rotation.y=f;F.r.rotation.y=-f;});
