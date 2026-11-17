@@ -637,9 +637,9 @@ function vWork(key,chi,coins,why,txt){endTalk();const ok=DW.vact&&DW.vact(key,ch
 /* ---------- Drachentreppe: Kloster ↔ Dorf ---------- */
 let _SD=null;
 function stairDef(){if(_SD)return _SD;if(W&&W.pilgrim)return null;
-  const yE=groundH0(0,39.4)+.15,FL=[[[1.5,28.0],[13,31.0]],[[12.6,34.8],[-12.6,34.6]],[[-12.6,38.0],[-1,38.6]]];
+  const yE=groundH0(0,39.4)+.15,FL=[[[2.6,27.6],[12.4,30.8]],[[12.4,34.8],[-12.4,34.6]],[[-12.4,38.0],[-2.6,38.5]]];
   const Ls=FL.map(([a,b])=>Math.hypot(b[0]-a[0],b[1]-a[1])),Lt=Ls[0]+Ls[1]+Ls[2],D=-yE,yA=-D*Ls[0]/Lt,yB=yA-D*Ls[1]/Lt,ys=[0,yA,yB,yE];
-  const land=[{x0:-2.6,x1:2.6,z0:24.6,z1:28.8,y:0,rail:'w',vz0:25.8},{x0:12.4,x1:16.4,z0:29.2,z1:36.4,y:yA,rail:'ens'},{x0:-16.4,x1:-12.4,z0:32.8,z1:39.8,y:yB,rail:'wns'},{x0:-2.6,x1:2.6,z0:37.8,z1:40.4,y:yE,rail:'e'}];
+  const land=[{x0:-2.6,x1:2.6,z0:24.6,z1:29.6,y:0,rail:'ws',vz0:25.8},{x0:12.4,x1:16.4,z0:29.2,z1:36.4,y:yA,rail:'ens'},{x0:-16.4,x1:-12.4,z0:32.8,z1:39.8,y:yB,rail:'wns'},{x0:-2.6,x1:2.6,z0:37.8,z1:40.4,y:yE,rail:'e'}];
   const fl=FL.map(([a,b],i)=>{const L=Ls[i],dx=(b[0]-a[0])/L,dz=(b[1]-a[1])/L;return{a,b,L,dx,dz,nx:-dz,nz:dx,ya:ys[i],yb:ys[i+1]};});
   return _SD={land,fl,hw:1.6};}
 function stairY(x,z,walk){const S=stairDef();if(!S||z<24.4||z>40.8||Math.abs(x)>16.6)return null;
@@ -729,7 +729,7 @@ function stairway(){const S=stairDef();if(!S)return;const M=W.M,DM=dragonMats(),
      const h=Math.min(L.y-groundH(px,pz)+.2,2+R()*8);if(h<.6)continue;const g=new TH.PlaneGeometry(1.1+R()*.6,h);g.translate(0,-h/2,0);g.rotateY(ry);g.translate(px,L.y-.02,pz);ivy.push(g);}});
    if(ivy.length){const m=new TH.Mesh(mergeGeos(ivy),im);W.root.add(m);}}
   // Wächterdrachen oben und Drachentor unten
-  guardian(-3.7,26.1,groundH(-3.7,26.1),0);guardian(3.7,26.1,groundH(3.7,26.1),0);
+  guardian(-1.75,26.6,0,Math.PI/2);guardian(-1.75,28.7,0,Math.PI/2);
   paifang(0,41.1,S.land[3].y,'龍門');
   if(!DW.unlocks().village){const mm=new TH.SpriteMaterial({map:softTex(),color:0xe8e4dc,transparent:true,opacity:.55,depthWrite:false});for(let i=0;i<26;i++){const t=Math.random(),F=S.fl[i%3],s=new TH.Sprite(mm);s.position.set(F.a[0]+F.dx*F.L*t+(Math.random()-.5)*3,F.ya+(F.yb-F.ya)*t+.8+Math.random()*1.5,F.a[1]+F.dz*F.L*t+(Math.random()-.5)*3);s.scale.setScalar(3+Math.random()*3);W.root.add(s);}}}
 
