@@ -335,7 +335,7 @@ function gate(open){const M=W.M,z=25.5;W.gateOpen=open;[-2.4,2.4].forEach(x=>{cy
   if(!open){const d=box(4.4,3.4,.12,M.wood,0,0,z,1);const lock=new TH.Mesh(new TH.BoxGeometry(.3,.34,.16),M.gold);lock.position.set(0,1.6,z-.1);W.root.add(lock);}
   wallLine(-14,z,-2.6,z,.5);wallLine(2.6,z,14,z,.5);for(let x=-14;x<=14;x+=1.2){if(Math.abs(x)<2.6)continue;box(1.2,1.1,.4,M.stone,x,0,z,1);}}
 function village(){
-  const v=DW.village(),lvl=v.lvl,got=v.got||[],has=k=>got.includes(k),M=W.M,night=W.tod.night;const UL=DW.unlocks();W.vOpen=UL.village;W.vExtra=UL.extras;W.vMarket=UL.market;const i0=(W.inter||[]).length;
+  const v=DW.village(),lvl=v.lvl,got=v.got||[],has=k=>got.includes(k),M=W.M,night=W.tod.night;const UL=DW.unlocks();W.vOpen=UL.village;W.vExtra=UL.extras;W.vMarket=UL.market;const PR=DW.prosperity();W.vPros=PR;W.vFest=PR>=.85||DW.pRun()>=7;const aband=PR<.35?new Set([2,3]):new Set();const i0=(W.inter||[]).length;
   const g=new TH.Group();W.root.add(g);W.vbox=[];W.vFloors=[];W.vProps=[];W.vU={wheels:[],water:[],chick:[],sky:[]};const root0=W.root;W.root=g;
   const gh=(x,z)=>groundH(x,z);
   try{
@@ -378,21 +378,31 @@ function village(){
       [-1,1].forEach(sd=>{box(.8*s,.16,.22,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#6a4a2e'}),sd*w*.3,.3+1.05*s,d/2+.12,1);for(let k=0;k<4;k++){const f=new TH.Mesh(new TH.SphereGeometry(.07,6,5),new TH.MeshStandardMaterial({color:['#d84a6a','#e8c03a','#f2f0e8','#c86a2a'][(k+hi)%4]}));f.position.set(sd*w*.3-.3*s+k*.2*s,.3+1.27*s,d/2+.12);hg.add(f);}});
       if(hi%3===0){const vm=new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#7a5a3a',roughness:.85});box(w*.9,.1,.7,vm,0,.25,d/2+.4,1);[-1,1].forEach(sd=>cyl(.06,2.1*s,vm,sd*w*.44,.3,d/2+.7,6));box(w,.06,.9,M.roof,0,.3+2.1*s,d/2+.45,1);}
       const door=new TH.Mesh(new TH.PlaneGeometry(.9*s,1.7*s),new TH.MeshStandardMaterial({color:'#2a1a12',roughness:.9}));door.position.set(0,.3+.85*s,d/2+.01);hg.add(door);
-      const lit=night||lvl>=3,wm=lit?M.glow:new TH.MeshStandardMaterial({color:'#e8dcc0',roughness:.8});[-1,1].forEach(sd=>{const wi=new TH.Mesh(new TH.PlaneGeometry(.7*s,.6*s),wm);wi.position.set(sd*w*.3,.3+1.5*s,d/2+.01);hg.add(wi);});
+      const ab=aband.has(hi),lit=(night||lvl>=3)&&!ab,wm=ab?new TH.MeshStandardMaterial({color:'#3a2e24',roughness:1}):lit?M.glow:new TH.MeshStandardMaterial({color:'#e8dcc0',roughness:.8});[-1,1].forEach(sd=>{const wi=new TH.Mesh(new TH.PlaneGeometry(.7*s,.6*s),wm);wi.position.set(sd*w*.3,.3+1.5*s,d/2+.01);hg.add(wi);});if(ab){[-.2,.25].forEach((yy,k)=>{const bd=box(1.1*s,.12,.05,new TH.MeshStandardMaterial({color:'#5a4a36'}),0,.3+.9*s+yy,d/2+.08,1);bd.rotation.z=k?.25:-.2;});}
       const broken=!roofOk&&hi%3===1;const rf=roof(two?w*.78+1.4:w+1.6,two?d*.78+1.4:d+1.6,1.2*s,0,topY,0);if(broken){rf.rotation.z=.18;rf.position.y-=.25;rf.material=new TH.MeshStandardMaterial({color:'#3a332c',roughness:1});if(rf.userData.under)rf.userData.under.visible=false;}
-      if(hi%2===0){box(.4,1.4,.4,M.stone,w*.3,topY,-d*.2,1);if(!broken)smoke(x,y+topY+1.5,z,6,0xcfcac2);}
+      if(hi%2===0){box(.4,1.4,.4,M.stone,w*.3,topY,-d*.2,1);if(!broken&&!aband.has(hi))smoke(x,y+topY+1.5,z,6,0xcfcac2);}
       if(kind==='heil'){const ban=new TH.Mesh(new TH.PlaneGeometry(.5,1.4),new TH.MeshStandardMaterial({color:'#3a7a4a',side:TH.DoubleSide}));ban.position.set(w/2+.3,1.6*s,d/2+.2);hg.add(ban);for(let i=0;i<5;i++){const h=new TH.Mesh(new TH.ConeGeometry(.08,.35,6),new TH.MeshStandardMaterial({color:i%2?'#6a8a3a':'#a8a06a'}));h.rotation.x=Math.PI;h.position.set(-w/2+.6+i*.35,.3+2.0*s,d/2+.5);hg.add(h);}box(2,.06,.06,beam,-w/2+1.3,.3+2.2*s,d/2+.5,1);}
       if(kind==='schule'){cyl(.08,2.6,beam,w/2+.9,.3,d/2,6);cyl(.08,2.6,beam,w/2+1.9,.3,d/2,6);box(1.2,.12,.12,beam,w/2+1.4,2.85,d/2,1);const bl=new TH.Mesh(new TH.CylinderGeometry(.14,.26,.4,12,1,true),new TH.MeshStandardMaterial({color:'#b8862a',metalness:.7,roughness:.35,side:TH.DoubleSide}));bl.position.set(w/2+1.4,2.55,d/2);hg.add(bl);}
     }finally{W.root=R0;}
     W.vbox.push([x,z,(face===1||face===-1?d:w)/2+.25,(face===1||face===-1?w:d)/2+.25]);hi++;return hg;};
   const vhouseIn=(x,z,face,s,kind)=>vInterior({x,z,face,s,kind,g,M,plast,beam,night,lvl,roofOk,hi:hi++});
   for(let i=0;i<nH;i++){const[x,z,f]=HS[i];vhouse(x,z,f,i<2?1.2:i%3===2?1.15:1,i===0?'alt':i===1?'fam':null,i<2);}
+  if(lvl<3&&PR>=.45&&HS[nH]){const[sx,sz,sf]=HS[nH];buildSite(sx,sz,sf,gh,beam);}
   if(has('medizin'))vhouse(-15,60,1,1.15,'heil',1);
   if(has('schule'))vhouse(14,61,-1,1.35,'schule',1);
   // ---- Brunnen
-  {const y=gh(0,52);if(has('brunnen')){cyl(.95,.7,M.stone,0,y,52,16);const wt=new TH.Mesh(new TH.CircleGeometry(.8,20),new TH.MeshStandardMaterial({color:'#3a6a70',roughness:.1,metalness:.3}));wt.rotation.x=-Math.PI/2;wt.position.set(0,y+.62,52);g.add(wt);
-     [-1,1].forEach(sd=>cyl(.07,2,M.wood,sd*.85,y,52,6));box(2.2,.08,1.4,M.roof,0,y+2.05,52,1);cyl(.05,1.7,M.wood,0,y+1.5,52,6).rotation.z=Math.PI/2;const bk=cyl(.14,.25,M.wood,0,y+.9,52,10,.11);}
-   else{cyl(.95,.45,M.stone,0,y,52,10);box(.6,.3,.4,M.stone,1.3,y,52.6,1).rotation.y=.6;}W.vbox.push([0,52,1.05,1.05]);}
+  {const y=gh(0,52);if(has('brunnen')){const wg=new TH.Group();wg.position.set(0,y,52);g.add(wg);const R0=W.root;W.root=wg;try{
+     const st=new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#b0a898',roughness:.95});const ring=new TH.Mesh(new TH.CylinderGeometry(1.05,1.12,.85,8,1,true),st);ring.position.y=.42;wg.add(ring);const inner=new TH.Mesh(new TH.CylinderGeometry(.9,.9,.85,8,1,true),new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#6a645a',side:TH.BackSide}));inner.position.y=.42;wg.add(inner);
+     const cap=new TH.Mesh(new TH.RingGeometry(.88,1.14,8),st);cap.rotation.x=-Math.PI/2;cap.position.y=.86;wg.add(cap);for(let k=0;k<8;k++){const a=k/8*6.283+.39;const b=box(.36,.14,.26,st,Math.cos(a)*1.0,.84,Math.sin(a)*1.0,1);b.rotation.y=-a;}
+     const wt=new TH.Mesh(new TH.CircleGeometry(.88,24),new TH.MeshStandardMaterial({color:'#2a5a64',roughness:.05,metalness:.5,emissive:'#0a2a30',emissiveIntensity:.4}));wt.rotation.x=-Math.PI/2;wt.position.y=.55;wg.add(wt);W.vU.well=wt;
+     const wd=new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#6a4a2e',roughness:.85});[-1,1].forEach(sd=>{box(.14,2.1,.14,wd,sd*1.05,.85,0,1);box(.3,.12,.3,st,sd*1.05,.84,0,1);});box(2.5,.12,.16,wd,0,2.9,0,1);roof(2.9,1.9,.75,0,3.0,0);
+     const ax=new TH.Mesh(new TH.CylinderGeometry(.09,.09,2.0,10),wd);ax.rotation.z=Math.PI/2;ax.position.y=2.25;wg.add(ax);const rope=new TH.Mesh(new TH.CylinderGeometry(.11,.11,.5,10),new TH.MeshStandardMaterial({color:'#b89a62',roughness:1}));rope.rotation.z=Math.PI/2;rope.position.y=2.25;wg.add(rope);
+     const cr=new TH.Group();cr.position.set(1.12,2.25,0);wg.add(cr);const arm=new TH.Mesh(new TH.BoxGeometry(.06,.4,.06),wd);arm.position.y=-.18;cr.add(arm);const hd=new TH.Mesh(new TH.CylinderGeometry(.04,.04,.25,6),wd);hd.rotation.z=Math.PI/2;hd.position.set(.12,-.36,0);cr.add(hd);W.vU.crank=cr;
+     const line=new TH.Mesh(new TH.CylinderGeometry(.012,.012,1.1,4),new TH.MeshStandardMaterial({color:'#8a7a52'}));line.position.set(0,1.68,0);wg.add(line);const bk=new TH.Mesh(new TH.CylinderGeometry(.16,.13,.26,12),wd);bk.position.set(0,1.0,0);wg.add(bk);W.vU.bucket=bk;W.vU.bline=line;
+     [[1.5,.6],[-1.4,-.7]].forEach(([a,b])=>{const p=new TH.Mesh(new TH.CylinderGeometry(.18,.14,.36,12),new TH.MeshStandardMaterial({color:'#8a5a3a',roughness:.6}));p.position.set(a,.18,b);wg.add(p);});
+     W.inter.push({x:0,z:53.6,r:1.5,label:'Dorfbrunnen',btn:'Wasser schöpfen',act:()=>{W.vU.draw=2.5;msg('Kühles, klares Wasser. Das Dorf ist dir dankbar.');DW.bell(.4);}});
+   }finally{W.root=R0;}}
+   else{cyl(.95,.45,M.stone,0,y,52,10);box(.6,.3,.4,M.stone,1.3,y,52.6,1).rotation.y=.6;}W.vbox.push([0,52,1.25,1.25]);}
   // ---- Markt
   if(has('ernte')||lvl>=2){[[-3.8,56.6],[3.8,56.6]].forEach(([x,z],i)=>{W.vbox.push([x,z,.65,1.25],[x+1.4,z-.2,.35,.7]);const sg=new TH.Group();sg.position.y=gh(x,z);g.add(sg);const r1=W.root;W.root=sg;try{stall(x,z);}finally{W.root=r1;}
      const crate=(cx,cz,col)=>{box(.5,.3,.4,beam,cx,gh(cx,cz),cz,1);for(let k=0;k<6;k++){const f=new TH.Mesh(new TH.SphereGeometry(.07,8,6),new TH.MeshStandardMaterial({color:col}));f.position.set(cx-.15+(k%3)*.15,gh(cx,cz)+.34,cz-.08+Math.floor(k/3)*.16);g.add(f);}};crate(x+1.4,z-.6,i?'#e8a02a':'#c83a2a');crate(x+1.4,z+.2,i?'#6a9a3a':'#e8d24a');});}
@@ -407,6 +417,7 @@ function village(){
   if(lvl>=3){W.vbox.push([0,76,2.5,2.5]);const pg=new TH.Group();pg.position.y=gh(0,76);g.add(pg);const r1=W.root;W.root=pg;try{pagoda(0,76,4,3.2);stoneLantern(-3,73,true);stoneLantern(3,73,true);}finally{W.root=r1;}
     if(night)for(let i=0;i<22;i++){const sp=new TH.Sprite(new TH.SpriteMaterial({map:softTex(),color:0xffa040,transparent:true,depthWrite:false,blending:TH.AdditiveBlending}));sp.scale.setScalar(.5);sp.userData={x:(Math.random()-.5)*14,z:52+(Math.random()-.5)*10,t:Math.random()};g.add(sp);W.vU.sky.push(sp);}}
   if(lvl>=1)flags([-6,gh(-6,52)+4.5,52],[6,gh(6,52)+4.5,52],18,.6);
+  if(W.vFest){flags([0,gh(0,46)+4.6,46],[0,gh(0,58)+4.6,58],18,.5);flags([-6,gh(-6,47)+4.4,47],[6,gh(6,57)+4.4,57],18,.6);for(let i=0;i<16;i++){const a=i/16*6.283;paperLantern(Math.cos(a)*4.2,gh(0,52)+3.2+Math.sin(i)*.2,52+Math.sin(a)*4.2,i%2?'#d8a030':'#c0281a',night,g);}}
   // ---- Hühner
   for(let i=0;i<2+lvl*2;i++){const c=new TH.Group(),wm=new TH.MeshStandardMaterial({color:i%3?'#f2efe6':'#a8642a',roughness:.9});const b=new TH.Mesh(new TH.SphereGeometry(.16,10,8),wm);b.scale.set(.8,.85,1.15);b.position.y=.2;c.add(b);
     const hd=new TH.Mesh(new TH.SphereGeometry(.08,8,6),wm);hd.position.set(0,.36,.14);c.add(hd);const cm=new TH.Mesh(new TH.BoxGeometry(.02,.06,.07),new TH.MeshStandardMaterial({color:'#d22a2a'}));cm.position.set(0,.44,.14);c.add(cm);const bk=new TH.Mesh(new TH.ConeGeometry(.025,.06,5),new TH.MeshStandardMaterial({color:'#e8a02a'}));bk.rotation.x=Math.PI/2;bk.position.set(0,.36,.23);c.add(bk);
@@ -749,6 +760,7 @@ function vUpdate2(dt,t){const U=W.vU;if(!U)return;
   (U.sparks||[]).forEach(s=>{if(s.t<=0){s.s.visible=false;return;}s.t-=dt;s.v.y-=dt*6;s.s.position.addScaledVector(s.v,dt);});
   (U.ducks||[]).forEach(D=>{D.x+=D.dir*dt*.35;if(D.x>28||D.x<-28||(Math.abs(D.x)<1.8&&W.vBridge)||(D.x>-27.5&&D.x<-20.5))D.dir*=-1,D.x+=D.dir*.1;const z=D.d.position.z,wy=Math.min(groundH(D.x,62.9),groundH(D.x,65.1))-.13;D.d.position.set(D.x,wy+Math.sin(t*2+D.ph)*.015,z+Math.sin(t*.4+D.ph)*.002);D.d.rotation.y=D.dir>0?Math.PI/2:-Math.PI/2;});
   if(U.boat){U.boat.position.y+=Math.sin(t*1.3)*.0015;U.boat.rotation.z=Math.sin(t*1.1)*.04;U.boat.rotation.x=Math.sin(t*.8)*.02;}
+  if(U.well){U.well.material.emissiveIntensity=.35+Math.sin(t*1.7)*.08;}if(U.crank){const dr=U.draw>0;if(dr){U.draw-=dt;U.crank.rotation.x-=dt*4;const k=Math.max(0,Math.min(1,1-Math.abs(U.draw-1.25)/1.25));U.bucket.position.y=1.0-k*.6;U.bline.scale.y=1+k*.55;U.bline.position.y=1.68-k*.3;}}
   (U.embers||[]).forEach((e,i)=>{e.material.emissiveIntensity=1.1+Math.sin(t*6+i*2)*.35+Math.sin(t*15.3+i)*.15;});if(U.cat)U.cat.scale.y=1+Math.sin(t*2)*.04;
   (U.cloth||[]).forEach((c,i)=>{c.rotation.x=Math.sin(t*1.6+i)*.12;});
   (U.petals||[]).forEach(s=>{const u=s.userData;u.t=(u.t+dt*.08)%1;s.position.set(u.o[0]+Math.sin(u.t*9+u.o[1])*1.2+u.t*1.5,groundH(u.o[0],u.o[1])+3.2-u.t*3.1,u.o[1]+Math.cos(u.t*7)*1.1);});
@@ -792,6 +804,21 @@ function villageNature(lvl){const R=rng(303),gh=groundH;
     const f=new TH.Mesh(new TH.PlaneGeometry(68,2.8),k%3===1?dry:wet);f.rotation.x=-Math.PI/2;f.position.set(0,top+.02,(z0+z1)/2);W.root.add(f);
     if(lvl>=1){const ri=new TH.InstancedMesh(rg,rmat,220);let c2=0;for(let a=0;a<220;a++){p.set(-33+R()*66,top,z0+.3+R()*2.6);q.setFromAxisAngle(Y,R()*6.28);const s=.45+R()*.25;sc.set(s,s*.8,s);m4.compose(p,q,sc);ri.setMatrixAt(c2++,m4);}ri.count=c2;W.root.add(ri);}}
 }
+
+
+/* ---------- Dorf lebt mit dir: Wohlstand, Baustelle, Fest, Feuerwerk ---------- */
+function firework(x,y,z,col){const n=70,pos=new Float32Array(n*3),vel=[];for(let i=0;i<n;i++){pos[i*3]=x;pos[i*3+1]=y;pos[i*3+2]=z;const a=Math.random()*6.28,b=Math.acos(2*Math.random()-1),sp=3+Math.random()*2.5;vel.push([Math.sin(b)*Math.cos(a)*sp,Math.cos(b)*sp,Math.sin(b)*Math.sin(a)*sp]);}
+  const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pos,3));const m=new TH.PointsMaterial({color:col||0xffc060,size:.35,map:softTex(),transparent:true,depthWrite:false,blending:TH.AdditiveBlending,fog:false});const p=new TH.Points(g,m);W.scene.add(p);(W.fw=W.fw||[]).push({p,vel,t:0});if(W.snd)try{blip(W.snd,180,.5,.35,'lowpass');}catch(e){}}
+function fireworksShow(n){if(!W||!W.villageAt)return;const [vx,vy,vz]=W.villageAt;const cols=[0xff5030,0xffd060,0x60c0ff,0xff70c0,0x90ff90];for(let i=0;i<(n||8);i++)setTimeout(()=>{if(W)firework(vx+(Math.random()-.5)*16,vy+11+Math.random()*6,vz+(Math.random()-.5)*10,cols[i%cols.length]);},i*450);}
+function fwUpdate(dt,t){if(W.fw)W.fw=W.fw.filter(F=>{F.t+=dt;const a=F.p.geometry.attributes.position.array;for(let i=0;i<F.vel.length;i++){const v=F.vel[i];v[1]-=dt*2.2;v[0]*=.985;v[2]*=.985;a[i*3]+=v[0]*dt;a[i*3+1]+=v[1]*dt;a[i*3+2]+=v[2]*dt;}F.p.geometry.attributes.position.needsUpdate=true;F.p.material.opacity=Math.max(0,1-F.t/1.8);if(F.t>1.8){W.scene.remove(F.p);return false;}return true;});
+  if(W.vFest&&W.tod&&W.tod.night&&W.inVillage!=null){W._fwT=(W._fwT||0)-dt;if(W._fwT<=0){W._fwT=2.5+Math.random()*3;const [vx,vy,vz]=W.villageAt||[0,-28,52];firework(vx+(Math.random()-.5)*18,vy+12+Math.random()*5,vz+(Math.random()-.5)*12,[0xff5030,0xffd060,0x60c0ff,0xff70c0][Math.floor(Math.random()*4)]);}}}
+function buildSite(x,z,face,gh,beam){const rot=face===1?Math.PI/2:face===-1?-Math.PI/2:face===2?Math.PI:0,w=4.2,d=3.4,y=gh(x,z),g=new TH.Group();g.position.set(x,y,z);g.rotation.y=rot;W.root.add(g);const R0=W.root;W.root=g;
+  try{const wood=new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#a8885a',roughness:.9}),pole=new TH.MeshStandardMaterial({color:'#8a7a5a',roughness:1});box(w+.4,1.4,d+.4,W.M.stone,0,-1.1,0,1.5);
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(.2,2.4,.2,beam,a*w/2,.3,b*d/2,1));box(w+.1,.14,d+.1,beam,0,2.6,0,1);box(w,.9,.12,W.M.plaster,0,.3,-d/2,1.4);
+    for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j+=2){cyl(.04,3.4,pole,i*(w/2+.45),.3,j*(d/2+.45),5);}[1.2,2.4].forEach(h=>{[-1,1].forEach(j=>box(w+1,.05,.35,wood,0,.3+h,j*(d/2+.45),1));});
+    for(let k=0;k<5;k++)box(2.2,.1,.22,wood,w/2+1.4,.3+k*.11,-.6+k*.03,1);for(let k=0;k<4;k++){const l=new TH.Mesh(new TH.CylinderGeometry(.12,.12,2,7),beam);l.rotation.z=Math.PI/2;l.position.set(-w/2-1.3,.42+k*.22,(k%2)*.24-.1);g.add(l);}
+    const sg=new TH.Mesh(new TH.PlaneGeometry(.9,.5),new TH.MeshStandardMaterial({map:signTex('建造中','#e8dcc0','#8a2a1a',256,140,54),roughness:.8}));sg.position.set(0,1.8,d/2+.3);g.add(sg);}finally{W.root=R0;}
+  W.vbox.push([x,z,(face===1||face===-1?d:w)/2+.9,(face===1||face===-1?w:d)/2+.9]);W.vSite=[x,z,rot];}
 
 /* ---------- Drachentreppe: Kloster ↔ Dorf ---------- */
 let _SD=null;
@@ -903,7 +930,9 @@ function vnpcs(lvl){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)retu
     ['#6a5a3a','#8a5a3a','#1a1614','Weberin Sun',[[-14,44],[-14,56],[-8,56]],.7],['#4a3a5a','#c99a72','#2a2420','Kind Ling',[[-4,48],[4,48],[4,55],[-4,55]],1.2,.7],['#3a5a6a','#a8784f','#1a1614','Kind Pei',[[10,48],[3,54],[10,58]],1.3,.68]];
   mk('#7a3a3a','#d8a882','#1a1614',{name:'Wirtin Hua',pts:[[-22.4,60.1]],sp:.2});mk('#3a3430','#a8784f','#2a2420',{name:'Schmied Gang',pts:[[24.4,53.7]],sp:.2});
   if(!DW.day('_ratd')&&DW.unlocks().extras){const R=ratToday();const ex=W.npcs.find(n=>n.name===R.w);if(ex){W.seeker=ex;}else{mk('#5a5a4a','#c9926a','#2a2420',{name:R.w,pts:[[-1.6,49.2],[-1.6,49.2]],sp:1.2});W.seeker=W.npcs.find(n=>n.name===R.w);}if(W.seeker){W.seeker.it.btn='Zuhören';const S0=W.seeker;W.seeker.it.act=()=>ratDialog(S0);}}
-  V.slice(0,[2,3,5,6][lvl]).forEach(([r,s,h,n,pts,sp,sc])=>mk(r,s,h,{name:n,pts,sp,sc}));});}
+  const PRc=W.vPros||.5,nV=Math.max(1,Math.min(6,[2,3,5,6][lvl]+(PRc>=.6?1:0)+(PRc>=.8?1:0)-(PRc<.35?2:0)));if(W.vFest){V.forEach(v=>{if(/^Kind/.test(v[3]))v[4]=[[2.2,52],[0,54.2],[-2.2,52],[0,49.8]];});}
+  if(W.vSite&&PRc>=.6){const[sx,sz]=W.vSite;mk('#6a5a3a','#b8885a','#2a2420',{name:'Zimmermann Tie',pts:[[sx+2.8,sz],[sx+2.8,sz+.4]],sp:.4});}
+  V.slice(0,nV).forEach(([r,s,h,n,pts,sp,sc])=>mk(r,s,h,{name:n,pts,sp,sc}));});}
 function goVillage(){if(!W||!W.av)return;endTalk();W.inVillage=1;const z=39.6,y=groundH(0,z);W.av.position.set(0,y,z);W.av.rotation.y=0;W.yaw=Math.PI;W.cam.position.set(0,y+3,z-5);W.camOv=null;
   if(W.fogSave)W.scene.fog.density=W.fogSave;const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);DW.bell(.8);}
 function leaveVillage(){if(!W||!W.av)return;W.inVillage=0;W.av.position.set(0,0,23);W.av.rotation.y=Math.PI;W.yaw=0;W.cam.position.set(0,3,26);msg('Zurück im Kloster');}
@@ -952,7 +981,7 @@ function roomDialog(id){
   if(id==='halle')btns.push(['Verneigen',()=>{endTalk();playOnce('Bow');DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
   if(id==='tor'&&W.villageAt&&!W.inVillage){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
-    if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);}}]);}
+    if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);fireworksShow(10);setTimeout(()=>{if(W)msg('Das ganze Dorf feiert dich! 🎆');},1200);}}]);}
   if(id==='tor'&&!W.inVillage){if(DW.unlocks().village)btns.unshift(['Ins Dorf hinabsteigen',()=>goVillage(),1]);else text+=`\n\nNoch liegt Nebel über der Drachentreppe. Ab Tag 3 darfst du ins Dorf hinabsteigen (heute: Tag ${DW.unlocks().day}).`;}
   if(id==='tor'&&DW.unlocks().market)btns.unshift(['Zum Markt',()=>{endTalk();market();},1]);
   if(id==='zelle'||(id==='garten'&&r.open))btns.push(['Einrichten',()=>{endTalk();furnishUI(id);}]);
@@ -992,6 +1021,7 @@ function briefing(first){if(!W||W.ch)return;if(first&&DW.flag('tut')&&!DW.mood()
    const T2=DW.trial();if(T2)L2.push(T2.done?'Deine Prüfungsaufgabe ist erfüllt. Meister Shen wartet.':`Prüfungsaufgabe: ${T2.need} (noch ${T2.left} Tage).`);
    const mp=DW.mapState();if(mp.fresh){mp.fresh=0;L2.push(`Ein Kartenstück gefunden! (${mp.n}/4) Es passt in das versiegelte Tor hinter dem Tempel.`);}
    const rw=DW.rivalWeek();if(rw)L2.push(rw.won?`Wochensieg gegen Bruder Ren: ${rw.mine} zu ${rw.his} perfekte Tage. +15 Kupfer.`:`Bruder Ren hat die Woche gewonnen, ${rw.his} zu ${rw.mine}. Neue Woche, neue Chance.`);
+   if(U2.village){const pr=DW.prosperity();if(W.vFest)L2.push('Im Dorf wird gefeiert! Deine Disziplin hat es zum Blühen gebracht. Heute Nacht gibt es Feuerwerk.');else if(pr<.35)L2.push('Im Dorf ist es still geworden. Ein paar Familien sind weggezogen. Kehr zurück zu deinen Routinen, dann kommen sie wieder.');else if(pr>=.6&&v2.lvl<3)L2.push('Im Dorf wird gebaut. Neue Familien ziehen zu.');}
    if(W.fox)L2.push('Im Morgennebel wurde ein weisser Fuchs im Garten gesehen…');if(W.ghost)L2.push('Beim Teich schimmert ein bläuliches Licht…');
    if(L2.length)extra+='\n\n'+L2.join('\n');}
   dlgK(first?'Tagesbeginn':'Heute',t+extra+(wx?'\n'+wx:'')+`\n\n«${spruch()}»`,btns);}
@@ -1280,7 +1310,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);tensionUpdate(.016,W.clock.elapsedTime);seekerUpdate(.016);sitUpdate(.016);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);tensionUpdate(.016,W.clock.elapsedTime);seekerUpdate(.016);fwUpdate(.016,W.clock.elapsedTime);sitUpdate(.016);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
