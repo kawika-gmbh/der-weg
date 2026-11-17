@@ -367,6 +367,8 @@ function roomDialog(id){
 function dlgK(k,text,btns){dlg(text,btns);$('#wDlgK').textContent=k;}
 function refreshRoom(){if(W){ptsHud();dayGlow(false);beacon();}}
 /* ---------- Tagesbeginn: interaktiv ---------- */
+const SPRUCH=['Wer jeden Tag einen Schritt geht, kommt weiter als der, der einmal rennt.','Die Disziplin ist eine Brücke zwischen Zielen und Erfolg. Geh hinüber.','Der Bambus beugt sich im Sturm und bricht nicht.','Ein Krug füllt sich Tropfen für Tropfen.','Fege den Hof, auch wenn morgen wieder Blätter fallen.','Wer sich selbst besiegt, ist stärker als der, der tausend besiegt.','Der Weg ist das Ziel. Aber du musst ihn gehen.','Stille ist kein leerer Raum. Sie ist voller Antworten.','Am Morgen entscheidet sich der Tag.','Das Wasser ist weich und höhlt doch den Stein.','Wenn du isst, iss. Wenn du gehst, geh.','Kleine Taten, oft getan, verändern alles.','Der Berg wird nicht kleiner. Du wirst stärker.','Heute ist ein guter Tag, um anzufangen. Wie gestern und morgen auch.','Ein ordentlicher Raum ist ein ruhiger Geist.','Wer nicht übt, vergisst. Wer übt, wird.','Atme. Dann geh weiter.','Auch der Meister war einmal Novize.','Der Fluss kommt ans Meer, weil er nicht aufhört zu fliessen.','Ehrlichkeit mit dir selbst ist der erste Schritt.','Die Kirschblüte blüht nicht schneller, wenn man an ihr zieht.','Ein voller Becher kann nichts aufnehmen. Leere ihn.','Was du heute tust, wird morgen leicht.','Langsam ist gut. Stehen bleiben ist schade.','Der Weg von tausend Meilen beginnt unter deinen Füssen.','Beständigkeit schlägt Begeisterung.','Ein Tag ohne Übung ist ein Tag, den du nachholen musst.','Lerne vom Koi: Er schwimmt gegen den Strom.','Wer früh aufsteht, hat den Hof für sich.','Die Glocke klingt, weil sie hohl ist.'];
+function spruch(){const d=new Date(),i=(d.getFullYear()*366+d.getMonth()*31+d.getDate())%SPRUCH.length;return SPRUCH[i];}
 function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name(),h=new Date().getHours(),L=DW.todayList(),open_=L.filter(r=>!r.done),dn=L.length-open_.length;
   const hi=h<5?`Noch wach, ${n}?`:h<11?`Guten Morgen, ${n}.`:h<17?`Guten Tag, ${n}.`:h<22?`Guten Abend, ${n}.`:`Spät geworden, ${n}.`;
   let t;if(!L.length)t=`${hi} Heute steht keine feste Routine an. Ein guter Tag, um dem Dorf zu helfen oder bei Meister Shen zu lernen.`;
@@ -382,7 +384,7 @@ function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name()
   if(v.ev&&!v.ok)btns.push(['Zum Dorf',()=>{endTalk();goRoom('tor');}]);
   btns.push(['Übersicht im Menü',()=>{endTalk();DW.openMenu('missions');}]);
   btns.push([first?'Ich schaue mich erst um':'Danke',()=>{endTalk();beacon();}]);
-  dlgK(first?'Tagesbeginn':'Heute',t+extra,btns);}
+  dlgK(first?'Tagesbeginn':'Heute',t+extra+`\n\n«${spruch()}»`,btns);}
 /* ---------- Leuchtfeuer zum nächsten Ziel ---------- */
 function beacon(force){if(!W||W.ch)return;const L=DW.todayList().filter(r=>!r.done);if(!W.bcn){const g=new TH.Group();const m=new TH.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:.35,depthWrite:false,blending:TH.AdditiveBlending,side:TH.DoubleSide});
     const c=new TH.Mesh(new TH.CylinderGeometry(.35,.6,7,20,1,true),m);c.position.y=3.5;g.add(c);const ring=new TH.Mesh(new TH.RingGeometry(.55,.75,32),m.clone());ring.rotation.x=-Math.PI/2;ring.position.y=.05;g.add(ring);W.root.add(g);W.bcn=g;}
@@ -626,6 +628,7 @@ function loop(){
   const dt=Math.min(.05,W.clock.getDelta()),t=W.clock.elapsedTime;
   let mx=W.mv.x,mz=W.mv.z;const K=W.keys;if(K.w||K.arrowup)mz=-1;if(K.s||K.arrowdown)mz=1;if(K.a||K.arrowleft)mx=-1;if(K.d||K.arrowright)mx=1;
   const ml=Math.min(1,Math.hypot(mx,mz)),av=W.av;
+  W.moving=ml>.08;W.run=!!K.shift;
   if(ml>.08){const sy=Math.sin(W.yaw),cy=Math.cos(W.yaw);const dx=(mx*cy+mz*sy),dz=(-mx*sy+mz*cy);const sp=4.6*ml*dt*((K.shift)?1.8:1)*(W.inHut?.6:1);const nx=av.position.x+dx/ml*sp*ml,nz2=av.position.z+dz/ml*sp*ml;
     if(!blocked(nx,nz2,av.position.x,av.position.z)){av.position.x=nx;av.position.z=nz2;}else if(!blocked(nx,av.position.z,av.position.x,av.position.z))av.position.x=nx;else if(!blocked(av.position.x,nz2,av.position.x,av.position.z))av.position.z=nz2;
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
@@ -658,7 +661,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
@@ -807,6 +810,34 @@ $('#gAgain').onclick=()=>{const c=G&&G.reward;finishG(true);startPoles();};
 function finishG(again){if(!G)return;cancelAnimationFrame(G.raf);g3dEnd();const chi=G.state==='end'?G.reward:0;G=null;$('#game').hidden=true;if(chi){DW.gameReward(chi,'Pflaumenblüten-Pfähle');if(W)msg('+'+chi+' Chi gutgeschrieben');}}
 window.addEventListener('resize',()=>{if(G)sizeG();});
 
+/* ---------- Klangkulisse (prozedural) ---------- */
+function noiseBuf(ac,brown){const n=ac.sampleRate*2,b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.5;}else d[i]=w;}return b;}
+['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{try{const a=DW.ac();if(a&&a.state==='suspended')a.resume();}catch(e){}},{passive:true}));
+function sndInit(){if(W.snd||!DW.soundOn())return;const ac=DW.ac();if(!ac)return;const S0={ac};W.snd=S0;
+  const out=ac.createGain();out.gain.value=0;out.connect(ac.destination);S0.out=out;
+  const loop=(buf)=>{const s=ac.createBufferSource();s.buffer=buf;s.loop=true;s.start();return s;};const br=noiseBuf(ac,true),wh=noiseBuf(ac,false);S0.wh=wh;
+  // Wind
+  const w=loop(br),wf=ac.createBiquadFilter();wf.type='lowpass';wf.frequency.value=380;const wg=ac.createGain();wg.gain.value=.12;w.connect(wf);wf.connect(wg);wg.connect(out);S0.wf=wf;S0.wg=wg;
+  // Wasser (Teich)
+  const q=loop(wh),qf=ac.createBiquadFilter();qf.type='bandpass';qf.frequency.value=1500;qf.Q.value=.8;const qg=ac.createGain();qg.gain.value=0;q.connect(qf);qf.connect(qg);qg.connect(out);S0.qg=qg;
+  // Grillen (Nacht)
+  const c=ac.createOscillator();c.frequency.value=4400;const cam=ac.createGain();cam.gain.value=0;const lfo=ac.createOscillator();lfo.frequency.value=28;const lg=ac.createGain();lg.gain.value=.5;lfo.connect(lg);lg.connect(cam.gain);c.connect(cam);const cg=ac.createGain();cg.gain.value=0;cam.connect(cg);cg.connect(out);c.start();lfo.start();S0.cg=cg;
+  // Feuer (Küche)
+  const f=loop(wh),ff=ac.createBiquadFilter();ff.type='lowpass';ff.frequency.value=700;const fg=ac.createGain();fg.gain.value=0;f.connect(ff);ff.connect(fg);fg.connect(out);S0.fg=fg;
+  S0.nextBird=ac.currentTime+2;S0.nextStep=0;S0.nextCrack=0;}
+function chirp(S0,pan){const ac=S0.ac,t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain(),p=ac.createStereoPanner?ac.createStereoPanner():null;const n=2+Math.floor(Math.random()*4),base=2400+Math.random()*2200;
+  o.type='sine';g.gain.value=0;for(let i=0;i<n;i++){const tt=t+i*.11;o.frequency.setValueAtTime(base,tt);o.frequency.exponentialRampToValueAtTime(base*(1.3+Math.random()*.5),tt+.06);g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(.05,tt+.015);g.gain.linearRampToValueAtTime(0,tt+.08);}
+  o.connect(g);if(p){p.pan.value=pan;g.connect(p);p.connect(S0.out);}else g.connect(S0.out);o.start(t);o.stop(t+n*.11+.1);}
+function blip(S0,freq,dur,vol,type,q){const ac=S0.ac,t=ac.currentTime,s=ac.createBufferSource();s.buffer=S0.wh;const f=ac.createBiquadFilter();f.type=type||'lowpass';f.frequency.value=freq;if(q)f.Q.value=q;const g=ac.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(S0.out);s.start(t,Math.random()*1.5);s.stop(t+dur+.02);}
+function sndUpdate(dt,moving){if(!W.snd){if(DW.soundOn()&&W.av&&!W.ch)sndInit();return;}const S0=W.snd,ac=S0.ac,t=ac.currentTime;if(ac.state==='suspended')return;
+  const on=DW.soundOn()&&!document.body.classList.contains('menuOver')&&!document.hidden?1:0;S0.out.gain.value+=(on*.9-S0.out.gain.value)*Math.min(1,dt*2);if(!on)return;
+  const night=W.tod&&W.tod.night,inH=!!W.inHut,P=W.av?W.av.position:{x:0,z:0};
+  S0.wg.gain.value=(inH?.04:.11)*(1+.5*Math.sin(t*.13)*Math.sin(t*.07));S0.wf.frequency.value=inH?220:300+180*Math.sin(t*.09);
+  const G=RPOS.garten.c,dp=Math.hypot(P.x-(G[0]-1),P.z-G[1]);S0.qg.gain.value=inH?0:Math.max(0,.07*(1-dp/11));
+  S0.cg.gain.value=night&&!W.se.winter?(inH?.004:.012):0;
+  const K=RPOS.kueche.c,dk=Math.hypot(P.x-K[0],P.z-K[1]);S0.fg.gain.value=Math.max(0,.05*(1-dk/6));if(dk<5&&t>S0.nextCrack){blip(S0,2500+Math.random()*2000,.04,.12*(1-dk/5),'highpass');S0.nextCrack=t+.08+Math.random()*.5;}
+  if(!night&&!W.se.winter&&t>S0.nextBird){chirp(S0,Math.random()*2-1);S0.nextBird=t+(inH?6:1.5)+Math.random()*(inH?8:4);}
+  if(moving&&t>S0.nextStep){if(inH)blip(S0,500,.09,.25,'lowpass');else blip(S0,2600,.07,.18,'bandpass',.7);S0.nextStep=t+(W.run?.29:.42);}}
 /* ---------- Markt, Münzen, Einrichten ---------- */
 const SLOTS={z1:{n:'Zelle · beim Fenster',room:'zelle',u:.9,v:-2.6},z2:{n:'Zelle · neben der Tür',room:'zelle',u:2.0,v:1.3},z3:{n:'Zelle · hinten',room:'zelle',u:-.4,v:-2.7},z4:{n:'Zelle · am Kleiderständer',room:'zelle',u:.9,v:2.4},
   h1:{n:'Hof · links am Weg',x:-7.3,z:12.5},h2:{n:'Hof · rechts am Weg',x:7.3,z:12.5},
@@ -849,6 +880,14 @@ function furnishUI(room){const D=DW.decor(),items=DW.items(),mine=Object.keys(SL
   o.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{DW.unplace(b.dataset.u);decorPlace();furnishUI(room);});
   o.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{o.hidden=true;slotPick(b.dataset.i,`${DW.itemName(b.dataset.i)} aufstellen`);});}
 /* ---------- Echte Objekte (Poly Haven, CC0) ---------- */
+function stall(x,z){const M=W.M,wood=M.wood;[[-1.1,-.5],[1.1,-.5],[-1.1,.5],[1.1,.5]].forEach(([a,b])=>cyl(.05,2.2,wood,x+b,0,z+a,6));
+  box(1.0,.85,2.3,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#6a4a30',roughness:.85}),x,0,z,1);
+  const cv=document.createElement('canvas');cv.width=64;cv.height=8;const c=cv.getContext('2d');for(let i=0;i<8;i++){c.fillStyle=i%2?'#efe2c4':'#a8322a';c.fillRect(i*8,0,8,8);}const tx=new TH.CanvasTexture(cv);tx.wrapS=TH.RepeatWrapping;tx.repeat.set(2,1);
+  const aw=new TH.Mesh(new TH.PlaneGeometry(2.6,1.5),new TH.MeshStandardMaterial({map:tx,side:TH.DoubleSide,roughness:1}));aw.rotation.set(-Math.PI/2+.35,0,Math.PI/2);aw.rotation.order='YXZ';aw.rotation.set(-Math.PI/2+.35,Math.PI/2,0);aw.position.set(x+.15,2.25,z);aw.castShadow=true;W.root.add(aw);
+  const sg=document.createElement('canvas');sg.width=256;sg.height=64;const g=sg.getContext('2d');g.fillStyle='#2a1a12';g.fillRect(0,0,256,64);g.fillStyle='#f2d48a';g.font='bold 34px serif';g.textAlign='center';g.fillText('MARKT',128,44);
+  const sign=new TH.Mesh(new TH.PlaneGeometry(1.1,.28),new TH.MeshStandardMaterial({map:new TH.CanvasTexture(sg),roughness:.8}));sign.position.set(x+.56,1.55,z);sign.rotation.y=Math.PI/2;W.root.add(sign);
+  W.solids.push([x,z-.7,.6],[x,z+.7,.6]);W.stallAt=[x,z];
+  W.inter.push({x:x+1.3,z,r:1.7,label:'Marktstand',btn:'Ansehen',act:()=>market()});}
 function props(){if(W.ch||!TH.GLTFLoader)return;const go=gl=>{if(!W)return;const L={};gl.scene.traverse(o=>{if(o.isMesh||o.isObject3D&&o.parent===gl.scene)L[o.name]=L[o.name]||o;});
   const at=(room,u,v)=>{const P=RPOS[room];return[P.c[0]+P.f[0]*u,P.c[1]+v];},open=DW.rooms().reduce((a,r)=>(a[r.id]=r.open,a),{});
   const PR={ceramic_pot:.42,wicker_basket_01:.25,wooden_bucket_01:.25,antique_ceramic_vase_01:.2,chinese_stool:.35,chinese_tea_table:.5,planter_pot_clay:.25};const put=(k,x,y,z,ry,s)=>{const src=L[k];if(!src)return;if(PR[k]&&y<.4)W.solids.push([x,z,PR[k]*(s||1)]);const o=src.clone();o.position.set(x,y,z);o.rotation.set(0,ry||0,0);if(s)o.scale.setScalar(s);o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});W.root.add(o);return o;};
@@ -859,6 +898,7 @@ function props(){if(W.ch||!TH.GLTFLoader)return;const go=gl=>{if(!W)return;const
   room('bad',[['wooden_bucket_01',-1.3,1.25,0,0],['wooden_bowl_01',-.6,2.4,0,0]]);
   (W.plantSpots||[]).forEach(([x,z],i)=>{put('planter_pot_clay',x,.35,z,i,1.9);imp('bush_c',x,z,1.05,i*.31+.2);const it=W.imps[W.imps.length-1];it.m.position.y=.35+.36;W.solids.push([x,z,.3]);});
   const G=RPOS.garten.c;[[2.6,1.2],[2.9,2],[-3.2,-1.8]].forEach(([a,b],i)=>put('planter_pot_clay',G[0]+a,0,G[1]+b,i,1.6+i*.3));
+  if(W.stallAt){const[sx,sz]=W.stallAt;put('ceramic_pot',sx,.85,sz-.75,0,.5);put('wicker_basket_01',sx,.85,sz-.1,.4);put('tea_set_01',sx+.05,.85,sz+.55,Math.PI/2,.8);put('brass_pot_02',sx-.25,.85,sz+.2,0);}
   put('wooden_broom',2.7,0,24.9,0,1).rotation.z=.25;put('brass_vase_03',0,0,4.6,0,3.2);
   W.put=put;W.propsOk=1;decorPlace();};
   if(window._propsGL)go(window._propsGL);else new TH.GLTFLoader().load('props.glb',gl=>{window._propsGL=gl;go(gl);},undefined,e=>console.warn('props',e));}
@@ -942,6 +982,7 @@ function life(){if(W.ch)return;
   smoke(RPOS.kueche.c[0]+1.2,5.1,RPOS.kueche.c[1]-1.2,10);box(.5,.9,.5,W.M.stone,RPOS.kueche.c[0]+1.2,4.3,RPOS.kueche.c[1]-1.2,1);
   [[-9.5,7],[9.8,6.4],[-16,15.5],[16.5,14]].forEach(([x,z],i)=>imp('gtree',x,z,3.4+(i%2)*.6,i*.37+.1,.6));
   [[-19,-4],[19.5,3],[-21,21],[21,-8],[2,-21],[-11,-21],[13,-20],[-22,8],[23,16]].forEach(([x,z],i)=>imp('btree',x,z,4.6+(i%3)*.8,i*.29+.05,.4));
+  stall(-5.6,21.9);
   birds();flutter();fireflies();npcs();props();}
 function lifeUpdate(){const now=performance.now()/1000,dt=Math.min(.05,now-(W.lt||now));W.lt=now;const t=now;
   if(W.bcn&&W.bcn.visible){const c=W.bcn.children[0],r=W.bcn.children[1];c.rotation.y=t*.5;const near=W.av&&Math.hypot(W.av.position.x-W.bcn.position.x,W.av.position.z-W.bcn.position.z)<2.2;const tgt=near?.08:(W.bcnPulse>0?.6:.32);if(W.bcnPulse>0)W.bcnPulse-=dt;c.material.opacity+=(tgt+Math.sin(t*2.4)*.06-c.material.opacity)*.08;r.scale.setScalar(1+Math.sin(t*2.4)*.12);r.material.opacity=c.material.opacity*1.4;}
