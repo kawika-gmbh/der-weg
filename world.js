@@ -436,6 +436,7 @@ function village(){
 function nextStep(){const g=DW.flag('guide'),L=DW.todayList(),open_=L.filter(r=>!r.done),ri=DW.rankInfo(),U=DW.unlocks();
   if(g===1&&open_.length)return{k:'Erster Schritt',t:`Geh zu «${open_[0].name}» (${open_[0].roomN}) und trag sie ein`,go:()=>goRoom(open_[0].room)};
   if(g===2)return{k:'Gut gemacht',t:'Sprich mit Meister Shen über dein Chi',go:()=>toMeister()};
+  {const pe=p6Evening();if(pe)return{k:'Prüfung · '+pe.n,t:'Meister Shen hat eine Frage an dich',go:()=>p6Ask(pe)};}
   if(open_.length)return{k:`Heute ${L.length-open_.length}/${L.length}`,t:`${open_[0].name} · ${open_[0].roomN}`,go:()=>goRoom(open_[0].room)};
   const T=DW.trial();if(T&&T.done)return{k:'Prüfung erfüllt',t:'Geh zu Meister Shen und leg die Rangprüfung ab',go:()=>toMeister()};
   if(T&&!T.done&&T.left>0)return{k:`Prüfungsaufgabe · noch ${T.left} T.`,t:T.need,go:T.type==='med10'?()=>goRoom('halle'):T.type==='tc'?()=>goRoom('hof'):null};
@@ -451,6 +452,8 @@ function nextStep(){const g=DW.flag('guide'),L=DW.todayList(),open_=L.filter(r=>
 function toMeister(){if(!W||!W.npc)return;const p=W.npc.position;W.av.position.set(p.x+Math.sin(W.npc.rotation.y)*1.4,p.y,p.z+Math.cos(W.npc.rotation.y)*1.4);W.av.rotation.y=W.npc.rotation.y+Math.PI;W.yaw=W.av.rotation.y+Math.PI;setTimeout(()=>W&&talk(5),400);}
 function questUpdate(){if(!W||W.ch)return;const now=performance.now();if(W._qT&&now-W._qT<900)return;W._qT=now;
   if(DW.flag('guide')===1&&DW.doneToday().done>0){DW.flag('guide',2);msg('Gut! Du hast Chi verdient. Sprich jetzt mit Meister Shen.');}
+  {const sg=DW.p6().find(p=>p.k==='shugyo'&&p.active);if(sg&&sg.count>=100){DW.p6Done('shugyo');DW.bell(1.5);msg('Shugyo vollendet! 100 Tage ohne Lücke. +25 Kupfer');}}
+  {const gb=DW.p6().find(p=>p.k==='ganbaru'&&p.active);if(gb){if(gb.st.start!==DW.todayKey()){DW.p6Start('ganbaru',{start:null});}else if(DW.doneToday().done>(gb.st.base||0)){DW.p6Done('ganbaru');DW.bell(1.3);msg('Ganbaru bestanden! Müde – und trotzdem vollendet. +25 Kupfer');}}}
   const s=nextStep(),el=$('#wQuest');if(!el)return;el.hidden=!!W.talking||!!W.med||!!W.tc;const key=s.k+s.t;if(W._qKey!==key){W._qKey=key;$('#wQuestK').textContent=s.k;$('#wQuestT').textContent=s.t;$('#wQuestI').textContent=s.ok?'✓':'!';el.classList.toggle('ok',!!s.ok);el.style.animation='none';void el.offsetWidth;el.style.animation='';}
   el.onclick=()=>{DW.tick();if(s.go){endTalk();s.go();}};marksUpdate();}
 function markTex(ok){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=ok?'#7fbf8a':'#f2c46a';x.beginPath();x.arc(32,32,26,0,6.28);x.fill();x.strokeStyle='#1a1410';x.lineWidth=3;x.stroke();x.fillStyle='#1a1410';x.font='bold 40px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(ok?'✓':'!',32,35);return new TH.CanvasTexture(c);}
@@ -575,6 +578,7 @@ function moodAsk(cb){dlgK('Meister Shen','Bevor wir beginnen: Wie geht es dir he
 function moodReply(k,cb){const next=()=>{endTalk();cb&&cb();};
   if(k==='energie')dlgK('Meister Shen','Dann nutze die Kraft. Kleiner Zusatz für heute, wenn du magst: eine freie Einheit, laufen, Yoga, egal was. Trag sie danach ein.',[['Mach ich',next,1]]);
   else if(k==='gut')dlgK('Meister Shen','Schön. Ein guter Tag ist ein guter Tag. Geh ihn Schritt für Schritt.',[['Danke',next,1]]);
+  else if(k==='muede'&&DW.p6().find(p=>p.k==='ganbaru'&&p.open&&!p.done&&!p.active)){dlgK('Meister Shen','Müde. Gut, dann ist heute dein Tag für Ganbaru: Bring trotzdem eine Routine zu Ende. Nicht für ein Ergebnis, sondern weil du es dir versprochen hast.',[['Ich nehme sie an',()=>{DW.p6Start('ganbaru',{base:DW.doneToday().done});next();},1],['Heute nicht',next]]);}
   else if(k==='muede')dlgK('Meister Shen','Müdigkeit ist eine Botschaft, kein Versagen. Mach heute nur das Nötigste, und mach es ruhig. Fünf Minuten in der Halle können mehr bringen als eine Stunde Kampf.',[['Zur Halle',()=>{endTalk();goRoom('halle');cb&&setTimeout(cb,600);}],['Verstanden',next,1]]);
   else if(k==='stress')dlgK('Meister Shen','Wenn der Geist rast, hilft der Atem. Drei tiefe Atemzüge, bevor du irgendetwas tust. Und dann eins nach dem anderen.',[['Kurz meditieren',()=>{endTalk();medChoose();}],['Danke',next,1]]);
   else{const canRest=!DW.restThisWeek||true;dlgK('Meister Shen','Dann ist heute ein Tag für Erholung. Dein Körper hat Vorrang. Ich schlage dir einen Ruhetag vor: Er zählt nicht als verpasst, und der Schatten kommt nicht.',[['Ruhetag nehmen',()=>{const ok=DW.restDay();endTalk();msg(ok?'Ruhetag. Gute Besserung.':'Ein Ruhetag ist diese Woche schon genommen, oder du hast heute schon etwas eingetragen. Mach nur, was gut tut.');if(ok)setTimeout(()=>{if(W){close();open({});}},1500);else cb&&cb();},1],['Ich versuche es trotzdem',next]]);}}
@@ -595,6 +599,23 @@ function dressUp(N,seed,name){const o=N.o,r=rng(seed*97+13),nm=name||'';const hs
   if(acc.length){N.acc=acc;(W.accs=W.accs||[]).push(N);}}
 const _hv=new TH.Vector3();
 function accUpdate(){(W.accs||[]).forEach(N=>{if(!N.o.parent)return;N.acc.forEach(a=>{a.b.getWorldPosition(_hv);const ry=N.o.rotation.y;a.m.position.set(_hv.x+Math.sin(ry)*(a.fwd||0),_hv.y+a.off,_hv.z+Math.cos(ry)*(a.fwd||0));a.m.rotation.y=ry;});});}
+
+
+/* ---------- Die sechs Prüfungen des Weges ---------- */
+function p6Menu(){const L=DW.p6();const lines=L.map(p=>`${p.done?'✓':p.active?'◐':p.open?'○':'🔒'} ${p.n}${p.done?' · bestanden':p.active?(p.k==='shugyo'?` · Tag ${p.count||0}/100`:p.k==='gaman'?` · ${p.st.count||0}/7`:p.k==='hhb'?` · ${p.st.count||0}/30`:' · läuft'):p.open?'':' · ab höherem Rang'}`).join('\n');
+  const btns=L.filter(p=>p.open&&!p.done).map(p=>[p.n,()=>p6Detail(p)]);btns.push(['Zurück',()=>endTalk()]);dlgK('Die sechs Prüfungen des Weges','Sechs alte Prüfungen. Sie zeigen nicht, wie stark du bist, sondern wie treu.\n\n'+lines,btns);}
+function p6Detail(p){const go={seiza:()=>{endTalk();goRoom('halle');setTimeout(()=>W&&seizaStart(),700);},shokunin:()=>{DW.p6Start('shokunin');endTalk();msg('Shokunin angenommen. Am Abend frage ich dich.');},ganbaru:()=>{endTalk();msg('Ganbaru zeigt sich an einem müden Tag. Sag es mir ehrlich, wenn es so weit ist.');},
+    gaman:()=>{DW.p6Start('gaman');endTalk();msg('Gaman beginnt. Jeden Abend frage ich: Hast du geklagt?');},hhb:()=>{DW.p6Start('hhb');endTalk();msg('Hara hachi bu beginnt. Jeden Abend: Hast du mit Mass gegessen?');},shugyo:()=>shugyoPick()}[p.k];
+  if(p.active&&p.k!=='seiza'){dlgK(p.n,p.t+'\n\nDiese Prüfung läuft bereits.'+(p.k==='shugyo'?`\nTag ${p.count||0} von 100.`:''),[['Zurück',()=>p6Menu(),1]]);return;}
+  dlgK(p.n,p.t,[[p.k==='seiza'?'Jetzt sitzen':p.k==='ganbaru'?'Verstanden':'Prüfung annehmen',go,1],['Zurück',()=>p6Menu()]]);}
+function shugyoPick(){const R=DW.ritualsAll();if(!R.length){dlgK('Shugyo','Du brauchst zuerst eine Routine.',[['Zurück',()=>p6Menu(),1]]);return;}dlgK('Shugyo','Welche Routine willst du 100 Tage ohne Lücke gehen?',R.map(r=>[r.name,()=>{DW.p6Start('shugyo',{rid:r.id});endTalk();msg(`Shugyo beginnt: ${r.name}. 100 Tage. Kein Tag Pause.`);DW.bell(1.1);}]).concat([['Zurück',()=>p6Menu()]]));}
+function seizaStart(){if(!W||!W.av)return;endTalk();W.seiza={t:300,end:performance.now()+300000,fail:false};msg('Seiza: Fünf Minuten. Atme. Bewege dich nicht und wechsle nicht die App.');W._seizaVis=()=>{if(document.hidden&&W&&W.seiza)W.seiza.fail=true;};document.addEventListener('visibilitychange',W._seizaVis);}
+function seizaUpdate(dt,moving){const Z=W.seiza;if(!Z)return;if(moving)Z.fail=true;const end=(ok)=>{document.removeEventListener('visibilitychange',W._seizaVis);W.seiza=null;if(ok){DW.p6Done('seiza');DW.bell(1.4);dlgK('Seiza bestanden','Fünf Minuten Stille. Das klingt wenig. Aber die meisten halten es nicht aus.\n\nSiegel «Seiza» · +25 Kupfer',[['Danke',()=>endTalk(),1]]);}else{dlgK('Seiza','Du hast dich bewegt oder die App verlassen. Kein Problem. Die Stille wartet. Versuch es wieder, wenn du bereit bist.',[['Nochmal',()=>seizaStart(),1],['Später',()=>endTalk()]]);}};
+  if(Z.fail){end(false);return;}Z.t=(Z.end-performance.now())/1000;const m=Math.floor(Z.t/60),s=Math.floor(Z.t%60);const el=$('#wMsg');if(el){el.textContent=`Seiza · ${m}:${String(s).padStart(2,'0')}`;el.classList.add('show');}if(Z.t<=0)end(true);}
+function p6Evening(){const L=DW.p6(),h=new Date().getHours();if(h<17)return null;const q=[];L.forEach(p=>{if(!p.active)return;const td=new Date().toISOString().slice(0,10);if(p.st.last===DW.todayKey())return;if(p.k==='shokunin')q.push(p);if(p.k==='gaman'||p.k==='hhb')q.push(p);});return q[0]||null;}
+function p6Ask(p){if(p.k==='shokunin'){dlgK('Shokunin','Hast du heute eine langweilige Aufgabe mit voller Sorgfalt erledigt?',[['Ja, wirklich',()=>{DW.p6Done('shokunin');DW.bell(1.2);dlgK('Shokunin bestanden','Sorgfalt zeigt sich, wenn niemand hinsieht.\n\nSiegel «Shokunin» · +25 Kupfer',[['Danke',()=>endTalk(),1]]);},1],['Heute nicht',()=>{endTalk();msg('Morgen ist ein neuer Tag.');DW.p6Start('shokunin',{last:DW.todayKey()});}]]);return;}
+  const qq=p.k==='gaman'?'Hast du dich heute bei jemandem beklagt?':'Hast du heute aufgehört zu essen, als du zu 80 % satt warst?';const yes=p.k==='gaman'?'Nein, kein Klagen':'Ja, mit Mass';const no=p.k==='gaman'?'Doch, habe geklagt':'Nein, zu viel';
+  dlgK(p.n,qq,[[yes,()=>{const r=DW.p6Check(p.k,true);if(r&&r.fin){DW.bell(1.4);dlgK(p.n+' bestanden',`${r.need} Tage. Das ist Charakter.\n\nSiegel «${p.n}» · +25 Kupfer`,[['Danke',()=>endTalk(),1]]);}else{endTalk();msg(`${p.n}: Tag ${r?r.count:'?'} von ${p.k==='gaman'?7:30}.`);}},1],[no,()=>{DW.p6Check(p.k,false);endTalk();msg('Ehrlichkeit ist der erste Schritt. Wir beginnen neu.');}]]);}
 
 /* ---------- Begehbare Dorfhäuser ---------- */
 const VLORE=['Vor hundert Jahren stand das Kloster leer. Ein einziger Mönch fegte jeden Morgen den Hof – bis andere kamen, um zu sehen, warum.','Der Bach heisst «Stiller Bach», weil er im Winter unter dem Eis weiterfliesst. Man hört ihn nur, wenn man still ist.','Die Drachen an der Treppe wurden von Steinmetzen aus dem Tal gehauen. Für jede Stufe ein Tag Arbeit.','Wer im Dorf geboren wird, pflanzt einen Kirschbaum. Die ältesten stehen schon lange nicht mehr – aber die Wurzeln sind noch da.','Mei sagt: «Ein Dorf ist wie ein Körper. Wenn eine Hand hilft, wird das ganze Dorf stärker.»','Früher kamen die Mönche jeden Markttag herunter. Dann kam der lange Winter, und niemand stieg mehr hinab. Bis jetzt.'];
@@ -946,13 +967,13 @@ function vnpcs(lvl){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)retu
   mk('#7a3a3a','#d8a882','#1a1614',{name:'Wirtin Hua',pts:[[-22.4,60.1]],sp:.2});mk('#3a3430','#a8784f','#2a2420',{name:'Schmied Gang',pts:[[24.4,53.7]],sp:.2});
   if(!DW.day('_ratd')&&DW.unlocks().extras){const R=ratToday();const ex=W.npcs.find(n=>n.name===R.w);if(ex){W.seeker=ex;}else{mk('#5a5a4a','#c9926a','#2a2420',{name:R.w,pts:[[-1.6,49.2],[-1.6,49.2]],sp:1.2});W.seeker=W.npcs.find(n=>n.name===R.w);}if(W.seeker){W.seeker.it.btn='Zuhören';const S0=W.seeker;W.seeker.it.act=()=>ratDialog(S0);}}
   const PRc=W.vPros||.5,nV=Math.max(1,Math.min(6,[2,3,5,6][lvl]+(PRc>=.6?1:0)+(PRc>=.8?1:0)-(PRc<.35?2:0)));if(W.vFest){V.forEach(v=>{if(/^Kind/.test(v[3]))v[4]=[[2.2,52],[0,54.2],[-2.2,52],[0,49.8]];});}
-  if(W.vSite&&PRc>=.6){const[sx,sz]=W.vSite;mk('#6a5a3a','#b8885a','#2a2420',{name:'Zimmermann Tie',pts:[[sx+2.8,sz],[sx+2.8,sz+.4]],sp:.4});}
+  if(W.vSite&&PRc>=.6){const[sx,sz]=W.vSite;const tx=sx+(sx>0?-4.2:4.2);mk('#6a5a3a','#b8885a','#2a2420',{name:'Zimmermann Tie',pts:[[tx,sz-.6],[tx,sz+.6]],sp:.4});}
   V.slice(0,nV).forEach(([r,s,h,n,pts,sp,sc])=>mk(r,s,h,{name:n,pts,sp,sc}));});}
 function goVillage(){if(!W||!W.av)return;endTalk();W.inVillage=1;const z=39.6,y=groundH(0,z);W.av.position.set(0,y,z);W.av.rotation.y=0;W.yaw=Math.PI;W.cam.position.set(0,y+3,z-5);W.camOv=null;
   if(W.fogSave)W.scene.fog.density=W.fogSave;const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);DW.bell(.8);}
 function leaveVillage(){if(!W||!W.av)return;W.inVillage=0;W.av.position.set(0,0,23);W.av.rotation.y=Math.PI;W.yaw=0;W.cam.position.set(0,3,26);msg('Zurück im Kloster');}
-function vBlocked(x,z){if(Math.abs(x)>30||z<38||z>79)return true;
-  for(const b of W.vbox||[]){if(Math.abs(x-b[0])<b[2]&&Math.abs(z-b[1])<b[3])return true;}
+function vBlocked(x,z,px,pz){if(Math.abs(x)>30||z<38||z>79)return true;
+  for(const b of W.vbox||[]){if(Math.abs(x-b[0])<b[2]&&Math.abs(z-b[1])<b[3]&&!(px!=null&&Math.abs(px-b[0])<b[2]&&Math.abs(pz-b[1])<b[3]))return true;}
   if(z>62.5&&z<65.5){const D=W.vDeck;if(D&&x>D.x0+.3&&x<D.x1-.3&&z<D.z1-.3)return false;if(!W.vBridge||Math.abs(x)>1.1)return true;}return false;}
 function vUpdate(dt,t){const U=W.vU;if(!U)return;U.wheels.forEach(w=>w.rotation.x-=dt*.8);U.water.forEach(tx=>{tx.offset.x-=dt*.25;});
   U.sky.forEach(s=>{const u=s.userData;u.t=(u.t+dt*.03)%1;s.position.set(u.x+Math.sin(t*.3+u.z)*.5,W.villageAt[1]+2+u.t*30,u.z);s.material.opacity=Math.min(1,(1-u.t)*2)*(.6+Math.sin(t*5+u.x)*.2);});
@@ -993,6 +1014,7 @@ function roomDialog(id){
   if(id==='zelle')btns.push(['Siegel',()=>{endTalk();sealsUI();}]);
   if(id==='zelle')btns.push(['Tagebuch',()=>{endTalk();journalUI();}]);
   if(id==='halle')btns.unshift(['Meditieren',()=>{endTalk();medChoose();},1]);
+  if(id==='halle'){const sz=DW.p6().find(p=>p.k==='seiza');if(sz&&!sz.done)btns.push(['Seiza-Prüfung (5 Min)',()=>seizaStart()]);}
   if(id==='halle')btns.push(['Verneigen',()=>{endTalk();playOnce('Bow');DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
   if(id==='tor'&&W.villageAt&&!W.inVillage){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
@@ -1197,6 +1219,7 @@ function talk(st){if(DW.flag('guide')===2){DW.flag('guide',9);const U=DW.unlocks
         dlg(`Richtig. Du bist jetzt ${ri2.name}. Welche Tür willst du öffnen? Dahinter wartet eine neue Routine.`,L.map(r=>[r.n,()=>{DW.openDoor(r.id);endTalk();msg(r.n+' ist offen. Geh hin und lege deine neue Routine an.');setTimeout(()=>{if(W){const keep={room:r.id};close();open(keep);}},1600);}]));}
         else dlg('Nicht ganz. Lies die Lektionen im Dojo noch einmal und komm morgen wieder.',[['Verstanden',()=>endTalk()]]);}]));},ri.eligible]);}
     const sto=DW.story();if(sto.length)btns.push(['Eure Geschichte, Meister',()=>{let i=sto.length-1;const show=()=>dlg(sto[i].t,[...(i>0?[['Früher',()=>{i--;show();}]]:[]),['Danke, Meister',()=>endTalk()]]);show();}]);
+    btns.push(['Die sechs Prüfungen',()=>p6Menu()]);
     btns.push(['Weisheit',()=>dlg(DW.wisdom(),[['Danke',()=>endTalk()],['Zurück',()=>menu(greet(st))]])]);
     dlg(text,btns);};
   if(qs===2)menu('Dein Auftrag für heute ist erfüllt. '+greet(st));else menu(greet(st));
@@ -1243,9 +1266,9 @@ function msg(t){const m=$('#wMsg');m.textContent=t;m.classList.add('show');clear
 
 /* ---------- Bewegung & Kollision ---------- */
 function blocked(x,z,px,pz){
-  if(W.npcs&&px!=null){for(const N of W.npcs){const o=N.o.position,dn=Math.hypot(x-o.x,z-o.z);if(dn<.45&&dn<Math.hypot(px-o.x,pz-o.z))return true;}}
+  if(W.npcs&&px!=null&&W.av&&px===W.av.position.x&&pz===W.av.position.z){for(const N of W.npcs){const o=N.o.position,dn=Math.hypot(x-o.x,z-o.z);if(dn<.45&&dn<Math.hypot(px-o.x,pz-o.z))return true;}}
   if(!W.pilgrim&&stairY(x,z,1)!=null){if(!W.gateOpen&&z>25.1&&z<25.9)return true;if(!W.vOpen&&z>28.2&&z<36){if(!W._fogMsg||performance.now()-W._fogMsg>4000){W._fogMsg=performance.now();msg('Nebel liegt auf der Treppe. Ab Tag 3 öffnet sich der Weg ins Dorf.');}return true;}for(const s of W.solids){const ds=Math.hypot(x-s[0],z-s[1]);if(ds<s[2]&&(px==null||ds<=Math.hypot(px-s[0],pz-s[1])))return true;}return false;}
-  if(!W.pilgrim&&z>34){for(const s of W.solids){const ds=Math.hypot(x-s[0],z-s[1]);if(ds<s[2]&&(px==null||ds<=Math.hypot(px-s[0],pz-s[1])))return true;}return vBlocked(x,z);}
+  if(!W.pilgrim&&z>34){for(const s of W.solids){const ds=Math.hypot(x-s[0],z-s[1]);if(ds<s[2]&&(px==null||ds<=Math.hypot(px-s[0],pz-s[1])))return true;}return vBlocked(x,z,px,pz);}
   if(Math.hypot(x,z)>40)return true;if(!W.pilgrim&&z>25)return true;
   for(const s of W.solids){const ds=Math.hypot(x-s[0],z-s[1]);if(ds<s[2]&&(px==null||ds<=Math.hypot(px-s[0],pz-s[1])))return true;}
   if(W.edgeZ&&z>W.edgeZ)return true;if(W.ch===2&&Math.hypot(x,z+12)<6.9)return true;if(W.ch===2&&Math.abs(x)<1.1&&z>-5&&z<14&&!(W.bridge&&z>W.bridge.z0&&z<W.bridge.z1))return true;
@@ -1298,7 +1321,7 @@ function loop(){
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
   else W.walk*=.9;
   const gy=W.sit?W.sit.y:heightAt(av.position.x,av.position.z);av.position.y+=(gy+Math.abs(Math.sin(W.walk))*.06*ml-av.position.y)*Math.min(1,dt*14);
-  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+(((W.med||W.sit)&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);W.tw=(W.tw||0)+((W.tc&&A.TaiChi?1:0)-(W.tw||0))*Math.min(1,dt*2);if(A.TaiChi)A.TaiChi.setEffectiveWeight(W.tw);const mw=Math.max(W.mw*W.mw*(3-2*W.mw),W.tw),ow=W.onceN&&A[W.onceN]?A[W.onceN].getEffectiveWeight():0,rest=(1-kw)*(1-mw)*(1-ow);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
+  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+(((W.med||W.sit||W.seiza)&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);W.tw=(W.tw||0)+((W.tc&&A.TaiChi?1:0)-(W.tw||0))*Math.min(1,dt*2);if(A.TaiChi)A.TaiChi.setEffectiveWeight(W.tw);const mw=Math.max(W.mw*W.mw*(3-2*W.mw),W.tw),ow=W.onceN&&A[W.onceN]?A[W.onceN].getEffectiveWeight():0,rest=(1-kw)*(1-mw)*(1-ow);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
   if(av.userData.torso){const b=1+Math.sin(t*1.3)*.012;av.userData.torso.scale.set(b,1,b);av.rotation.z=Math.sin(W.walk)*.04*ml;}
   // Kamera
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut&&!inHut&&W.av){W.yawTo=W.av.rotation.y+Math.PI;}W.M.hid=W.M.hid||new TH.MeshBasicMaterial({colorWrite:false,depthWrite:false});if(W.inHut)W.inHut.roof.forEach(m=>{if(m.userData.mat)m.material=m.userData.mat;});if(inHut)inHut.roof.forEach(m=>{if(!m.userData.mat)m.userData.mat=m.material;m.material=W.M.hid;});W.inHut=inHut;if(W.vIntL){if(inHut&&inHut.lp){W.vIntL.position.set(...inHut.lp);W.vIntL.intensity=1.1;}else W.vIntL.intensity=0;}}
@@ -1325,7 +1348,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);tensionUpdate(.016,W.clock.elapsedTime);seekerUpdate(.016);fwUpdate(.016,W.clock.elapsedTime);accUpdate();sitUpdate(.016);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);tensionUpdate(.016,W.clock.elapsedTime);seekerUpdate(.016);fwUpdate(.016,W.clock.elapsedTime);accUpdate();sitUpdate(.016);seizaUpdate(.016,W.moving);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
