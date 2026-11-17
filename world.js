@@ -648,7 +648,7 @@ function loop(){
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
   else W.walk*=.9;
   const gy=heightAt(av.position.x,av.position.z);av.position.y+=(gy+Math.abs(Math.sin(W.walk))*.06*ml-av.position.y)*Math.min(1,dt*14);
-  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+((W.med&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);const mw=W.mw*W.mw*(3-2*W.mw),ow=W.onceN&&A[W.onceN]?A[W.onceN].getEffectiveWeight():0,rest=(1-kw)*(1-mw)*(1-ow);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
+  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+((W.med&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);W.tw=(W.tw||0)+((W.tc&&A.TaiChi?1:0)-(W.tw||0))*Math.min(1,dt*2);if(A.TaiChi)A.TaiChi.setEffectiveWeight(W.tw);const mw=Math.max(W.mw*W.mw*(3-2*W.mw),W.tw),ow=W.onceN&&A[W.onceN]?A[W.onceN].getEffectiveWeight():0,rest=(1-kw)*(1-mw)*(1-ow);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
   if(av.userData.torso){const b=1+Math.sin(t*1.3)*.012;av.userData.torso.scale.set(b,1,b);av.rotation.z=Math.sin(W.walk)*.04*ml;}
   // Kamera
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut&&!inHut&&W.av){W.yawTo=W.av.rotation.y+Math.PI;}W.M.hid=W.M.hid||new TH.MeshBasicMaterial({colorWrite:false,depthWrite:false});if(W.inHut)W.inHut.roof.forEach(m=>{if(m.userData.mat)m.material=m.userData.mat;});if(inHut)inHut.roof.forEach(m=>{if(!m.userData.mat)m.userData.mat=m.material;m.material=W.M.hid;});W.inHut=inHut;}
@@ -675,7 +675,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
@@ -879,6 +879,23 @@ function trainForm(N){if(!W||!W.av||W.training)return;const o=N.o,av=W.av;const 
   const cx=(o.position.x+fx)/2;W.camOv={p:new TH.Vector3(cx-2.2,1.9,o.position.z-3.4),t:new TH.Vector3(cx,1,o.position.z)};
   if(N.A.Form){N.A.Form.reset();N.A.Form.play();}let reps=0;msg('Folge Bruder Tao. Drei Durchgänge.');
   const one=()=>{if(!W||!W.training)return;reps++;if(N.A.Form)N.A.Form.reset();playOnce('Form',()=>{if(!W)return;if(reps<3){setTimeout(one,250);}else{W.training=0;W.camOv=null;const r=DW.trainDone();playOnce('Bow');N.bowT=2.4;msg(r.first?`Gut gemacht. +${r.chi} Chi und Kraft.`:'Gut gemacht. Die Belohnung gibt es einmal am Tag, die Übung bleibt dir.');if(r.first)checkin('kraft',r.chi);ptsHud();}});};one();}
+/* ---------- Tai Chi 8er-Form ---------- */
+const TCQ=[[0,'Beginn','Füsse schulterbreit. Die Arme heben sich langsam bis auf Schulterhöhe und sinken wieder, die Knie beugen sich leicht.'],[7.5,'Affe abwehren','Eine Hand schiebt nach vorn, die andere zieht zurück zur Hüfte. Dann wechseln.'],[20,'Knie streifen','Schritt nach vorn. Die untere Hand streift am Knie vorbei, die obere schiebt nach vorn.'],[27,'Mähne des Wildpferds teilen','Die vordere Hand hebt sich schräg nach oben, die hintere sinkt zur Hüfte.'],[34,'Wolkenhände','Die Hände ziehen wie Wolken vor dem Gesicht vorbei. Die Hüfte dreht mit.'],[46.5,'Goldener Hahn','Ein Knie hebt sich, die Hand steigt mit. Halte das Gleichgewicht.'],[53.5,'Fersenstoss','Die Arme öffnen sich weit. Die Ferse stösst langsam nach vorn.'],[62,'Spatzenschwanz greifen','Abwehren, zurückrollen, drücken, stossen.'],[74.5,'Hände kreuzen','Die Hände kreuzen sich vor der Brust.'],[77.5,'Abschluss','Die Arme sinken. Atme aus. Steh still.']];
+function tcChoose(N){const o=ovl('wTc',`<div><h3>Tai Chi mit Bruder Tao</h3><p>Die 8er-Form im Yang-Stil, ein Durchgang dauert etwa 80 Sekunden. Stell dich hin, mit etwas Platz um dich, und mach mit. Mit Kopfhörern hörst du die Ansagen.</p><div class="sl">${[3,5,10].map(m=>`<button class="btn" data-m="${m}">${m} Minuten <small>· ${Math.round(m*60/81)} Durchgänge</small></button>`).join('')}</div><div class="row"><button class="btn" data-x>Abbrechen</button></div></div>`);
+  o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};o.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{o.hidden=true;tcStart(N,+b.dataset.m);});}
+function tcStart(N,min){if(!W||!W.av)return;xclip('TaiChi',c=>{if(!W||!W.mixer)return;const a=W.acts.TaiChi||(W.acts.TaiChi=W.mixer.clipAction(c));a.setLoop(TH.LoopRepeat);a.reset();a.play();a.setEffectiveWeight(0);if(N.A.TaiChi){N.A.TaiChi.reset();N.A.TaiChi.play();}
+  const o=N.o,av=W.av,fx=o.position.x-1.6,fz=o.position.z+.3;av.position.set(fx,groundH(fx,fz),fz);av.rotation.y=o.rotation.y;
+  W.tc={t0:performance.now()/1000,dur:min*60,min,q:-1,N,len:c.duration};const cx=(o.position.x+fx)/2;W.camOv={p:new TH.Vector3(cx-3.4,1.8,o.position.z+3.4),t:new TH.Vector3(cx,.95,o.position.z)};
+  const ov=ovl('wTcRun',`<div class="medbox"><div class="mt" id="tcT">${min}:00</div><b id="tcN" style="display:block;font-size:20px;color:#f2d48a;margin-bottom:4px">Beginn</b><p id="tcX">Füsse schulterbreit.</p><div class="row"><button class="btn" id="tcStop">Beenden</button></div></div>`);ov.classList.add('medrun');ov.onclick=null;
+  $('#tcStop').onclick=()=>tcEnd(false);document.querySelectorAll('.w-top,.w-pts,.w-hint').forEach(e=>e.style.visibility='hidden');bowl(.3);});}
+function tcTick(){const T=W.tc;if(!T)return;const el=performance.now()/1000-T.t0,left=Math.max(0,T.dur-el),lt=el%T.len;
+  const tt=$('#tcT');if(tt)tt.textContent=`${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;
+  let qi=0;for(let i=0;i<TCQ.length;i++)if(lt>=TCQ[i][0])qi=i;const key=Math.floor(el/T.len)*100+qi;if(key!==T.q){T.q=key;$('#tcN').textContent=TCQ[qi][1];$('#tcX').textContent=TCQ[qi][2];say(TCQ[qi][1]+'. '+TCQ[qi][2]);}
+  const a=W.camOv;if(a){const ang=Math.sin(el*.03)*.5;const cx=a.t.x,cz=a.t.z;a.p.set(cx-Math.cos(ang+.8)*4.6,1.8,cz+Math.sin(ang+.8)*4.6);}
+  if(left<=0)tcEnd(true);}
+function tcEnd(done){const T=W.tc;if(!T)return;W.tc=null;try{speechSynthesis.cancel();}catch(e){}const o=$('#wTcRun');if(o)o.hidden=true;document.querySelectorAll('.w-top,.w-pts,.w-hint').forEach(e=>e.style.visibility='');W.camOv=null;
+  const m=(performance.now()/1000-T.t0)/60;if(done||m>=1){bowl(.3);T.N.bowT=2.4;playOnce('Bow');const r=DW.taichiDone(done?T.min:Math.floor(m));const p=[];if(r.chi)p.push(`+${r.chi} Chi und Kraft`);if(r.rit)p.push(`Routine «${r.rit}» erfüllt`);msg(p.length?'Gut geübt. '+p.join(' · ')+'.':'Gut geübt. Chi gibt es einmal am Tag.');if(r.chi)checkin('kraft',r.chi);ptsHud();sealCheck();}
+  else msg('Tai Chi abgebrochen. Ab einer Minute zählt es.');}
 /* ---------- Abendritual ---------- */
 function evening(){const n=DW.name(),dt=DW.doneToday(),L=DW.todayList();const summ=!dt.n?'Heute standen keine festen Routinen an.':dt.done>=dt.n?`Du hast heute alles erfüllt. ${dt.n} von ${dt.n}.`:`${dt.done} von ${dt.n} Routinen erfüllt. ${L.filter(r=>!r.done).map(r=>r.name).join(', ')} blieb offen. Morgen ist ein neuer Tag.`;
   const o=ovl('wEve',`<div><h3>Abendritual</h3><p>${summ}</p><p style="margin-top:10px">Wofür bist du heute dankbar?</p><textarea id="eveTx" rows="3" style="width:100%;background:#0c0d0f;color:#ecebe6;border:1px solid var(--stroke);border-radius:14px;padding:10px;font:inherit;margin-bottom:12px" placeholder="Ein Satz genügt."></textarea><div class="row"><button class="btn" data-x>Später</button><button class="btn primary" id="eveOk">Licht löschen</button></div></div>`);
@@ -1107,18 +1124,18 @@ const MONKSAY=['Guten Morgen. Der Tee ist heiss.','Shen sagt, du machst Fortschr
 function npcs(){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)return;W.npcs=[];
   const mk=(robe,skin,hair,cfg)=>{const o=MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));
     ['Idle','Walk','Stance'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(0);}});const N=Object.assign({o,mx,A,i:0,wait:0,mode:cfg.mode,pts:cfg.pts,sp:cfg.sp||1,cur:null},cfg);o.position.set(cfg.pts[0][0],groundH(cfg.pts[0][0],cfg.pts[0][1]),cfg.pts[0][1]);
-    const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:cfg.mode==='train'?'Ansprechen':'Grüssen',act:()=>{if(cfg.mode!=='train'&&nqDialog(N,cfg.name))return;if(cfg.mode==='train'){dlgK('Bruder Tao','Die Form der fünf Bewegungen: Pferdestand, Faust links, Faust rechts, Abwehr, Tritt. Mach mit, Körper und Geist werden eins.',[['Mittrainieren',()=>{endTalk();trainForm(N);},1],['Grüssen',()=>{endTalk();N.bowT=2.4;playOnce('Bow');msg('Bruder Tao: «Wer übt, wird.»');}],['Gehen',()=>endTalk()]]);return;}const t=MONKSAY[Math.floor(Math.random()*MONKSAY.length)];msg(cfg.name+': «'+t+'»');DW.bell(.8);N.wait=Math.max(N.wait,3.2);N.face=true;N.bowT=2.2;playOnce('Bow');}};W.inter.push(it);N.it=it;
+    const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:cfg.mode==='train'?'Ansprechen':'Grüssen',act:()=>{if(cfg.mode!=='train'&&nqDialog(N,cfg.name))return;if(cfg.mode==='train'){dlgK('Bruder Tao','Tai Chi ist Meditation in Bewegung. Ich zeige dir die 8er-Form im Yang-Stil. Stell dich hin, Füsse schulterbreit, und mach mit. Oder wir üben die kurze Kung-Fu-Form.',[['Tai Chi · 8er-Form',()=>{endTalk();tcChoose(N);},1],['Kurze Kung-Fu-Form',()=>{endTalk();trainForm(N);}],['Grüssen',()=>{endTalk();N.bowT=2.4;playOnce('Bow');msg('Bruder Tao: «Wer übt, wird.»');}],['Gehen',()=>endTalk()]]);return;}const t=MONKSAY[Math.floor(Math.random()*MONKSAY.length)];msg(cfg.name+': «'+t+'»');DW.bell(.8);N.wait=Math.max(N.wait,3.2);N.face=true;N.bowT=2.2;playOnce('Bow');}};W.inter.push(it);N.it=it;
     if(cfg.mode==='sweep'){const br=new TH.Group();const st=new TH.Mesh(new TH.CylinderGeometry(.02,.02,1.4,6),W.M.wood);st.position.y=.7;br.add(st);const bh=new TH.Mesh(new TH.ConeGeometry(.16,.35,8),new TH.MeshStandardMaterial({color:'#b8a06a',roughness:1}));bh.position.y=.1;br.add(bh);let hand=null;o.traverse(c=>{if(c.isBone&&c.name==='handR')hand=c;});
       if(hand){const ws=new TH.Vector3();hand.getWorldScale(ws);const g2=new TH.Group();g2.add(br);br.position.set(0,-.95,0);g2.scale.setScalar(1/ws.x);g2.position.set(0,.06,0);g2.rotation.set(3.14,0,.15);hand.add(g2);N.broomHand=g2;}
       else{br.position.set(.25,0,.45);br.rotation.x=.5;o.add(br);}N.broom=br;}
-    ['Sweep','Bow','Form'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));
+    ['Sweep','Bow','Form','TaiChi'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));
     W.npcs.push(N);};
   mk('#c98a2a','#c99a72','#2a2420',{name:'Bruder Wei',mode:'sweep',pts:[[-4,9],[4,9],[4,13],[-4,13]],sp:.55});
   mk('#7a2e24','#a8784f','#1a1614',{name:'Schwester Lin',mode:'walk',pts:[[-5.8,7.2],[-5.8,18.5],[5.8,18.5],[5.8,7.2]],sp:1});
   mk('#4a4440','#e0b896','#c9c4bb',{name:'Bruder Tao',mode:'train',pts:[[RPOS.hof.c[0]-.5,RPOS.hof.c[1]+2.6]],face:[-1,0]});
   mk('#d9cfbd','#8a5a3a','#1a1614',{name:'Novize Kai',mode:'walk',pts:[[-6,11],[-3,16],[3,16],[3.2,10.5]],sp:.8});
 });}
-function setW(N,name){['Idle','Walk','Stance','Sweep','Bow','Form'].forEach(n=>{if(N.A[n])N.A[n].setEffectiveWeight(n===name?1:0);});if(N.cur!==name&&N.A[name]){N.A[name].reset();N.A[name].play();}N.cur=name;}
+function setW(N,name){['Idle','Walk','Stance','Sweep','Bow','Form','TaiChi'].forEach(n=>{if(N.A[n])N.A[n].setEffectiveWeight(n===name?1:0);});if(N.cur!==name&&N.A[name]){N.A[name].reset();N.A[name].play();}N.cur=name;}
 function life(){if(W.ch)return;
   const G=RPOS.garten.c;koi(G[0]-1,G[1]);
   bamboo(-20,10,26,3.2);bamboo(19,-16,18,2.6);
@@ -1150,7 +1167,7 @@ function lifeUpdate(){const now=performance.now()/1000,dt=Math.min(.05,now-(W.lt
   if(W.bambooL)W.bambooL.rotation.y=Math.sin(t*.5)*.004;
   if(W.npcs)W.npcs.forEach(N=>{N.mx.update(dt);const o=N.o;N.it.x=o.position.x;N.it.z=o.position.z;
     if(N.face&&W.av){const tgt=Math.atan2(W.av.position.x-o.position.x,W.av.position.z-o.position.z);o.rotation.y+=(((tgt-o.rotation.y+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI)*Math.min(1,dt*5);}
-    if(N.mode==='train'){if(N.bowT>0){N.bowT-=dt;setW(N,N.A.Bow?'Bow':'Idle');return;}setW(N,N.A.Form?'Form':N.A.Stance?'Stance':'Idle');if(!N.A.Form&&N.A.Stance&&N.A.Stance.time>N.A.Stance.getClip().duration-.05)N.A.Stance.time=0;if(!N.face&&N.face0==null){o.rotation.y=Math.atan2(N.facev?N.facev[0]:-1,0);}if(N.wait>0){N.wait-=dt;if(N.wait<=0)N.face=false;}return;}
+    if(N.mode==='train'){if(W.tc&&N.A.TaiChi){setW(N,'TaiChi');return;}if(N.bowT>0){N.bowT-=dt;setW(N,N.A.Bow?'Bow':'Idle');return;}setW(N,N.A.Form?'Form':N.A.Stance?'Stance':'Idle');if(!N.A.Form&&N.A.Stance&&N.A.Stance.time>N.A.Stance.getClip().duration-.05)N.A.Stance.time=0;if(!N.face&&N.face0==null){o.rotation.y=Math.atan2(N.facev?N.facev[0]:-1,0);}if(N.wait>0){N.wait-=dt;if(N.wait<=0)N.face=false;}return;}
     if(N.bowT>0){N.bowT-=dt;setW(N,N.A.Bow?'Bow':'Idle');if(N.wait>0)N.wait-=dt;return;}
     if(N.wait>0){N.wait-=dt;setW(N,N.mode==='sweep'&&!N.face&&N.A.Sweep?'Sweep':'Idle');if(N.wait<=0)N.face=false;return;}
     const p=N.pts[(N.i+1)%N.pts.length],dx=p[0]-o.position.x,dz=p[1]-o.position.z,d=Math.hypot(dx,dz);
