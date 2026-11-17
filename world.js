@@ -387,6 +387,7 @@ function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name()
   if(ri.eligible&&!ri.max)btns.push(['Zu Meister Shen',()=>{endTalk();if(W.npc){const p=W.npc.position;W.av.position.set(p.x+Math.sin(W.npc.rotation.y)*1.4,p.y,p.z+Math.cos(W.npc.rotation.y)*1.4);W.av.rotation.y=W.npc.rotation.y+Math.PI;W.yaw=W.av.rotation.y+Math.PI;}setTimeout(()=>W&&talk(5),400);},!nx]);
   if(v.ev&&!v.ok)btns.push(['Zum Dorf',()=>{endTalk();goRoom('tor');}]);
   if(h>=18&&!DW.day('_eve'))btns.unshift(['Abendritual in der Zelle',()=>{endTalk();goRoom('zelle');setTimeout(()=>{if(W){endTalk();evening();}},700);},!nx]);
+  btns.push(['Wochenrückblick',()=>{endTalk();weekReview();}]);
   btns.push(['Übersicht im Menü',()=>{endTalk();DW.openMenu('missions');}]);
   btns.push([first?'Ich schaue mich erst um':'Danke',()=>{endTalk();beacon();}]);
   const wx={regen:'Draussen regnet es. Ein guter Tag für die Halle.',nebel:'Nebel liegt über dem Kloster.',schnee:'Es schneit. Die Welt ist still.'}[W.weather];
@@ -696,7 +697,7 @@ function open(opts){opts=opts||{};
   if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];if(!ch&&id==='zelle'&&!DW.flag('tut')){const P2=RPOS.zelle;W.meisterPos=[P2.c[0]+P2.f[0]*1.5,.35,P2.c[1]+1.3];W.spawnAt[3]=W.meisterPos[0]-sp[0];W.spawnAt[4]=W.meisterPos[2]-sp[2];W.tutZelle=1;}}applyTod();avatar();interactables(5);meister(5);if(W.tutZelle&&W.npc){W.npc.rotation.y=Math.atan2(W.spawnAt[0]-W.meisterPos[0],W.spawnAt[2]-W.meisterPos[2]);}if(!ch)shadowFoe();controls();ptsHud();
   if(ch){const sp=[W.ch===2?3.6:0,12];W.inter.push({x:sp[0],z:sp[1]+1.5,r:1.4,label:'Heimweg ins Kloster',btn:'Zurück',act:()=>{close();open({room:'tor'});}});if(DW.pilgrimVisit(ch))setTimeout(()=>W&&msg('Pilgerreise: +20 Punkte'),1200);}
   if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen. Hier hat jede Routine ihren Ort: Aufstehen am Bett, Essen am Herd.`,`Die Schlafzelle und die Küche stehen dir offen. Alle anderen Türen sind verschlossen. Mit jedem neuen Rang darfst du eine davon öffnen.`,`Trage deine Routinen dort ein, wo sie passieren. Jede bringt Punkte. Mit ihnen hilfst du dem Dorf unten im Tal.`,`Und nun geh. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);endTalk();if(W)setTimeout(()=>W&&briefing(true),400);return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
-  else if(!ch&&!opts.room&&!DW.day('_brief'))setTimeout(()=>{if(W)briefing(true);},1100);
+  else if(!ch&&!opts.room&&!DW.day('_brief'))setTimeout(()=>{if(!W)return;if(new Date().getDay()===0&&!DW.day('_wk')&&DW.flag('tut'))weekReview();briefing(true);},1100);
   else if(W.autoRoom)setTimeout(()=>{if(W)roomDialog(W.autoRoom);},900);
   $('#wDlgX').onclick=()=>endTalk();
   if(W.spawnAt){const sp=W.spawnAt;W.cam.position.set(sp[0]+Math.sin(W.yaw)*2.6,sp[1]+2.7,sp[2]+Math.cos(W.yaw)*2.6);}else{W.cam.position.set(0,6,22);W.yaw=0;}
@@ -835,6 +836,12 @@ function weather(){if(W.ch)return;let fw=null;try{fw=localStorage.getItem('dw.we
 function weatherUpdate(dt){const w=W.wP;if(!w)return;const p=w.P.geometry.attributes.position,c=W.av?W.av.position:{x:0,z:0},t=performance.now()/1000;w.P.visible=!W.inHut;
   for(let i=0;i<p.count;i++){let y=p.getY(i)-(w.rain?11:1.1)*w.sp[i]*dt;let x=p.getX(i),z=p.getZ(i);if(!w.rain){x+=Math.sin(t*.7+i)*.004;}
     if(y<0){y=12;x=c.x+(Math.random()-.5)*24;z=c.z+(Math.random()-.5)*24;}p.setXYZ(i,x,y,z);}p.needsUpdate=true;}
+/* ---------- Wochenrückblick ---------- */
+function weekReview(){const w=DW.week();const best=w.full>=6?'Eine Woche wie aus Stein gemeisselt. So wird man Meister.':w.full>=4?'Eine gute Woche. Halte den Rhythmus.':w.full>=2?'Es war nicht jeder Tag leicht. Aber du bist geblieben.':'Diese Woche war schwer. Ein neuer Anfang ist kein Rückschritt.';
+  const o=ovl('wWeek',`<div><div class="mh"><div><h3>Deine Woche</h3><p>Meister Shen schaut mit dir zurück.</p></div><span class="coin">${w.rank}</span></div>
+   <div class="wk">${w.days.map(d=>`<div class="${d.full?'f':d.done?'p':''}"><i></i><small>${d.wd}</small></div>`).join('')}</div>
+   <div class="ws"><span><b>${w.full}</b>vollendete Tage</span><span><b>${w.pts}</b>Punkte</span><span><b>${w.med}</b>Meditationen</span><span><b>${w.tr}</b>Trainings</span><span><b>${w.dank}</b>Dankbarkeit</span><span><b>${w.village}</b>Dorf-Events</span></div>
+   <p style="margin-top:12px;font-style:italic">«${best}»</p><div class="row"><button class="btn primary" data-x>Weiter</button></div></div>`);o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};DW.day('_wk',1);bowl(.2);}
 /* ---------- Tagebuch ---------- */
 function journalUI(){const J=DW.journal();const ks=Object.keys(J).sort().reverse().slice(0,30);const fmt=k=>k.split('-').reverse().join('.');
   const o=ovl('wJour',`<div><h3>Tagebuch der Dankbarkeit</h3><p>${ks.length?'Was du an deinen Abenden festgehalten hast.':'Noch leer. Beim Abendritual kannst du jeden Tag einen Satz festhalten.'}</p><div class="sl">${ks.map(k=>`<div class="fr"><span><small>${fmt(k)}</small>${J[k].replace(/</g,'&lt;')}</span></div>`).join('')}</div><div class="row"><button class="btn" data-x>Schliessen</button></div></div>`);o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};}
