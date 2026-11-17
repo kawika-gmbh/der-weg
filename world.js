@@ -355,7 +355,7 @@ function roomDialog(id){
   if(r.open&&DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
   r.arch.forEach(x=>{if(r.open&&DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
   if(id==='halle')btns.unshift(['Meditieren',()=>{endTalk();medChoose();},1]);
-  if(id==='halle')btns.push(['Verneigen',()=>{endTalk();pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
+  if(id==='halle')btns.push(['Verneigen',()=>{endTalk();playOnce('Bow');DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
   if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
     if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);}}]);}
@@ -491,7 +491,9 @@ function avatar(){
     W.mixer=mx;W.acts=A;['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(n==='Idle'?1:0);}});
     if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}});
 }
-function kneelLoad(){if(W.kneelLoading||!W.mixer)return;W.kneelLoading=1;[['Kneel','kneel.glb'],['Meditate','meditate.glb']].forEach(([n,f])=>{const go=gl=>{if(!W||!W.mixer)return;const c=gl.animations[0];if(!c)return;c.name=n;const a=W.mixer.clipAction(c);a.play();a.setEffectiveWeight(0);W.acts[n]=a;};
+const XCLIP={};function xclip(n,cb){if(XCLIP[n]){cb(XCLIP[n]);return;}const f=n.toLowerCase()+'.glb';(xclip.q=xclip.q||{})[n]=(xclip.q[n]||[]).concat(cb);if(xclip.q[n].length>1)return;new TH.GLTFLoader().load(f,gl=>{const c=gl.animations[0];if(!c)return;c.name=n;XCLIP[n]=c;xclip.q[n].forEach(f=>f(c));xclip.q[n]=[];},undefined,()=>{});}
+function playOnce(n,after){if(!W||!W.mixer)return;xclip(n,c=>{if(!W||!W.mixer)return;const a=W.acts[n]||(W.acts[n]=W.mixer.clipAction(c));a.setLoop(TH.LoopOnce);a.clampWhenFinished=false;a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();W.onceN=n;W.onceT=c.duration;setTimeout(()=>{if(W&&W.acts[n])W.acts[n].fadeOut(.35);W&&(W.onceN=null);after&&after();},c.duration*1000-300);});}
+function kneelLoad(){if(W.kneelLoading||!W.mixer)return;W.kneelLoading=1;xclip('Bow',()=>{});[['Kneel','kneel.glb'],['Meditate','meditate.glb']].forEach(([n,f])=>{const go=gl=>{if(!W||!W.mixer)return;const c=gl.animations[0];if(!c)return;c.name=n;const a=W.mixer.clipAction(c);a.play();a.setEffectiveWeight(0);W.acts[n]=a;};
   const key='_gl_'+n;if(window[key])go(window[key]);else new TH.GLTFLoader().load(f,gl=>{window[key]=gl;go(gl);},undefined,()=>{});});}
 function kneelW(dt){const tgt=W.kneel>0?1:0;if(W.kneel>0)W.kneel-=dt;W.kk=(W.kk||0)+(tgt-(W.kk||0))*Math.min(1,dt*2.5);return W.kk*W.kk*(3-2*W.kk);}
 function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(on){a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();}else a.fadeOut(.3);}
@@ -639,7 +641,7 @@ function loop(){
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
   else W.walk*=.9;
   const gy=heightAt(av.position.x,av.position.z);av.position.y+=(gy+Math.abs(Math.sin(W.walk))*.06*ml-av.position.y)*Math.min(1,dt*14);
-  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+((W.med&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);const mw=W.mw*W.mw*(3-2*W.mw),rest=(1-kw)*(1-mw);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
+  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+((W.med&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);const mw=W.mw*W.mw*(3-2*W.mw),ow=W.onceN&&A[W.onceN]?A[W.onceN].getEffectiveWeight():0,rest=(1-kw)*(1-mw)*(1-ow);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
   if(av.userData.torso){const b=1+Math.sin(t*1.3)*.012;av.userData.torso.scale.set(b,1,b);av.rotation.z=Math.sin(W.walk)*.04*ml;}
   // Kamera
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut&&!inHut&&W.av){W.yawTo=W.av.rotation.y+Math.PI;}W.M.hid=W.M.hid||new TH.MeshBasicMaterial({colorWrite:false,depthWrite:false});if(W.inHut)W.inHut.roof.forEach(m=>{if(m.userData.mat)m.material=m.userData.mat;});if(inHut)inHut.roof.forEach(m=>{if(!m.userData.mat)m.userData.mat=m.material;m.material=W.M.hid;});W.inHut=inHut;}
@@ -1037,17 +1039,18 @@ const MONKSAY=['Guten Morgen. Der Tee ist heiss.','Shen sagt, du machst Fortschr
 function npcs(){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)return;W.npcs=[];
   const mk=(robe,skin,hair,cfg)=>{const o=MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));
     ['Idle','Walk','Stance'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(0);}});const N=Object.assign({o,mx,A,i:0,wait:0,mode:cfg.mode,pts:cfg.pts,sp:cfg.sp||1,cur:null},cfg);o.position.set(cfg.pts[0][0],groundH(cfg.pts[0][0],cfg.pts[0][1]),cfg.pts[0][1]);
-    const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:'Grüssen',act:()=>{const t=MONKSAY[Math.floor(Math.random()*MONKSAY.length)];msg(cfg.name+': «'+t+'»');DW.bell(.8);N.wait=Math.max(N.wait,3);N.face=true;}};W.inter.push(it);N.it=it;
+    const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:'Grüssen',act:()=>{const t=MONKSAY[Math.floor(Math.random()*MONKSAY.length)];msg(cfg.name+': «'+t+'»');DW.bell(.8);N.wait=Math.max(N.wait,3.2);N.face=true;N.bowT=2.2;playOnce('Bow');}};W.inter.push(it);N.it=it;
     if(cfg.mode==='sweep'){const br=new TH.Group();const st=new TH.Mesh(new TH.CylinderGeometry(.02,.02,1.4,6),W.M.wood);st.position.y=.7;br.add(st);const bh=new TH.Mesh(new TH.ConeGeometry(.16,.35,8),new TH.MeshStandardMaterial({color:'#b8a06a',roughness:1}));bh.position.y=.1;br.add(bh);let hand=null;o.traverse(c=>{if(c.isBone&&c.name==='handR')hand=c;});
       if(hand){const ws=new TH.Vector3();hand.getWorldScale(ws);const g2=new TH.Group();g2.add(br);br.position.set(0,-.95,0);g2.scale.setScalar(1/ws.x);g2.position.set(0,.06,0);g2.rotation.set(3.14,0,.15);hand.add(g2);N.broomHand=g2;}
       else{br.position.set(.25,0,.45);br.rotation.x=.5;o.add(br);}N.broom=br;}
+    ['Sweep','Bow'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));
     W.npcs.push(N);};
   mk('#c98a2a','#c99a72','#2a2420',{name:'Bruder Wei',mode:'sweep',pts:[[-4,9],[4,9],[4,13],[-4,13]],sp:.55});
   mk('#7a2e24','#a8784f','#1a1614',{name:'Schwester Lin',mode:'walk',pts:[[-5.8,7.2],[-5.8,18.5],[5.8,18.5],[5.8,7.2]],sp:1});
   mk('#4a4440','#e0b896','#c9c4bb',{name:'Bruder Tao',mode:'train',pts:[[RPOS.hof.c[0]-.5,RPOS.hof.c[1]+2.6]],face:[-1,0]});
   mk('#d9cfbd','#8a5a3a','#1a1614',{name:'Novize Kai',mode:'walk',pts:[[-6,11],[-3,16],[3,16],[3.2,10.5]],sp:.8});
 });}
-function setW(N,name){['Idle','Walk','Stance'].forEach(n=>{if(N.A[n])N.A[n].setEffectiveWeight(n===name?1:0);});if(N.cur!==name&&N.A[name]){N.A[name].reset();N.A[name].play();}N.cur=name;}
+function setW(N,name){['Idle','Walk','Stance','Sweep','Bow'].forEach(n=>{if(N.A[n])N.A[n].setEffectiveWeight(n===name?1:0);});if(N.cur!==name&&N.A[name]){N.A[name].reset();N.A[name].play();}N.cur=name;}
 function life(){if(W.ch)return;
   const G=RPOS.garten.c;koi(G[0]-1,G[1]);
   bamboo(-20,10,26,3.2);bamboo(19,-16,18,2.6);
@@ -1079,10 +1082,11 @@ function lifeUpdate(){const now=performance.now()/1000,dt=Math.min(.05,now-(W.lt
   if(W.npcs)W.npcs.forEach(N=>{N.mx.update(dt);const o=N.o;N.it.x=o.position.x;N.it.z=o.position.z;
     if(N.face&&W.av){const tgt=Math.atan2(W.av.position.x-o.position.x,W.av.position.z-o.position.z);o.rotation.y+=(((tgt-o.rotation.y+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI)*Math.min(1,dt*5);}
     if(N.mode==='train'){setW(N,N.A.Stance?'Stance':'Idle');if(N.A.Stance&&N.A.Stance.time>N.A.Stance.getClip().duration-.05)N.A.Stance.time=0;if(!N.face&&N.face0==null){o.rotation.y=Math.atan2(N.facev?N.facev[0]:-1,0);}if(N.wait>0){N.wait-=dt;if(N.wait<=0)N.face=false;}return;}
-    if(N.wait>0){N.wait-=dt;setW(N,'Idle');if(N.wait<=0)N.face=false;return;}
+    if(N.bowT>0){N.bowT-=dt;setW(N,N.A.Bow?'Bow':'Idle');if(N.wait>0)N.wait-=dt;return;}
+    if(N.wait>0){N.wait-=dt;setW(N,N.mode==='sweep'&&!N.face&&N.A.Sweep?'Sweep':'Idle');if(N.wait<=0)N.face=false;return;}
     const p=N.pts[(N.i+1)%N.pts.length],dx=p[0]-o.position.x,dz=p[1]-o.position.z,d=Math.hypot(dx,dz);
     if(W.av&&Math.hypot(W.av.position.x-o.position.x,W.av.position.z-o.position.z)<1.1){setW(N,'Idle');return;}
-    if(d<.15){N.i=(N.i+1)%N.pts.length;N.wait=N.mode==='sweep'?1.5+Math.random()*2:2+Math.random()*4;return;}
+    if(d<.15){N.i=(N.i+1)%N.pts.length;N.wait=N.mode==='sweep'?4+Math.random()*4:2+Math.random()*4;return;}
     const s=N.sp*dt;let ux=dx/d,uz=dz/d;const free=(a,b)=>!blocked(o.position.x+a*.45,o.position.z+b*.45,o.position.x,o.position.z);
     if(!free(ux,uz)){let ok=false;for(const da of [.6,-.6,1.2,-1.2,1.8,-1.8]){const c=Math.cos(da),sn=Math.sin(da),ax=ux*c-uz*sn,az=ux*sn+uz*c;if(free(ax,az)){ux=ax;uz=az;ok=true;break;}}if(!ok){N.stuck=(N.stuck||0)+dt;if(N.stuck>1.5){N.i=(N.i+1)%N.pts.length;N.stuck=0;}setW(N,'Idle');return;}}N.stuck=0;
     setW(N,'Walk');o.position.x+=ux*Math.min(s,d);o.position.z+=uz*Math.min(s,d);o.position.y=groundH(o.position.x,o.position.z)+(W.rects.length?0:0);
