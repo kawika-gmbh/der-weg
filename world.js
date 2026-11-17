@@ -120,7 +120,7 @@ function temple(st){
   {const g=new TH.Group();g.position.set(0,b+.98,-2.1);W.root.add(g);const S=(r,y,sx,sy,sz,par)=>{const m=new TH.Mesh(new TH.SphereGeometry(r,24,18),M.gold);m.position.y=y;m.scale.set(sx,sy,sz);add(m,par||g);return m;};
     S(.55,.18,1.25,.4,1);S(.36,.62,1,1.25,.85);S(.2,1.08,1,1.1,1);S(.07,1.3,1,1,1);
     const halo=new TH.Mesh(new TH.TorusGeometry(.42,.025,8,40),M.gold);halo.position.set(0,1.05,-.25);add(halo,g);
-    if(TH.GLTFLoader){const put=gl=>{if(!W)return;while(g.children.length)g.remove(g.children[0]);const o=gl.scene.clone();o.scale.setScalar(.72);o.position.set(0,-.02,-.05);o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;c.material=M.gold;}});g.add(o);const L=new TH.PointLight(0xffd59a,.7,4,2);L.position.set(0,1.2,1.2);g.add(L);};
+    if(TH.GLTFLoader){const put=gl=>{if(!W)return;while(g.children.length)g.remove(g.children[0]);const o=gl.scene.clone();o.scale.setScalar(.62);o.position.set(0,-.02,0);o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;c.material=M.gold;}});g.add(o);g.updateMatrixWorld(true);const bb=new TH.Box3().setFromObject(o);if(bb.min.z<-2.38)o.position.z+=(-2.38-bb.min.z);const L=new TH.PointLight(0xffd59a,.7,4,2);L.position.set(0,1.2,1.2);g.add(L);};
       if(window._buddhaGL)put(window._buddhaGL);else new TH.GLTFLoader().load('buddha.glb',gl=>{window._buddhaGL=gl;put(gl);},undefined,()=>{});}}
   [-1.2,-.8,.8,1.2].forEach((x,i)=>{const c=new TH.Mesh(new TH.CylinderGeometry(.04,.04,.22,10),new TH.MeshStandardMaterial({color:'#efe6d2',roughness:.6}));c.position.set(x,b+1.05,-1.75);add(c);
     const f=new TH.Mesh(new TH.SphereGeometry(.03,8,6),M.glow);f.position.set(x,b+1.2,-1.75);f.scale.y=1.8;W.root.add(f);W.flames=(W.flames||[]).concat(f);});
@@ -335,7 +335,7 @@ function gate(open){const M=W.M,z=25.5;W.gateOpen=open;[-2.4,2.4].forEach(x=>{cy
   if(!open){const d=box(4.4,3.4,.12,M.wood,0,0,z,1);const lock=new TH.Mesh(new TH.BoxGeometry(.3,.34,.16),M.gold);lock.position.set(0,1.6,z-.1);W.root.add(lock);}
   wallLine(-14,z,-2.6,z,.5);wallLine(2.6,z,14,z,.5);for(let x=-14;x<=14;x+=1.2){if(Math.abs(x)<2.6)continue;box(1.2,1.1,.4,M.stone,x,0,z,1);}}
 function village(){
-  const v=DW.village(),lvl=v.lvl,got=v.got||[],has=k=>got.includes(k),M=W.M,night=W.tod.night;
+  const v=DW.village(),lvl=v.lvl,got=v.got||[],has=k=>got.includes(k),M=W.M,night=W.tod.night;const UL=DW.unlocks();W.vOpen=UL.village;W.vExtra=UL.extras;W.vMarket=UL.market;const i0=(W.inter||[]).length;
   const g=new TH.Group();W.root.add(g);W.vbox=[];W.vFloors=[];W.vProps=[];W.vU={wheels:[],water:[],chick:[],sky:[]};const root0=W.root;W.root=g;
   const gh=(x,z)=>groundH(x,z);
   try{
@@ -409,9 +409,41 @@ function village(){
   // ---- Abstieg/Aufstieg
   W.inter.push({x:0,z:38.6,r:1.6,label:'Pfad zum Kloster',btn:'Hinaufsteigen',act:()=>leaveVillage()});
   if(night){[[0,52],[0,44],[0,58]].forEach(([x,z])=>{const L=new TH.PointLight(0xffa860,1.3,12,2);L.position.set(x,gh(x,z)+3,z);g.add(L);W.flick.push(L);});}
+  W.inter.slice(i0).forEach(it=>{const L=it.label||'';const isM=/Dorfmarkt/.test(L),isX=/Teehaus|Schmiede|Dorfschrein|Fischersteg|Haus der|Heilerhaus|Dorfschule/.test(L);if((isM&&!W.vMarket)||(isX&&!W.vExtra)){const nm=L.split(' ·')[0];it.btn='Verschlossen';it.act=()=>lockedMsg(nm);}});
   }finally{W.root=root0;}
   vnpcs(lvl);
 }
+
+
+/* ---------- Orientierung: Nächster Schritt, Markierungen, Freischaltungen ---------- */
+function nextStep(){const g=DW.flag('guide'),L=DW.todayList(),open_=L.filter(r=>!r.done),ri=DW.rankInfo(),U=DW.unlocks();
+  if(g===1&&open_.length)return{k:'Erster Schritt',t:`Geh zu «${open_[0].name}» (${open_[0].roomN}) und trag sie ein`,go:()=>goRoom(open_[0].room)};
+  if(g===2)return{k:'Gut gemacht',t:'Sprich mit Meister Shen über dein Chi',go:()=>toMeister()};
+  if(open_.length)return{k:`Heute ${L.length-open_.length}/${L.length}`,t:`${open_[0].name} · ${open_[0].roomN}`,go:()=>goRoom(open_[0].room)};
+  if(ri.eligible&&!ri.max)return{k:'Rang',t:'Meister Shen erwartet dich zur Rangprüfung',go:()=>toMeister()};
+  const nq=DW.day('_nq')||0,{q}=nqToday();if(nq===0)return{k:'Jemand braucht dich',t:`${q.who} hat etwas auf dem Herzen`,go:()=>{const N=(W.npcs||[]).find(n=>n.name===q.who);if(N){const p=N.o.position;W.av.position.set(p.x+1.2,heightAt(p.x+1.2,p.z),p.z);}}};
+  if(nq===2)return{k:'Auftrag',t:`Bring ${q.who} die ${q.item}`,go:null};
+  const v=DW.village();if(U.village&&v.ev&&!v.ok)return{k:'Das Dorf',t:`${v.ev.n} · hilf am Klostertor`,go:()=>goRoom('tor')};
+  if(!L.length)return{k:'Heute',t:'Lege im Menü deine erste Routine an',go:()=>DW.openMenu()};
+  return{k:'Alles erledigt',t:U.village?'Besuche das Dorf oder ruh dich aus':'Ruh dich aus. Morgen geht es weiter.',ok:1,go:U.village?()=>goRoom('tor'):null};}
+function toMeister(){if(!W||!W.npc)return;const p=W.npc.position;W.av.position.set(p.x+Math.sin(W.npc.rotation.y)*1.4,p.y,p.z+Math.cos(W.npc.rotation.y)*1.4);W.av.rotation.y=W.npc.rotation.y+Math.PI;W.yaw=W.av.rotation.y+Math.PI;setTimeout(()=>W&&talk(5),400);}
+function questUpdate(){if(!W||W.ch)return;const now=performance.now();if(W._qT&&now-W._qT<900)return;W._qT=now;
+  if(DW.flag('guide')===1&&DW.doneToday().done>0){DW.flag('guide',2);msg('Gut! Du hast Chi verdient. Sprich jetzt mit Meister Shen.');}
+  const s=nextStep(),el=$('#wQuest');if(!el)return;el.hidden=!!W.talking||!!W.med||!!W.tc;const key=s.k+s.t;if(W._qKey!==key){W._qKey=key;$('#wQuestK').textContent=s.k;$('#wQuestT').textContent=s.t;$('#wQuestI').textContent=s.ok?'✓':'!';el.classList.toggle('ok',!!s.ok);el.style.animation='none';void el.offsetWidth;el.style.animation='';}
+  el.onclick=()=>{DW.tick();if(s.go){endTalk();s.go();}};marksUpdate();}
+function markTex(ok){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=ok?'#7fbf8a':'#f2c46a';x.beginPath();x.arc(32,32,26,0,6.28);x.fill();x.strokeStyle='#1a1410';x.lineWidth=3;x.stroke();x.fillStyle='#1a1410';x.font='bold 40px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(ok?'✓':'!',32,35);return new TH.CanvasTexture(c);}
+function marksUpdate(){W.marks=W.marks||{};const want={},L=DW.todayList(),ri=DW.rankInfo(),U=DW.unlocks();
+  L.filter(r=>!r.done).forEach(r=>{const sp=(W.roomSpot&&W.roomSpot[r.room])?[W.roomSpot[r.room][0],0,W.roomSpot[r.room][1]]:spotOf(r.room);want['r_'+r.room]=[sp[0],(sp[1]||0)+2.9,sp[2]];});
+  if(W.npc&&((ri.eligible&&!ri.max)||DW.flag('guide')===2)){const p=W.npc.position;want.m=[p.x,p.y+2.35,p.z];}
+  const nq=DW.day('_nq')||0,{q}=nqToday();if(nq!==1&&nq<3)(W.npcs||[]).forEach(N=>{if(N.name===q.who&&(nq===0||nq===2)){const p=N.o.position;want['n_'+N.name]=[p.x,p.y+2.3,p.z];}});
+  const v=DW.village();if(U.village&&v.ev&&!v.ok){(W.npcs||[]).forEach(N=>{if(N.name==='Älteste Mei'){const p=N.o.position;want.mei=[p.x,p.y+2.3,p.z];}});const sp=spotOf('tor');want.tor=[sp[0],2.9,sp[2]];}
+  Object.keys(W.marks).forEach(k=>{if(!want[k]){W.marks[k].visible=false;}});
+  Object.entries(want).forEach(([k,p])=>{let m=W.marks[k];if(!m){W._mT=W._mT||new TH.SpriteMaterial({map:markTex(),depthTest:false,transparent:true,fog:false,toneMapped:false});m=new TH.Sprite(W._mT);m.scale.setScalar(.55);m.renderOrder=20;W.root.add(m);W.marks[k]=m;}const ap=W.av?W.av.position:null;m.visible=!(ap&&Math.hypot(ap.x-p[0],ap.z-p[2])<3.5);m.userData.p=p;});}
+function marksAnim(t){if(!W.marks)return;Object.values(W.marks).forEach(m=>{if(!m.visible||!m.userData.p)return;const p=m.userData.p;m.position.set(p[0],p[1]+Math.sin(t*3)*.08,p[2]);});}
+function lockedMsg(what){msg(`${what} öffnet sich ab Rang «Schüler». Bleib dran!`);}
+function unlockNews(){const U=DW.unlocks(),out=[];if(U.village&&!DW.flag('u_village')){DW.flag('u_village',1);out.push('Neu: Das Dorf im Tal. Steig über die Drachentreppe hinab. Deine Punkte helfen den Menschen dort.');}
+  if(U.market&&!DW.flag('u_market')){DW.flag('u_market',1);out.push('Neu: Kupfer und Markt. Für erledigte Routinen bekommst du Kupfer. Am Tor kaufst du davon Dinge für dein Kloster.');}
+  if(U.extras&&!DW.flag('u_extras')){DW.flag('u_extras',1);out.push('Neu: Im Dorf öffnen Teehaus, Schmiede, Schrein, Fischersteg und die Häuser. Dort gibt es kleine Tagesaufgaben.');}return out;}
 
 /* ---------- Begehbare Dorfhäuser ---------- */
 const VLORE=['Vor hundert Jahren stand das Kloster leer. Ein einziger Mönch fegte jeden Morgen den Hof – bis andere kamen, um zu sehen, warum.','Der Bach heisst «Stiller Bach», weil er im Winter unter dem Eis weiterfliesst. Man hört ihn nur, wenn man still ist.','Die Drachen an der Treppe wurden von Steinmetzen aus dem Tal gehauen. Für jede Stufe ein Tag Arbeit.','Wer im Dorf geboren wird, pflanzt einen Kirschbaum. Die ältesten stehen schon lange nicht mehr – aber die Wurzeln sind noch da.','Mei sagt: «Ein Dorf ist wie ein Körper. Wenn eine Hand hilft, wird das ganze Dorf stärker.»','Früher kamen die Mönche jeden Markttag herunter. Dann kam der lange Winter, und niemand stieg mehr hinab. Bis jetzt.'];
@@ -698,7 +730,8 @@ function stairway(){const S=stairDef();if(!S)return;const M=W.M,DM=dragonMats(),
    if(ivy.length){const m=new TH.Mesh(mergeGeos(ivy),im);W.root.add(m);}}
   // Wächterdrachen oben und Drachentor unten
   guardian(-3.7,26.1,groundH(-3.7,26.1),0);guardian(3.7,26.1,groundH(3.7,26.1),0);
-  paifang(0,41.1,S.land[3].y,'龍門');}
+  paifang(0,41.1,S.land[3].y,'龍門');
+  if(!DW.unlocks().village){const mm=new TH.SpriteMaterial({map:softTex(),color:0xe8e4dc,transparent:true,opacity:.55,depthWrite:false});for(let i=0;i<26;i++){const t=Math.random(),F=S.fl[i%3],s=new TH.Sprite(mm);s.position.set(F.a[0]+F.dx*F.L*t+(Math.random()-.5)*3,F.ya+(F.yb-F.ya)*t+.8+Math.random()*1.5,F.a[1]+F.dz*F.L*t+(Math.random()-.5)*3);s.scale.setScalar(3+Math.random()*3);W.root.add(s);}}}
 
 const VSAY=['Seit das Kloster uns hilft, lachen die Kinder wieder.','Die Ernte war gut dieses Jahr. Danke dir.','Mein Grossvater erzählte, früher sei das Tal voller Laternen gewesen.','Hast du die Hühner gesehen? Eins fehlt schon wieder.','Wer im Kloster lebt, steht früh auf. Das sieht man dir an.','Komm am Markttag wieder, dann gibt es süsse Reiskuchen.','Die Mönche oben sind still. Aber ihre Arbeit hört man im ganzen Tal.'];
 function vnpcs(lvl){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)return;W.npcs=W.npcs||[];
@@ -741,7 +774,10 @@ function roomDialog(id){
   const btns=[];let text=r.d+'.';
   if(!r.open&&id==='halle')text='Die Halle steht allen offen, die still werden wollen. Routinen lernst du hier ab einem höheren Rang, meditieren kannst du schon heute.';
   else if(!r.open)text='Das Tor ins Tal ist noch verschlossen, Schritte-Routinen lernst du ab einem höheren Rang. Doch von hier siehst du das Dorf, und es braucht deine Hilfe.';
-  else if(!r.rit.length)text+=' Hier hast du noch keine Routine.';
+  else if(!r.rit.length){const fr=DW.slotsFree(),nx=DW.todayList().find(x=>!x.done);text=`${r.n}: Hier trägst du Routinen für ${r.d} ein.\n\n`+(fr>0?`Du hast noch ${fr} freien Platz. Lege hier eine Routine an, wenn sie zu diesem Ort passt.`:`Deine ${DW.todayList().length?'Routinen-Plätze':'Plätze'} sind belegt. Mit dem nächsten Rang bekommst du einen weiteren Platz.`)+(id==='hof'?'\n\nAuch ohne eigene Routine kannst du hier trainieren: Bruder Tao zeigt dir Tai Chi. Das gibt Kraft-Chi.':'');
+    if(nx&&nx.room!==id)btns.push([`Zu deiner Routine: ${nx.name}`,()=>{endTalk();goRoom(nx.room);},fr<=0]);
+    if(id==='hof'){const T=(W.npcs||[]).find(n=>n.name==='Bruder Tao');if(T)btns.unshift(['Tai Chi mit Bruder Tao',()=>{endTalk();tcChoose(T);},1]);}}
+  else text+='\n\nErledige die Routine im echten Leben und tippe dann unten auf den Knopf mit ihrem Namen.';
   r.rit.forEach(x=>{const st=x.done?'✓ erledigt':!x.due?'heute nicht fällig':x.sub;text+=`\n${x.done?'✓':'○'} ${x.name} · ${st}`;
     if(!x.done&&x.due)btns.push([x.label+': '+x.name,()=>{endTalk();DW.doRitual(x.id);setTimeout(refreshRoom,400);},1]);});
   r.rit.forEach(x=>{if(x.editable)btns.push(['Bearbeiten: '+x.name,()=>{endTalk();DW.editRitual(x.id);}]);});
@@ -755,12 +791,12 @@ function roomDialog(id){
   if(id==='tor'&&W.villageAt&&!W.inVillage){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
     if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);}}]);}
-  if(id==='tor'&&!W.inVillage)btns.unshift(['Ins Dorf hinabsteigen',()=>goVillage(),1]);
-  if(id==='tor')btns.unshift(['Zum Markt',()=>{endTalk();market();},1]);
+  if(id==='tor'&&!W.inVillage){if(DW.unlocks().village)btns.unshift(['Ins Dorf hinabsteigen',()=>goVillage(),1]);else text+=`\n\nNoch liegt Nebel über der Drachentreppe. Ab Tag 3 darfst du ins Dorf hinabsteigen (heute: Tag ${DW.unlocks().day}).`;}
+  if(id==='tor'&&DW.unlocks().market)btns.unshift(['Zum Markt',()=>{endTalk();market();},1]);
   if(id==='zelle'||(id==='garten'&&r.open))btns.push(['Einrichten',()=>{endTalk();furnishUI(id);}]);
   if(id==='tor'){const st=DW.stepsToday();btns.splice(Math.max(0,btns.length),0,[st?`Schritte heute: ${st} (anpassen)`:'Schritte von heute eintragen',()=>{endTalk();stepsDlg();},!st]);}
   if(id==='tor')DW.pilgrims().forEach(p=>{if(p.open&&r.open)btns.push(['Pilgerreise: '+p.n+(p.visited?' (diese Woche besucht)':''),()=>{endTalk();close();open({pilgrim:p.ch});}]);else text+=`\n· ${p.n}: ab Rang ${p.rankName}`;});
-  btns.push(['Gehen',()=>endTalk()]);
+  btns.push(['Schliessen',()=>endTalk()]);
   dlgK(r.n,text,btns);
 }
 function dlgK(k,text,btns){dlg(text,btns);$('#wDlgK').textContent=k;}
@@ -787,6 +823,7 @@ function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name()
   btns.push([first?'Ich schaue mich erst um':'Danke',()=>{endTalk();beacon();}]);
   {const st=DW.day('_nq')||0,{q}=nqToday();if(st===0)extra+=`\n${q.who} scheint etwas auf dem Herzen zu haben.`;else if(st===2)extra+=`\nBring ${q.who} die ${q.item}.`;}
   const wx={regen:'Draussen regnet es. Ein guter Tag für die Halle.',nebel:'Nebel liegt über dem Kloster.',schnee:'Es schneit. Die Welt ist still.'}[W.weather];
+  {const nw=unlockNews();if(nw.length)extra='\n\n✦ '+nw.join('\n✦ ')+extra;}
   dlgK(first?'Tagesbeginn':'Heute',t+extra+(wx?'\n'+wx:'')+`\n\n«${spruch()}»`,btns);}
 /* ---------- Leuchtfeuer zum nächsten Ziel ---------- */
 function beacon(force){if(!W||W.ch)return;const L=DW.todayList().filter(r=>!r.done);if(!W.bcn){const g=new TH.Group();const bc=document.createElement('canvas');bc.width=4;bc.height=128;const bx=bc.getContext('2d'),bg=bx.createLinearGradient(0,0,0,128);bg.addColorStop(0,'rgba(255,220,140,0)');bg.addColorStop(.6,'rgba(255,220,140,.35)');bg.addColorStop(1,'rgba(255,220,140,.9)');bx.fillStyle=bg;bx.fillRect(0,0,4,128);
@@ -835,7 +872,7 @@ function rewards(){const got=DW.village().got||[],M=W.M,y=.35;if(!got.length)ret
 function goRoom(id){if(!W||W.pilgrim){close();open({room:id});return;}const ins=W.roomSpot&&W.roomSpot[id],P=RPOS[id];const sp=ins?[ins[0],.35,ins[1]]:spotOf(id);const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];
   W.av.position.set(sp[0],sp[1],sp[2]);W.av.rotation.y=Math.atan2(tx-sp[0],tz-sp[2]);W.yaw=W.av.rotation.y+Math.PI;W.cam.position.set(sp[0]+Math.sin(W.yaw)*3,sp[1]+3,sp[2]+Math.cos(W.yaw)*3);endTalk();setTimeout(()=>{if(W)roomDialog(id);},350);}
 function rankHud(){const ri=DW.rankInfo(),dt=DW.doneToday();$('#wRankN').textContent=ri.name;$('#wRankS').textContent=`Heute ${dt.done}/${dt.n} · Rang ${ri.rank+1}`;const u=DW.portrait(),im=$('#wPor').firstChild;if(u&&(!im||im.getAttribute('src')!==u))$('#wPor').innerHTML=`<img src="${u}" alt="">`;}
-function ptsHud(){rankHud();let el=$('#wPts');if(!el){el=document.createElement('div');el.id='wPts';el.className='w-pts';$('#world').appendChild(el);}el.innerHTML=`<span class="cu"><i style="background:#c98a4a;border-radius:50%"></i>Kupfer <b>${DW.coins()}</b></span>`+DW.pts().map(p=>`<span><i style="background:${p.c}"></i>${p.n.slice(0,3)} <b>${p.v}</b></span>`).join('');}
+function ptsHud(){document.body.classList.toggle('noCu',!DW.unlocks().market);rankHud();let el=$('#wPts');if(!el){el=document.createElement('div');el.id='wPts';el.className='w-pts';$('#world').appendChild(el);}el.innerHTML=`<span class="cu"><i style="background:#c98a4a;border-radius:50%"></i>Kupfer <b>${DW.coins()}</b></span>`+DW.pts().map(p=>`<span><i style="background:${p.c}"></i>${p.n.slice(0,3)} <b>${p.v}</b></span>`).join('');}
 
 /* ---------- Tageszeit ---------- */
 const TOD={
@@ -929,7 +966,7 @@ function greet(st){
 }
 function dlg(text,btns){const d=$('#wDlg');$('#wDlgK').textContent='Meister Shen';$('#wDlgT').textContent=text;const B=$('#wDlgB');B.innerHTML='';btns.forEach(([l,f,pri],i)=>{const b=document.createElement('button');b.textContent=(FINE&&i<9?(i+1)+'  ':'')+l;if(pri)b.className='pri';b.onclick=()=>{DW.tick();f();};B.appendChild(b);});d.hidden=false;$('#wPrompt').hidden=true;if(!W.talking)W.talkPos=W.av.position.clone();W.talking=true;}
 function endTalk(){$('#wDlg').hidden=true;if(W){W.talking=false;W.near=null;if(W.camOv){W.camOv=null;if(W.fogSave)W.scene.fog.density=W.fogSave;}}}
-function talk(st){
+function talk(st){if(DW.flag('guide')===2){DW.flag('guide',9);const U=DW.unlocks();dlgK('Meister Shen',`Siehst du die Punkte oben? Jede Farbe steht für einen Bereich deines Lebens: Ordnung, Nahrung, Ruhe, Kraft, Weisheit, Schritte.\n\nMit diesen Punkten hilfst du später dem Dorf im Tal${U.village?' – es wartet schon auf dich, unten an der Drachentreppe':'. In ein paar Tagen lichtet sich der Nebel und du darfst hinabsteigen'}. Bleib dran, dann öffnen sich neue Türen.`,[['Verstanden',()=>endTalk(),1]]);return;}
   const q=questToday(st),qs=DW.day('_qs')||0;// 0 offen, 1 angenommen, 2 erledigt
   const L=DW.lesson(),both=()=>q.a.ok()&&q.b.ok();
   const menu=(text)=>{const btns=[];
@@ -991,7 +1028,7 @@ function msg(t){const m=$('#wMsg');m.textContent=t;m.classList.add('show');clear
 
 /* ---------- Bewegung & Kollision ---------- */
 function blocked(x,z,px,pz){
-  if(!W.pilgrim&&stairY(x,z,1)!=null){if(!W.gateOpen&&z>25.1&&z<25.9)return true;for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}return false;}
+  if(!W.pilgrim&&stairY(x,z,1)!=null){if(!W.gateOpen&&z>25.1&&z<25.9)return true;if(!W.vOpen&&z>28.2&&z<36){if(!W._fogMsg||performance.now()-W._fogMsg>4000){W._fogMsg=performance.now();msg('Nebel liegt auf der Treppe. Ab Tag 3 öffnet sich der Weg ins Dorf.');}return true;}for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}return false;}
   if(!W.pilgrim&&z>34){for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}return vBlocked(x,z);}
   if(Math.hypot(x,z)>40)return true;if(!W.pilgrim&&z>25)return true;
   for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}
@@ -1072,7 +1109,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
@@ -1095,7 +1132,7 @@ function open(opts){opts=opts||{};
    if(room){W.autoRoom=room;W.spawnRoom=room;}}
   if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];if(!ch&&id==='zelle'&&!DW.flag('tut')){const P2=RPOS.zelle;W.meisterPos=[P2.c[0]+P2.f[0]*1.5,.35,P2.c[1]+1.3];W.spawnAt[3]=W.meisterPos[0]-sp[0];W.spawnAt[4]=W.meisterPos[2]-sp[2];W.tutZelle=1;}}applyTod();avatar();interactables(5);meister(5);if(W.tutZelle&&W.npc){W.npc.rotation.y=Math.atan2(W.spawnAt[0]-W.meisterPos[0],W.spawnAt[2]-W.meisterPos[2]);}if(!ch)shadowFoe();controls();ptsHud();
   if(ch){const sp=[W.ch===2?3.6:0,12];W.inter.push({x:sp[0],z:sp[1]+1.5,r:1.4,label:'Heimweg ins Kloster',btn:'Zurück',act:()=>{close();open({room:'tor'});}});if(DW.pilgrimVisit(ch))setTimeout(()=>W&&msg('Pilgerreise: +20 Punkte'),1200);}
-  if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen. Hier hat jede Routine ihren Ort: Aufstehen am Bett, Essen am Herd.`,`Die Schlafzelle und die Küche stehen dir offen. Alle anderen Türen sind verschlossen. Mit jedem neuen Rang darfst du eine davon öffnen.`,`Trage deine Routinen dort ein, wo sie passieren. Jede bringt Punkte. Mit ihnen hilfst du dem Dorf unten im Tal.`,`Und nun geh. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);endTalk();if(W)setTimeout(()=>W&&briefing(true),400);return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
+  if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen.\n\nSo funktioniert der Weg: Du erledigst deine Routinen im echten Leben und trägst sie hier ein. Dafür bekommst du Chi. Mit Chi wächst dein Kloster, und das Dorf im Tal blüht auf.`,`Jede Routine hat ihren Raum: Aufstehen in der Zelle, Essen in der Küche. Oben links siehst du immer deinen nächsten Schritt. Tipp ihn an, und du gehst direkt hin.`,`Die anderen Türen sind noch verschlossen. Mit jedem neuen Rang darfst du eine öffnen. Fang klein an. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);DW.flag('guide',1);endTalk();if(W)setTimeout(()=>W&&beacon(true),400);return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
   else if(!ch&&!opts.room&&!DW.day('_brief'))setTimeout(()=>{if(!W)return;if(new Date().getDay()===0&&!DW.day('_wk')&&DW.flag('tut'))weekReview();briefing(true);},1100);
   else if(W.autoRoom)setTimeout(()=>{if(W)roomDialog(W.autoRoom);},900);
   $('#wDlgX').onclick=()=>endTalk();
