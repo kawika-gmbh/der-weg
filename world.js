@@ -342,10 +342,11 @@ function village(){
   W.villageAt=[0,gh(0,52),52];
   // ---- Wege (folgen dem Gelände)
   const strip=(x0,z0,x1,z1,wd,mat,off)=>{const L=Math.hypot(x1-x0,z1-z0),n=Math.max(2,Math.ceil(L/1.2)),geo=new TH.PlaneGeometry(wd,L,2,n);geo.rotateX(-Math.PI/2);const p=geo.attributes.position,ang=Math.atan2(x1-x0,z1-z0),c=Math.cos(ang),s=Math.sin(ang),mx=(x0+x1)/2,mz=(z0+z1)/2;
-    for(let i=0;i<p.count;i++){const lx=p.getX(i),lz=-p.getZ(i),wx=mx+lx*c+lz*s,wz=mz-lx*s+lz*c;p.setXYZ(i,wx,gh(wx,wz)+(off||.04),wz);}geo.computeVertexNormals();const m=new TH.Mesh(geo,mat);m.receiveShadow=true;g.add(m);return m;};
-  const pathM=has('pfad')?new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#9a9288',roughness:1}):new TH.MeshStandardMaterial({color:'#6e5a44',roughness:1});
+    for(let i=0;i<p.count;i++){const lx=p.getX(i),lz=-p.getZ(i),wx=mx+lx*c+lz*s,wz=mz-lx*s+lz*c;p.setXYZ(i,wx,gh(wx,wz)+(off||.04),wz);}worldUV(geo,1.6);geo.computeVertexNormals();const m=new TH.Mesh(geo,mat);m.receiveShadow=true;g.add(m);return m;};
+  const pathM=has('pfad')||lvl>=1?new TH.MeshStandardMaterial({map:cobbleTex(),color:'#d8d0c2',roughness:.95}):new TH.MeshStandardMaterial({map:cobbleTex(),color:'#8a7a62',roughness:1});
   strip(0,37.5,0,62,3,pathM);strip(-24,52,24,52,2.6,pathM);
-  {const geo=new TH.CircleGeometry(6.5,40,0);geo.rotateX(-Math.PI/2);const p=geo.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i)+52;p.setXYZ(i,x,gh(x,z)+.05,z);}const m=new TH.Mesh(geo,pathM);m.receiveShadow=true;g.add(m);}
+  {const geo=new TH.CircleGeometry(7.2,48,0);geo.rotateX(-Math.PI/2);const p=geo.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i)+52;p.setXYZ(i,x,gh(x,z)+.05,z);}worldUV(geo,1.6);const m=new TH.Mesh(geo,pathM);m.receiveShadow=true;g.add(m);
+   const rim=new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#a8a090',roughness:1});for(let i=0;i<64;i++){const a0=i/64*6.283,da=Math.min(...[0,Math.PI/2,Math.PI,Math.PI*1.5,Math.PI*2].map(q=>Math.abs(a0-q)));if(da<.2)continue;const x=Math.cos(a0)*7.3,z=52+Math.sin(a0)*7.3;const b=box(.75,.42,.32,rim,x,gh(x,z)-.05,z,1);b.rotation.y=-a0+Math.PI/2;W.solids.push([x,z,.32]);}}
   // ---- Bach mit Wasserband
   {const n=60,pos=[],uv=[],idx=[];for(let i=0;i<=n;i++){const x=-31+i*62/n,y=Math.min(gh(x,62.9),gh(x,65.1))-.18;[62.7,65.3].forEach((z,k)=>{pos.push(x,y,z);uv.push(i*.6,k);});if(i<n){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}}
    const geo=new TH.BufferGeometry();geo.setAttribute('position',new TH.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new TH.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
@@ -369,12 +370,17 @@ function village(){
   const plast=M.plaster,beam=new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#4a3220',roughness:.8});
   const vhouse=(x,z,face,s,kind,ent)=>{if(ent)return vhouseIn(x,z,face,s,kind);const rot=face===1?Math.PI/2:face===-1?-Math.PI/2:face===2?Math.PI:0;const w=4.2*s,d=3.4*s,y=gh(x,z);const hg=new TH.Group();hg.position.set(x,y,z);hg.rotation.y=rot;g.add(hg);
     const R0=W.root;W.root=hg;try{
-      box(w+.4,1.4,d+.4,M.stone,0,-1.1,0,1.5);box(w,2.3*s,d,plast,0,.3,0,1.7);
+      const tints=['#f2ece0','#ead8b4','#e2cfa8','#f4efe6','#dccab0'],pm=plast.clone();pm.color=new TH.Color(tints[hi%5]);const two=hi%4===3,up=two?1.7*s:0,topY=.3+2.3*s+up;
+      box(w+.4,1.4,d+.4,M.stone,0,-1.1,0,1.5);box(w,2.3*s,d,pm,0,.3,0,1.7);box(w+.03,.75,d+.03,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#5a3e28',roughness:.85}),0,.3,0,1);
       [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(.2,2.3*s,.2,beam,a*w/2,.3,b*d/2,1));box(w+.1,.16,d+.1,beam,0,.3+2.3*s-.1,0,1);box(w+.1,.12,d+.1,beam,0,1.3*s,0,1);
+      if(two){roof(w+1.1,d+1.1,.35,0,.3+2.3*s-.05,0);box(w*.78,up,d*.78,pm,0,.3+2.3*s,0,1.7);[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(.16,up,.16,beam,a*w*.39,.3+2.3*s,b*d*.39,1));const wi=new TH.Mesh(new TH.PlaneGeometry(.9*s,.5*s),night||lvl>=3?M.glow:new TH.MeshStandardMaterial({color:'#e8dcc0'}));wi.position.set(0,.3+2.3*s+up*.55,d*.39+.01);hg.add(wi);}
+      {const nc=['#2a3a6a','#8a2a22','#e8e0cc','#2a4a3a'][hi%4];for(let k=-1;k<=1;k++){const cl=new TH.Mesh(new TH.PlaneGeometry(.28*s,.55),new TH.MeshStandardMaterial({color:nc,side:TH.DoubleSide,roughness:.9}));cl.position.set(k*.3*s,.3+1.55*s,d/2+.05);hg.add(cl);}}
+      [-1,1].forEach(sd=>{box(.8*s,.16,.22,new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#6a4a2e'}),sd*w*.3,.3+1.05*s,d/2+.12,1);for(let k=0;k<4;k++){const f=new TH.Mesh(new TH.SphereGeometry(.07,6,5),new TH.MeshStandardMaterial({color:['#d84a6a','#e8c03a','#f2f0e8','#c86a2a'][(k+hi)%4]}));f.position.set(sd*w*.3-.3*s+k*.2*s,.3+1.27*s,d/2+.12);hg.add(f);}});
+      if(hi%3===0){const vm=new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#7a5a3a',roughness:.85});box(w*.9,.1,.7,vm,0,.25,d/2+.4,1);[-1,1].forEach(sd=>cyl(.06,2.1*s,vm,sd*w*.44,.3,d/2+.7,6));box(w,.06,.9,M.roof,0,.3+2.1*s,d/2+.45,1);}
       const door=new TH.Mesh(new TH.PlaneGeometry(.9*s,1.7*s),new TH.MeshStandardMaterial({color:'#2a1a12',roughness:.9}));door.position.set(0,.3+.85*s,d/2+.01);hg.add(door);
       const lit=night||lvl>=3,wm=lit?M.glow:new TH.MeshStandardMaterial({color:'#e8dcc0',roughness:.8});[-1,1].forEach(sd=>{const wi=new TH.Mesh(new TH.PlaneGeometry(.7*s,.6*s),wm);wi.position.set(sd*w*.3,.3+1.5*s,d/2+.01);hg.add(wi);});
-      const broken=!roofOk&&hi%3===1;const rf=roof(w+1.6,d+1.6,1.2*s,0,.3+2.3*s,0);if(broken){rf.rotation.z=.18;rf.position.y-=.25;rf.material=new TH.MeshStandardMaterial({color:'#3a332c',roughness:1});if(rf.userData.under)rf.userData.under.visible=false;}
-      if(hi%2===0){box(.4,1.4,.4,M.stone,w*.3,.3+2.3*s,-d*.2,1);if(!broken)smoke(x,y+.3+2.3*s+1.5,z,6,0xcfcac2);}
+      const broken=!roofOk&&hi%3===1;const rf=roof(two?w*.78+1.4:w+1.6,two?d*.78+1.4:d+1.6,1.2*s,0,topY,0);if(broken){rf.rotation.z=.18;rf.position.y-=.25;rf.material=new TH.MeshStandardMaterial({color:'#3a332c',roughness:1});if(rf.userData.under)rf.userData.under.visible=false;}
+      if(hi%2===0){box(.4,1.4,.4,M.stone,w*.3,topY,-d*.2,1);if(!broken)smoke(x,y+topY+1.5,z,6,0xcfcac2);}
       if(kind==='heil'){const ban=new TH.Mesh(new TH.PlaneGeometry(.5,1.4),new TH.MeshStandardMaterial({color:'#3a7a4a',side:TH.DoubleSide}));ban.position.set(w/2+.3,1.6*s,d/2+.2);hg.add(ban);for(let i=0;i<5;i++){const h=new TH.Mesh(new TH.ConeGeometry(.08,.35,6),new TH.MeshStandardMaterial({color:i%2?'#6a8a3a':'#a8a06a'}));h.rotation.x=Math.PI;h.position.set(-w/2+.6+i*.35,.3+2.0*s,d/2+.5);hg.add(h);}box(2,.06,.06,beam,-w/2+1.3,.3+2.2*s,d/2+.5,1);}
       if(kind==='schule'){cyl(.08,2.6,beam,w/2+.9,.3,d/2,6);cyl(.08,2.6,beam,w/2+1.9,.3,d/2,6);box(1.2,.12,.12,beam,w/2+1.4,2.85,d/2,1);const bl=new TH.Mesh(new TH.CylinderGeometry(.14,.26,.4,12,1,true),new TH.MeshStandardMaterial({color:'#b8862a',metalness:.7,roughness:.35,side:TH.DoubleSide}));bl.position.set(w/2+1.4,2.55,d/2);hg.add(bl);}
     }finally{W.root=R0;}
@@ -391,7 +397,7 @@ function village(){
   if(has('ernte')||lvl>=2){[[-3.8,56.6],[3.8,56.6]].forEach(([x,z],i)=>{W.vbox.push([x,z,.65,1.25],[x+1.4,z-.2,.35,.7]);const sg=new TH.Group();sg.position.y=gh(x,z);g.add(sg);const r1=W.root;W.root=sg;try{stall(x,z);}finally{W.root=r1;}
      const crate=(cx,cz,col)=>{box(.5,.3,.4,beam,cx,gh(cx,cz),cz,1);for(let k=0;k<6;k++){const f=new TH.Mesh(new TH.SphereGeometry(.07,8,6),new TH.MeshStandardMaterial({color:col}));f.position.set(cx-.15+(k%3)*.15,gh(cx,cz)+.34,cz-.08+Math.floor(k/3)*.16);g.add(f);}};crate(x+1.4,z-.6,i?'#e8a02a':'#c83a2a');crate(x+1.4,z+.2,i?'#6a9a3a':'#e8d24a');});}
   // ---- Laternenketten
-  if(has('laternen')||lvl>=3){const chain=(a,b,n)=>{for(let i=0;i<=n;i++){const t=i/n,x=a[0]+(b[0]-a[0])*t,z=a[2]+(b[2]-a[2])*t,y=a[1]+(b[1]-a[1])*t-Math.sin(t*Math.PI)*.6;const l=new TH.Mesh(new TH.SphereGeometry(.17,10,8),new TH.MeshStandardMaterial({color:i%2?'#e04a2a':'#f2b23a',emissive:i%2?'#e04a2a':'#f2b23a',emissiveIntensity:night?1.6:.35}));l.scale.y=1.25;l.position.set(x,y,z);g.add(l);}};
+  if(has('laternen')||lvl>=3){const chain=(a,b,n)=>{const rope=new TH.CatmullRomCurve3([new TH.Vector3(...a),new TH.Vector3((a[0]+b[0])/2,(a[1]+b[1])/2-.6,(a[2]+b[2])/2),new TH.Vector3(...b)]);g.add(new TH.Mesh(new TH.TubeGeometry(rope,12,.012,4),new TH.MeshStandardMaterial({color:'#2a2018'})));for(let i=1;i<n;i++){const t=i/n,pp=rope.getPoint(t);paperLantern(pp.x,pp.y-.3,pp.z,i%3===1?'#d8a030':'#c0281a',night);}};
     for(let z=40;z<=60;z+=5){const y=gh(0,z);[-2.3,2.3].forEach(sx=>{cyl(.06,3.6,beam,sx,gh(sx,z),z,6);W.solids.push([sx,z,.18]);});chain([-2.3,y+3.5,z],[2.3,y+3.5,z],6);}
     for(let i=0;i<8;i++){const a=i/8*6.28,b=(i+1)/8*6.28,y=gh(0,52)+3.8;chain([Math.cos(a)*6,y,52+Math.sin(a)*6],[Math.cos(b)*6,y,52+Math.sin(b)*6],4);cyl(.07,3.9,beam,Math.cos(a)*6,gh(Math.cos(a)*6,52+Math.sin(a)*6),52+Math.sin(a)*6,6);W.solids.push([Math.cos(a)*6,52+Math.sin(a)*6,.18]);}}
   // ---- Wassermühle
@@ -429,7 +435,8 @@ function nextStep(){const g=DW.flag('guide'),L=DW.todayList(),open_=L.filter(r=>
   if(nq===2)return{k:'Auftrag',t:`Bring ${q.who} die ${q.item}`,go:null};
   const v=DW.village();if(U.village&&v.ev&&!v.ok)return{k:'Das Dorf',t:`${v.ev.n} · hilf am Klostertor`,go:()=>goRoom('tor')};
   if(!L.length)return{k:'Heute',t:'Lege im Menü deine erste Routine an',go:()=>DW.openMenu()};
-  return{k:'Alles erledigt',t:U.village?'Besuche das Dorf oder ruh dich aus':'Ruh dich aus. Morgen geht es weiter.',ok:1,go:U.village?()=>goRoom('tor'):null};}
+  {const hh=new Date().getHours();if(hh>=20&&!DW.day('_sleep'))return{k:'Alles erledigt',t:'Zeit zu schlafen? Geh zu deinem Bett in der Zelle.',ok:1,go:()=>goRoom('zelle')};}
+  return{k:'Alles erledigt',t:'Spontan trainiert? Tippe hier für eine freie Einheit.',ok:1,go:()=>freeDlg()};}
 function toMeister(){if(!W||!W.npc)return;const p=W.npc.position;W.av.position.set(p.x+Math.sin(W.npc.rotation.y)*1.4,p.y,p.z+Math.cos(W.npc.rotation.y)*1.4);W.av.rotation.y=W.npc.rotation.y+Math.PI;W.yaw=W.av.rotation.y+Math.PI;setTimeout(()=>W&&talk(5),400);}
 function questUpdate(){if(!W||W.ch)return;const now=performance.now();if(W._qT&&now-W._qT<900)return;W._qT=now;
   if(DW.flag('guide')===1&&DW.doneToday().done>0){DW.flag('guide',2);msg('Gut! Du hast Chi verdient. Sprich jetzt mit Meister Shen.');}
@@ -533,7 +540,7 @@ function addBench(x,z,ry,y,M){const g=new TH.Group();g.position.set(x,y,z);g.rot
   W.solids.push([x,z,.55]);const fx=Math.sin(ry),fz=Math.cos(ry);W.inter.push({x:x+fx*.9,z:z+fz*.9,r:1.3,label:'Bank',btn:'Hinsetzen',act:()=>sitDown(x,z,ry,y)});}
 function sitDown(x,z,ry,y){if(!W||!W.av)return;endTalk();const av=W.av;av.position.set(x+Math.sin(ry)*.08,y+.42,z+Math.cos(ry)*.08);av.rotation.y=ry;W.yaw=ry+Math.PI;
   W.sit={x,z,ry,y:y+.42,t:0,next:5+Math.random()*7,vis:null,done:false};msg('Du setzt dich und atmest durch. Bewege dich, um aufzustehen.');}
-function standUp(){if(!W.sit)return;const S=W.sit;if(S.vis&&S.vis.o){S.vis.leave=1;}W.sit=null;}
+function standUp(){if(!W.sit)return;const S=W.sit;if(S.vis&&S.vis.o){const o=S.vis.o;setTimeout(()=>{if(W&&o.parent)o.parent.remove(o);},300);}W.sit=null;if(W.av){const fx=W.av.position.x+Math.sin(S.ry)*1.0,fz=W.av.position.z+Math.cos(S.ry)*1.0;W.av.position.x=fx;W.av.position.z=fz;}}
 function sitUpdate(dt){const S=W.sit;if(!S)return;S.t+=dt;if(W.av){W.av.position.y=S.y;}
   if(!S.vis&&!S.done&&S.t>S.next){S.done=true;const first=!DW.day('_benchv');if(first||Math.random()<.55){spawnVisitor(S);}else{msg('Niemand kommt vorbei. Nur der Wind. Auch das ist gut.');}}
   const V=S.vis;if(V&&V.o){V.mx.update(dt);const o=V.o,tx=S.x+Math.sin(S.ry)*1.5,tz=S.z+Math.cos(S.ry)*1.5,dx=tx-o.position.x,dz=tz-o.position.z,d=Math.hypot(dx,dz);
@@ -546,6 +553,22 @@ function tipDialog(S,V){const T=V.tip;DW.day('_benchv',1);const bye=()=>{endTalk
   if(T.t){const ok=DW.vact('_bench',1,'Rast auf der Bank');dlgK(T.w+' setzt sich kurz zu dir',T.t+(ok?'\n\n+1 Ruhe':''),[['Danke für den Tipp',bye,1]]);return;}
   dlgK(T.w+' bleibt stehen',T.q+'\n\nEr lächelt: «Na, weisst du es?»',T.o.map((o,i)=>[o,()=>{if(i===T.a){const ok=DW.vact('_riddle',2,'Rätsel gelöst');dlgK(T.w,'«Richtig!»\n\n'+T.y+(ok?'\n\n+2 Weisheit':''),[['Schön',bye,1]]);DW.bell(.7);}else dlgK(T.w,'«Knapp daneben.»\n\n'+T.y,[['Ach so',bye,1]]);}]));}
 function visitorsUpdate(dt){if(!W.sit)return;}
+
+
+/* ---------- Schlafen, Befinden, freie Einheit ---------- */
+function fade(txt,cb){const f=$('#wFade');if(!f){cb&&cb();return;}f.textContent=txt||'';f.style.pointerEvents='auto';f.style.opacity='1';setTimeout(()=>{cb&&cb();setTimeout(()=>{f.style.opacity='0';f.style.pointerEvents='none';},900);},2200);}
+function sleepFlow(){endTalk();const go=()=>{const rid=DW.sleep();fade('Gute Nacht …',()=>{if(rid){try{DW.doRitual(rid);}catch(e){}}const ok=DW.vact('_sleepb',1,'Früh zur Ruhe');W.tod&&(W.scene.fog.density*=1);msg(rid?'Schlafroutine eingetragen. Gute Nacht.':'Gute Nacht. Morgen geht der Weg weiter.'+(ok?' +1 Ruhe':''));});};
+  if(!DW.day('_eve')&&new Date().getHours()>=18)dlgK('Schlafzelle','Bevor du schläfst: Willst du noch kurz auf den Tag zurückblicken?',[['Abendritual zuerst',()=>{endTalk();evening();},1],['Direkt schlafen',go]]);else go();}
+const MOODS=[['Voller Energie','energie'],['Gut','gut'],['Müde','muede'],['Gestresst','stress'],['Nicht gut / krank','krank']];
+function moodAsk(cb){dlgK('Meister Shen','Bevor wir beginnen: Wie geht es dir heute? Sei ehrlich, hier gibt es keine falsche Antwort.',MOODS.map(([n,k])=>[n,()=>{DW.mood(k);moodReply(k,cb);}]));}
+function moodReply(k,cb){const next=()=>{endTalk();cb&&cb();};
+  if(k==='energie')dlgK('Meister Shen','Dann nutze die Kraft. Kleiner Zusatz für heute, wenn du magst: eine freie Einheit, laufen, Yoga, egal was. Trag sie danach ein.',[['Mach ich',next,1]]);
+  else if(k==='gut')dlgK('Meister Shen','Schön. Ein guter Tag ist ein guter Tag. Geh ihn Schritt für Schritt.',[['Danke',next,1]]);
+  else if(k==='muede')dlgK('Meister Shen','Müdigkeit ist eine Botschaft, kein Versagen. Mach heute nur das Nötigste, und mach es ruhig. Fünf Minuten in der Halle können mehr bringen als eine Stunde Kampf.',[['Zur Halle',()=>{endTalk();goRoom('halle');cb&&setTimeout(cb,600);}],['Verstanden',next,1]]);
+  else if(k==='stress')dlgK('Meister Shen','Wenn der Geist rast, hilft der Atem. Drei tiefe Atemzüge, bevor du irgendetwas tust. Und dann eins nach dem anderen.',[['Kurz meditieren',()=>{endTalk();medChoose();}],['Danke',next,1]]);
+  else{const canRest=!DW.restThisWeek||true;dlgK('Meister Shen','Dann ist heute ein Tag für Erholung. Dein Körper hat Vorrang. Ich schlage dir einen Ruhetag vor: Er zählt nicht als verpasst, und der Schatten kommt nicht.',[['Ruhetag nehmen',()=>{const ok=DW.restDay();endTalk();msg(ok?'Ruhetag. Gute Besserung.':'Ein Ruhetag ist diese Woche schon genommen, oder du hast heute schon etwas eingetragen. Mach nur, was gut tut.');if(ok)setTimeout(()=>{if(W){close();open({});}},1500);else cb&&cb();},1],['Ich versuche es trotzdem',next]]);}}
+function freeDlg(){const F=DW.FREE;dlgK('Freie Einheit','Spontan trainiert oder etwas für dich getan? Was war es?',F.map(([n,c,e])=>[e+' '+n,()=>freeDur(n)]).concat([['Abbrechen',()=>endTalk()]]));}
+function freeDur(n){dlgK('Freie Einheit · '+n,'Wie lange ungefähr?',[15,30,45,60,90].map(m=>[m+' Min',()=>{const r=DW.freeLog(n,m);endTalk();msg(r.cap?`${n} eingetragen. Das Tageslimit für freie Einheiten ist erreicht.`:`${n} · ${m} Min eingetragen · +${r.chi} ${(DW.pts().find(p=>p.k===r.cat)||{}).n||''}`);DW.bell(.8);ptsHud();}]).concat([['Zurück',()=>freeDlg()]]));}
 
 /* ---------- Begehbare Dorfhäuser ---------- */
 const VLORE=['Vor hundert Jahren stand das Kloster leer. Ein einziger Mönch fegte jeden Morgen den Hof – bis andere kamen, um zu sehen, warum.','Der Bach heisst «Stiller Bach», weil er im Winter unter dem Eis weiterfliesst. Man hört ihn nur, wenn man still ist.','Die Drachen an der Treppe wurden von Steinmetzen aus dem Tal gehauen. Für jede Stufe ein Tag Arbeit.','Wer im Dorf geboren wird, pflanzt einen Kirschbaum. Die ältesten stehen schon lange nicht mehr – aber die Wurzeln sind noch da.','Mei sagt: «Ein Dorf ist wie ein Körper. Wenn eine Hand hilft, wird das ganze Dorf stärker.»','Früher kamen die Mönche jeden Markttag herunter. Dann kam der lange Winter, und niemand stieg mehr hinab. Bis jetzt.'];
@@ -736,6 +759,23 @@ function vUpdate2(dt,t){const U=W.vU;if(!U)return;
 function vBuy(cost,key,chi,why,txt){endTalk();if(!DW.spend||!DW.spend(cost,why)){msg('Dafür fehlt dir Kupfer. Verdiene es mit deinen Routinen.');return;}const ok=DW.vact&&DW.vact(key,chi,why);msg(txt+(ok?` · +${chi} Chi`:''));DW.bell(.5);}
 function vWork(key,chi,coins,why,txt){endTalk();const ok=DW.vact&&DW.vact(key,chi,why);if(!ok){msg('Für heute hast du genug geholfen. Komm morgen wieder.');return;}DW.addCoins(coins,why);msg(txt+` · +${chi} Chi`);}
 
+
+/* ---------- Dorf-Optik: Pflaster, Papierlaternen, Gras ---------- */
+function cobbleTex(){if(W._cob)return W._cob;const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),R=rng(5);x.fillStyle='#4a443c';x.fillRect(0,0,256,256);
+  for(let r=0;r<11;r++)for(let k=0;k<9;k++){const cx=k*29+(r%2?14:0)+(R()-.5)*6,cy=r*24+(R()-.5)*5,w=12+R()*4,h=10+R()*3,g=110+R()*50|0;x.fillStyle=`rgb(${g+8},${g+2},${g-8})`;x.beginPath();x.ellipse(cx,cy,w,h,R()*.4,0,6.28);x.fill();
+    x.fillStyle='rgba(255,255,255,.08)';x.beginPath();x.ellipse(cx-3,cy-3,w*.6,h*.5,0,0,6.28);x.fill();if(R()<.25){x.fillStyle='rgba(70,100,40,.45)';x.fillRect(cx+w*.6,cy-2,4,5);}}
+  const t=new TH.CanvasTexture(c);t.wrapS=t.wrapT=TH.RepeatWrapping;t.anisotropy=4;t.encoding=TH.sRGBEncoding;return W._cob=t;}
+function worldUV(geo,s){const p=geo.attributes.position,uv=geo.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,p.getX(i)/s,p.getZ(i)/s);uv.needsUpdate=true;}
+function paperLanternGeo(){if(W._plg)return W._plg;const pts=[];for(let i=0;i<=12;i++){const t=i/12,y=-.22+t*.44,r=.04+Math.sin(t*Math.PI)*.17*(1+(i%2?-.04:.04));pts.push(new TH.Vector2(Math.max(.03,r),y));}const g=new TH.LatheGeometry(pts,14);return W._plg=g;}
+function paperLantern(x,y,z,col,night,par){const g=new TH.Group();g.position.set(x,y,z);const m=new TH.Mesh(paperLanternGeo(),new TH.MeshStandardMaterial({color:col||'#a8180c',emissive:col||'#ff3010',emissiveIntensity:night?1.3:.12,roughness:.8,side:TH.DoubleSide,toneMapped:false}));g.add(m);
+  const cap=new TH.Mesh(new TH.CylinderGeometry(.06,.07,.05,10),new TH.MeshStandardMaterial({color:'#1a1410',roughness:.6}));cap.position.y=.24;g.add(cap);const cap2=cap.clone();cap2.position.y=-.24;g.add(cap2);
+  const ts=new TH.Mesh(new TH.CylinderGeometry(.012,.03,.2,6),new TH.MeshStandardMaterial({color:'#e8b030'}));ts.position.y=-.36;g.add(ts);(par||W.root).add(g);return g;}
+function villageGrass(){if(!W.grassT||!W.grassT.length)return;const g1=new TH.PlaneGeometry(.9,.675);g1.translate(0,.3,0);const g2=g1.clone();g2.rotateY(Math.PI/2);const geo=mergeGeos([g1,g2]);const r=rng(71),m=new TH.Matrix4(),q=new TH.Quaternion(),sc=new TH.Vector3(),p=new TH.Vector3(),Y=new TH.Vector3(0,1,0);
+  const tint=new TH.Color('#9ab07a').multiplyScalar(W.tod.imp||1);const mat=new TH.MeshBasicMaterial({map:W.grassT[0],alphaTest:.5,side:TH.DoubleSide,color:tint,toneMapped:false});const N=900,inst=new TH.InstancedMesh(geo,mat,N);let c=0;
+  for(let i=0;i<N*5&&c<N;i++){const x=(r()-.5)*58,z=38.5+r()*40;if(Math.abs(x)<2&&z<62.5)continue;if(Math.abs(z-52)<1.7&&Math.abs(x)<25)continue;if(Math.hypot(x,z-52)<7.4)continue;if(z>62.2&&z<65.8)continue;if(z>66.5&&z<77&&Math.abs(x)<24.5&&Math.abs(x)>1.5)continue;
+    if((W.vbox||[]).some(b=>Math.abs(x-b[0])<b[2]+.3&&Math.abs(z-b[1])<b[3]+.3))continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<s[2]+.2))continue;if(W.vDeck&&x>W.vDeck.x0-.5&&x<W.vDeck.x1+.5&&z>W.vDeck.z0-.5)continue;if(stairDist(x,z)<1.5)continue;
+    const s=.7+r()*.9;p.set(x,groundH(x,z)-.03,z);q.setFromAxisAngle(Y,r()*6.28);sc.set(s,s*(.8+r()*.5),s);m.compose(p,q,sc);inst.setMatrixAt(c++,m);}inst.count=c;W.root.add(inst);}
+
 /* ---------- Drachentreppe: Kloster ↔ Dorf ---------- */
 let _SD=null;
 function stairDef(){if(_SD)return _SD;if(W&&W.pilgrim)return null;
@@ -887,6 +927,8 @@ function roomDialog(id){
   if(r.open&&DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
   r.arch.forEach(x=>{if(r.open&&DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
   if(id==='zelle'&&new Date().getHours()>=18&&!DW.day('_eve'))btns.unshift(['Abendritual',()=>{endTalk();evening();},1]);
+  {const hh=new Date().getHours();if(id==='zelle'&&(hh>=19||hh<4))btns.unshift(['Schlafen gehen',()=>sleepFlow(),!DW.todayList().some(x=>!x.done)]);}
+  if(id==='hof'||id==='tor')btns.push(['Freie Einheit eintragen',()=>{endTalk();freeDlg();}]);
   if(id==='zelle')btns.push(['Siegel',()=>{endTalk();sealsUI();}]);
   if(id==='zelle')btns.push(['Tagebuch',()=>{endTalk();journalUI();}]);
   if(id==='halle')btns.unshift(['Meditieren',()=>{endTalk();medChoose();},1]);
@@ -907,7 +949,7 @@ function refreshRoom(){if(W){ptsHud();dayGlow(false);beacon();sealCheck();}}
 /* ---------- Tagesbeginn: interaktiv ---------- */
 const SPRUCH=['Wer jeden Tag einen Schritt geht, kommt weiter als der, der einmal rennt.','Die Disziplin ist eine Brücke zwischen Zielen und Erfolg. Geh hinüber.','Der Bambus beugt sich im Sturm und bricht nicht.','Ein Krug füllt sich Tropfen für Tropfen.','Fege den Hof, auch wenn morgen wieder Blätter fallen.','Wer sich selbst besiegt, ist stärker als der, der tausend besiegt.','Der Weg ist das Ziel. Aber du musst ihn gehen.','Stille ist kein leerer Raum. Sie ist voller Antworten.','Am Morgen entscheidet sich der Tag.','Das Wasser ist weich und höhlt doch den Stein.','Wenn du isst, iss. Wenn du gehst, geh.','Kleine Taten, oft getan, verändern alles.','Der Berg wird nicht kleiner. Du wirst stärker.','Heute ist ein guter Tag, um anzufangen. Wie gestern und morgen auch.','Ein ordentlicher Raum ist ein ruhiger Geist.','Wer nicht übt, vergisst. Wer übt, wird.','Atme. Dann geh weiter.','Auch der Meister war einmal Novize.','Der Fluss kommt ans Meer, weil er nicht aufhört zu fliessen.','Ehrlichkeit mit dir selbst ist der erste Schritt.','Die Kirschblüte blüht nicht schneller, wenn man an ihr zieht.','Ein voller Becher kann nichts aufnehmen. Leere ihn.','Was du heute tust, wird morgen leicht.','Langsam ist gut. Stehen bleiben ist schade.','Der Weg von tausend Meilen beginnt unter deinen Füssen.','Beständigkeit schlägt Begeisterung.','Ein Tag ohne Übung ist ein Tag, den du nachholen musst.','Lerne vom Koi: Er schwimmt gegen den Strom.','Wer früh aufsteht, hat den Hof für sich.','Die Glocke klingt, weil sie hohl ist.'];
 function spruch(){const d=new Date(),i=(d.getFullYear()*366+d.getMonth()*31+d.getDate())%SPRUCH.length;return SPRUCH[i];}
-function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name(),h=new Date().getHours(),L=DW.todayList(),open_=L.filter(r=>!r.done),dn=L.length-open_.length;
+function briefing(first){if(!W||W.ch)return;if(first&&DW.flag('tut')&&!DW.mood()&&!W._moodAsked){W._moodAsked=1;moodAsk(()=>briefing(first));return;}DW.day('_brief',1);const n=DW.name(),h=new Date().getHours(),L=DW.todayList(),open_=L.filter(r=>!r.done),dn=L.length-open_.length;
   const hi=h<5?`Noch wach, ${n}?`:h<11?`Guten Morgen, ${n}.`:h<17?`Guten Tag, ${n}.`:h<22?`Guten Abend, ${n}.`:`Spät geworden, ${n}.`;
   let t;if(!L.length)t=`${hi} Heute steht keine feste Routine an. Ein guter Tag, um dem Dorf zu helfen oder bei Meister Shen zu lernen.`;
   else if(!open_.length)t=`${hi} Alles erfüllt für heute. ${L.length} von ${L.length}. Das Kloster leuchtet für dich.`;
@@ -921,6 +963,7 @@ function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name()
   if(ri.eligible&&!ri.max)btns.push(['Zu Meister Shen',()=>{endTalk();if(W.npc){const p=W.npc.position;W.av.position.set(p.x+Math.sin(W.npc.rotation.y)*1.4,p.y,p.z+Math.cos(W.npc.rotation.y)*1.4);W.av.rotation.y=W.npc.rotation.y+Math.PI;W.yaw=W.av.rotation.y+Math.PI;}setTimeout(()=>W&&talk(5),400);},!nx]);
   if(v.ev&&!v.ok)btns.push(['Zum Dorf',()=>{endTalk();goRoom('tor');}]);
   if(h>=18&&!DW.day('_eve'))btns.unshift(['Abendritual in der Zelle',()=>{endTalk();goRoom('zelle');setTimeout(()=>{if(W){endTalk();evening();}},700);},!nx]);
+  btns.push(['Freie Einheit eintragen',()=>{endTalk();freeDlg();}]);
   btns.push(['Wochenrückblick',()=>{endTalk();weekReview();}]);
   btns.push(['Übersicht im Menü',()=>{endTalk();DW.openMenu('missions');}]);
   btns.push([first?'Ich schaue mich erst um':'Danke',()=>{endTalk();beacon();}]);
@@ -1139,10 +1182,10 @@ function msg(t){const m=$('#wMsg');m.textContent=t;m.classList.add('show');clear
 /* ---------- Bewegung & Kollision ---------- */
 function blocked(x,z,px,pz){
   if(W.npcs&&px!=null){for(const N of W.npcs){const o=N.o.position,dn=Math.hypot(x-o.x,z-o.z);if(dn<.45&&dn<Math.hypot(px-o.x,pz-o.z))return true;}}
-  if(!W.pilgrim&&stairY(x,z,1)!=null){if(!W.gateOpen&&z>25.1&&z<25.9)return true;if(!W.vOpen&&z>28.2&&z<36){if(!W._fogMsg||performance.now()-W._fogMsg>4000){W._fogMsg=performance.now();msg('Nebel liegt auf der Treppe. Ab Tag 3 öffnet sich der Weg ins Dorf.');}return true;}for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}return false;}
-  if(!W.pilgrim&&z>34){for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}return vBlocked(x,z);}
+  if(!W.pilgrim&&stairY(x,z,1)!=null){if(!W.gateOpen&&z>25.1&&z<25.9)return true;if(!W.vOpen&&z>28.2&&z<36){if(!W._fogMsg||performance.now()-W._fogMsg>4000){W._fogMsg=performance.now();msg('Nebel liegt auf der Treppe. Ab Tag 3 öffnet sich der Weg ins Dorf.');}return true;}for(const s of W.solids){const ds=Math.hypot(x-s[0],z-s[1]);if(ds<s[2]&&(px==null||ds<=Math.hypot(px-s[0],pz-s[1])))return true;}return false;}
+  if(!W.pilgrim&&z>34){for(const s of W.solids){const ds=Math.hypot(x-s[0],z-s[1]);if(ds<s[2]&&(px==null||ds<=Math.hypot(px-s[0],pz-s[1])))return true;}return vBlocked(x,z);}
   if(Math.hypot(x,z)>40)return true;if(!W.pilgrim&&z>25)return true;
-  for(const s of W.solids){if(Math.hypot(x-s[0],z-s[1])<s[2])return true;}
+  for(const s of W.solids){const ds=Math.hypot(x-s[0],z-s[1]);if(ds<s[2]&&(px==null||ds<=Math.hypot(px-s[0],pz-s[1])))return true;}
   if(W.edgeZ&&z>W.edgeZ)return true;if(W.ch===2&&Math.hypot(x,z+12)<6.9)return true;if(W.ch===2&&Math.abs(x)<1.1&&z>-5&&z<14&&!(W.bridge&&z>W.bridge.z0&&z<W.bridge.z1))return true;
   if(W.ch===0&&W.platform){const inP=Math.abs(x)<5.5&&Math.abs(z)<4,wasP=Math.abs(px)<5.5&&Math.abs(pz)<4,steps=Math.abs(x)<2.1&&z>=3.6&&z<5.6;if(inP&&!wasP&&!(Math.abs(px)<2.1&&pz>=3.6))return true;if(!inP&&wasP&&!steps)return true;}
   if(W.ch===0&&W.walls){if(Math.abs(x)<4.3&&z<-2.4&&z>-2.85)return true;if(Math.abs(Math.abs(x)-4.1)<.2&&z>-2.6&&z<2.6)return true;}
@@ -1211,7 +1254,7 @@ function loop(){
   if(W.glint){const dd=Math.hypot(av.position.x-W.scrollSpot[0],av.position.z-W.scrollSpot[1]);W.glint.material.opacity=dd<5?Math.max(0,Math.sin(t*3))*.9*(1-dd/5):0;W.glint.scale.setScalar(1+Math.sin(t*6)*.4);}
   if(W.pts&&!RM){const a=W.pts.geometry.attributes.position.array;for(let i=0;i<a.length;i+=3){a[i+1]-=dt*.9;a[i]+=Math.sin(t+i)*.01;if(a[i+1]<0){a[i+1]=14;a[i]=av.position.x+(Math.random()-.5)*60;a[i+2]=av.position.z+(Math.random()-.5)*60;}}W.pts.geometry.attributes.position.needsUpdate=true;}
   // Interaktion
-  let near=null;for(const it of W.inter){if(!it.hide&&Math.hypot(av.position.x-it.x,av.position.z-it.z)<it.r){if(it.auto){it.act();W.inter=W.inter.filter(x=>x!==it);break;}near=it;}}
+  let near=null;if(!W.sit)for(const it of W.inter){if(!it.hide&&Math.hypot(av.position.x-it.x,av.position.z-it.z)<it.r){if(it.auto){it.act();W.inter=W.inter.filter(x=>x!==it);break;}near=it;}}
   if(W.talking)near=W.near;if(near!==W.near){W.near=near;const p=$('#wPrompt');if(near){$('#wPromptT').textContent=near.label;$('#wPromptB').textContent=near.btn+(FINE?' · E':'');p.hidden=false;}else p.hidden=true;}
   $('#wEn').textContent=DW.energy();
   if(W.npcMix){W.npcMix.update(dt);const o=W.npc,dx=av.position.x-o.position.x,dz=av.position.z-o.position.z;if(Math.hypot(dx,dz)<5){let d=Math.atan2(dx,dz)-o.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;o.rotation.y+=d*Math.min(1,dt*3);}}
@@ -1238,7 +1281,7 @@ function open(opts){opts=opts||{};
   const ng=(x,z,m)=>W.noGo.some(n=>Math.hypot(x-n[0],z-n[1])<n[2]+(m||0))||(W.edgeZ&&z>W.edgeZ-3);
   const r=rng(21);let c=0,tries=0;while(c<(ch===3?0:ch===1?6:14)&&tries<500){tries++;const a=r()*6.28,d=11+r()*20,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ng(x,z,3))continue;if(Math.abs(x)<3.2&&z>3)continue;if(Math.hypot(x-9,z-7)<8)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<4))continue;maple(x,z,.8+r()*.5,r()*6);c++;}
   c=0;tries=0;while(c<(ch===3?0:30)&&tries<800){tries++;const a=r()*6.28,d=24+r()*24,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ng(x,z,3))continue;if(Math.abs(x)<4&&z>3)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<3.5))continue;pine(x,z,.8+r()*.5,r()*6);c++;}
-  if(ch!==3)grassField();
+  if(ch!==3){grassField();if(!ch)try{villageGrass();}catch(e){}}
   {let room=opts.room;const h=new Date().getHours();if(!room&&h>=4&&h<12){const z=DW.rooms().find(r=>r.id==='zelle');if(z&&z.rit.some(x=>x.type==='window'&&x.due&&!x.done))room='zelle';}
    if(room){W.autoRoom=room;W.spawnRoom=room;}}
   if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];if(!ch&&id==='zelle'&&!DW.flag('tut')){const P2=RPOS.zelle;W.meisterPos=[P2.c[0]+P2.f[0]*1.5,.35,P2.c[1]+1.3];W.spawnAt[3]=W.meisterPos[0]-sp[0];W.spawnAt[4]=W.meisterPos[2]-sp[2];W.tutZelle=1;}}applyTod();avatar();interactables(5);meister(5);if(W.tutZelle&&W.npc){W.npc.rotation.y=Math.atan2(W.spawnAt[0]-W.meisterPos[0],W.spawnAt[2]-W.meisterPos[2]);}if(!ch){shadowFoe();sealedGate();rivalNpc();rareMoments();addBench(-6.6,16.8,Math.PI/2,groundH(-6.6,16.8));addBench(6.6,16.8,-Math.PI/2,groundH(6.6,16.8));}controls();ptsHud();

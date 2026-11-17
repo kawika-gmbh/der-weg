@@ -472,7 +472,7 @@ body.menuOver #world .w-top,body.menuOver #world .w-pts,body.menuOver #world .w-
 body.menuOver #hud::before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(8,8,10,.35),rgba(8,8,10,.7));pointer-events:none;z-index:-1}
 .w-hint{bottom:calc(env(safe-area-inset-bottom) + 96px)!important;white-space:normal!important;max-width:calc(100% - 32px);text-align:center;line-height:1.4}
 .w-prompt{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(14,15,18,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--stroke);padding:8px 8px 8px 16px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap;animation:spIn .3s}
-.w-msg{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translate(-50%,-10px);opacity:0;background:rgba(14,15,18,.82);padding:10px 16px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.w-msg{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 160px);transform:translate(-50%,-10px);opacity:0;background:rgba(14,15,18,.82);padding:10px 16px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
 .w-msg.show{opacity:1;transform:translate(-50%,0)}
 .w-float{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font-weight:800;font-size:20px;letter-spacing:.02em;pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,.6);white-space:nowrap;z-index:3}
 .w-steps{position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,8,10,.55);z-index:6}.w-steps[hidden]{display:none}.w-steps>div{background:#141518;border:1px solid var(--stroke);border-radius:22px;padding:20px;width:min(340px,88vw)}.w-steps h3{margin:0 0 4px;font-size:18px}.w-steps p{margin:0 0 14px;color:rgba(236,235,230,.65);font-size:13.5px;line-height:1.45}.w-steps input{width:100%;font:600 28px 'IBM Plex Mono',ui-monospace,monospace;background:#0c0d0f;color:#ecebe6;border:1px solid var(--stroke);border-radius:14px;padding:12px 14px;margin-bottom:12px}.w-steps .row{display:flex;gap:8px}.w-steps button{flex:1;padding:13px;border-radius:14px;font-weight:700}
@@ -693,6 +693,7 @@ body.shadowed .kbw{filter:saturate(.55) brightness(.78) contrast(1.05)}
   <div class="w-hint" id="wHint">Links ziehen zum Laufen · rechts wischen zum Umsehen</div>
   <div id="wPrompt" class="w-prompt" hidden><span id="wPromptT"></span><button class="act" id="wPromptB"></button></div>
   <div id="wMsg" class="w-msg"></div>
+  <div id="wFade" style="position:absolute;inset:0;background:#05060a;opacity:0;pointer-events:none;transition:opacity 1.6s ease;display:flex;align-items:center;justify-content:center;color:#e8e2d0;font-size:20px;font-weight:600;letter-spacing:.04em"></div>
   <div id="wDlg" class="w-dlg" hidden><div class="w-dlg-h"><span class="eyebrow" id="wDlgK">Meister Shen</span><button class="icon" id="wDlgX" aria-label="Gespräch beenden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><p id="wDlgT"></p><div class="w-dlg-b" id="wDlgB"></div></div>
 </div>
 <div id="game" hidden>
@@ -791,7 +792,7 @@ function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
 const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
 const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
-const APPV='0.30 Beta · 17.11.2026';
+const APPV='0.31 Beta · 17.11.2026';
 const ERRLOG=[];window.addEventListener('error',e=>{ERRLOG.push((e.message||'')+' @'+((e.filename||'').split('/').pop())+':'+(e.lineno||''));if(ERRLOG.length>6)ERRLOG.shift();});window.addEventListener('unhandledrejection',e=>{ERRLOG.push('P '+String(e.reason&&e.reason.message||e.reason).slice(0,120));if(ERRLOG.length>6)ERRLOG.shift();});
 const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:7,pct:.7,win:7,slots:3},{n:'Bruder · Schwester',days:14,pct:.75,win:10,slots:4},{n:'Hüter',days:21,pct:.8,win:14,slots:5},{n:'Lehrer',days:30,pct:.85,win:21,slots:6},{n:'Meister',days:45,pct:.85,win:30,slots:7},{n:'Grossmeister',days:75,pct:.9,win:45,slots:8}];
 const TRIALS={med10:'Meditiere einmal mindestens 10 Minuten in der Halle',tc:'Lauf die ganze Tai-Chi-Form mit Bruder Tao im Hof',perf3:'Schaffe 3 perfekte Tage in Folge',perf5:'Schaffe 5 perfekte Tage in Folge',perf7:'Schaffe 7 perfekte Tage in Folge'};
@@ -989,7 +990,7 @@ function wakeFactor(r){const[h,m]=r.cfg.start.split(':').map(Number);const now=n
 function freqLabel(r){const f=freqOf(r);if(f.mode==='days')return (f.days||[]).slice().sort().map(i=>DOW[i]).join(' ');if(f.mode==='week')return f.n+'× pro Woche';return 'Täglich';}
 function restThisWeek(){const mk=mondayKey(new Date());return Object.keys(S.days).some(k=>k>=mk&&S.days[k]._rest);}
 function recDone(r,rec){return !!(rec&&rec.d);}
-const NOCHI={_benchv:1,_ratd:1,_bx:1,_bxMsg:1,_nq:1,_qs:1,_qa:1,_qb:1,_qb2:1,_wk:1,_qp:1,_qpp:1,_qlv:1};function dayChi(d){let c=0;if(!d)return 0;for(const k in d){if(k==='_n'||k==='_steps'||k==='_brief'||k==='_eve'||NOCHI[k])continue;const v=d[k];c+=(typeof v==='number')?v:(v&&v.c||0);}return c;}
+const NOCHI={_mood:1,_sleep:1,_benchv:1,_ratd:1,_bx:1,_bxMsg:1,_nq:1,_qs:1,_qa:1,_qb:1,_qb2:1,_wk:1,_qp:1,_qpp:1,_qlv:1};function dayChi(d){let c=0;if(!d)return 0;for(const k in d){if(k==='_n'||k==='_steps'||k==='_brief'||k==='_eve'||NOCHI[k])continue;const v=d[k];c+=(typeof v==='number')?v:(v&&v.c||0);}return c;}
 function dayDone(d){if(!d)return 0;let n=0;for(const k in d){if(k[0]!=='_'&&d[k]&&d[k].d)n++;}return n;}
 function dayFrac(d){if(!d)return 0;if(d._rest||d._n===0)return 1;const n=d._n||S.rituals.length;return Math.min(1,dayDone(d)/n);}
 function totalChi(){return Object.values(S.days).reduce((a,d)=>a+dayChi(d),0);}
@@ -1579,6 +1580,12 @@ window.DW={
   todayList:()=>{const d=today();return dueList().map(r=>{const rm=r.room||roomOf(r);return{id:r.id,name:r.name,room:rm,roomN:ROOMS[rm].n,type:r.type,cfg:r.cfg,done:!!recDone(r,d[r.id])};});},
   portrait:()=>portraitURL,doneToday:()=>{const d=today(),l=dueList();return{done:l.filter(r=>recDone(r,d[r.id])).length,n:l.length};},
   openMenu:t=>openMenu(t),closeMenu:()=>closeMenu(),
+  FREE:[['Joggen','kraft','🏃'],['Yoga','ruhe','🧘'],['Schwimmen','kraft','🏊'],['Velo','kraft','🚴'],['Wandern','schritte','🥾'],['Krafttraining','kraft','💪'],['Dehnen','ruhe','🤸'],['Tanzen','kraft','💃'],['Ballsport','kraft','⚽'],['Meditation','ruhe','🪷']],
+  freeLog(kind,min){const F=this.FREE.find(f=>f[0]===kind)||[kind,'kraft'];const d=today();const room=Math.max(0,40-(d._fx||0));const chi=Math.min(room,Math.round(Math.max(5,Math.min(180,+min||0))*.8));d._fl=d._fl||[];d._fl.push({k:F[0],m:Math.round(+min||0)});if(chi>0){d._fx=(d._fx||0)+chi;addPts(F[1],chi);}stat('free');save();renderAll();return{chi,cat:F[1],cap:room<=0};},
+  mood(k){const d=today();if(k!==undefined){d._mood=k;save();}return d._mood;},
+  moodWeek(){const mk=mondayKey(new Date());return Object.keys(S.days).filter(k=>k>=mk).sort().map(k=>S.days[k]._mood).filter(Boolean);},
+  restDay(){if(restThisWeek())return false;const d=today();if(Object.keys(d).some(k=>k[0]!=='_'&&d[k]&&d[k].v))return false;d._rest=true;d._n=0;save();renderAll();return true;},
+  sleep(){const d=today();d._sleep=new Date().toTimeString().slice(0,5);const r=dueList().find(x=>(x.room||roomOf(x))==='zelle'&&/schlaf|licht aus|bett|nachtruhe/i.test(x.name)&&!recDone(x,d[x.id]));save();return r?r.id:null;},
   unlocks(){const n=dayN(),T=!!S.test;return{day:n,village:T||n>=3||(S.village.done||0)>0||(S.rank||0)>=1,market:T||n>=5||(S.rank||0)>=1,extras:T||(S.rank||0)>=1};},
   flag(k,v){S.flags=S.flags||{};if(v!==undefined){S.flags[k]=v;save();}return S.flags[k];},
   rooms:()=>Object.entries(ROOMS).map(([id,R])=>{const d=today(),tk=dk(new Date());return{id,n:R.n,d:R.d,cat:R.cat,open:S.doors.includes(id),
@@ -1779,7 +1786,7 @@ function lessonIdx(){return (Math.max(1,dayN())-1+(S.cycle-1)*7)%LESSONS.length;
 function lessonToday(){return S.learn.log[dk(new Date())];}
 function weekLessons(){const mk=mondayKey(new Date());return Object.entries(S.learn.log).filter(([k])=>k>=mk).map(([k,v])=>v);}
 function practiceIdx(){return Math.floor((pk(mondayKey(new Date()))-pk(mondayKey(pk(S.cycleStart))))/(7*DAY))%PRACTICE.length;}
-const BCAT={_bench:'ruhe',_riddle:'weisheit',_rat:'weisheit',_fox:'weisheit',_ghost:'ruhe',_lore:'weisheit',_help:'nahrung',_herb:'ruhe',_teach:'weisheit',_tea:'ruhe',_cook:'nahrung',_shr:'weisheit',_work:'kraft',_fish:'ruhe',_t:'kraft',_m:'ruhe',_f:'kraft',_e:'ruhe',_l:'weisheit',_x:'weisheit',_p:'weisheit',_q:'ruhe',_g:'kraft',_s7:'ordnung',_ws:'weisheit'};
+const BCAT={_sleepb:'ruhe',_bench:'ruhe',_riddle:'weisheit',_rat:'weisheit',_fox:'weisheit',_ghost:'ruhe',_lore:'weisheit',_help:'nahrung',_herb:'ruhe',_teach:'weisheit',_tea:'ruhe',_cook:'nahrung',_shr:'weisheit',_work:'kraft',_fish:'ruhe',_t:'kraft',_m:'ruhe',_f:'kraft',_e:'ruhe',_l:'weisheit',_x:'weisheit',_p:'weisheit',_q:'ruhe',_g:'kraft',_s7:'ordnung',_ws:'weisheit'};
 const BONUSCAP=25;function addBonus(key,chi){const d=today();if(chi>0){const room=Math.max(0,BONUSCAP-(d._bx||0));if(chi>room){if(!d._bxMsg){d._bxMsg=1;setTimeout(()=>toast('Bonus-Chi für heute ausgeschöpft. Deine Routinen zählen weiter voll.'),1600);}chi=room;}d._bx=(d._bx||0)+chi;}d[key]=(d[key]||0)+chi;const c=BCAT[key];if(c&&chi>0){addPts(c,chi);window._lastBonus={cat:c,n:chi};}save();return chi;}
 function renderDojo(){
   const L=LESSONS[lessonIdx()],lt=lessonToday(),wk=mondayKey(new Date()),wl=weekLessons(),ex=S.learn.exams[wk],pr=PRACTICE[practiceIdx()],prDone=S.learn.practice[wk];
@@ -2081,6 +2088,11 @@ function start(data){
   buildWorld(true);requestAnimationFrame(fxLoop);
   window.addEventListener('load',()=>{if(window.MonkKit)MonkKit.load(()=>refreshPortrait());});
   window.addEventListener('pointermove',e=>{ptr.tx=(e.clientX/window.innerWidth-.5)*2;ptr.ty=(e.clientY/window.innerHeight-.5)*2;},{passive:true});window.addEventListener('resize',()=>{if(photoOn)fxSize();});
+  if(!fresh){try{const P=new URLSearchParams(location.search);const st=P.get('steps'),wk=P.get('workout'),mn=P.get('min');const out=[];
+    if(st){const add=DW.logSteps(+st);out.push(add?`${(+st).toLocaleString('de-CH')} Schritte übernommen`:'Schritte schon aktuell');}
+    if(wk&&mn){const map={laufen:'Joggen',running:'Joggen',joggen:'Joggen',run:'Joggen',yoga:'Yoga',schwimmen:'Schwimmen',swimming:'Schwimmen',radfahren:'Velo',cycling:'Velo',velo:'Velo',wandern:'Wandern',hiking:'Wandern',gehen:'Wandern',walking:'Wandern',krafttraining:'Krafttraining',strength:'Krafttraining',tanzen:'Tanzen',dance:'Tanzen'};const key=wk.toLowerCase().split(/[ ,]/)[0];const k=map[key]||Object.keys(map).map(x=>key.includes(x)?map[x]:null).find(Boolean)||'Krafttraining';
+      const lastK='hk_'+dk(new Date())+'_'+k+'_'+mn;if(!(S.flags||{})[lastK]){S.flags=S.flags||{};S.flags[lastK]=1;const r=DW.freeLog(k,+mn);out.push(`${k} ${mn} Min · +${r.chi} Chi`);}}
+    if(out.length){history.replaceState(null,'',location.pathname);setTimeout(()=>toast('Aus Health: '+out.join(' · ')),1500);}}catch(e){}}
   renderAll();
   if(fresh)openCreator(true);else{if(dayN()>365)setTimeout(()=>showYear(false),800);autoEnter();}
   setInterval(()=>{if(tab==='missions'&&!document.querySelector('#pane-missions form'))renderMissions();},30000);
