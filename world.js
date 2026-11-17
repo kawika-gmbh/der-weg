@@ -354,6 +354,7 @@ function roomDialog(id){
   r.rit.forEach(x=>{if(x.editable)btns.push(['Bearbeiten: '+x.name,()=>{endTalk();DW.editRitual(x.id);}]);});
   if(r.open&&DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
   r.arch.forEach(x=>{if(r.open&&DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
+  if(id==='zelle'&&new Date().getHours()>=18&&!DW.day('_eve'))btns.unshift(['Abendritual',()=>{endTalk();evening();},1]);
   if(id==='halle')btns.unshift(['Meditieren',()=>{endTalk();medChoose();},1]);
   if(id==='halle')btns.push(['Verneigen',()=>{endTalk();playOnce('Bow');DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
   if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
@@ -384,6 +385,7 @@ function briefing(first){if(!W||W.ch)return;DW.day('_brief',1);const n=DW.name()
   if(open_.length>1)btns.push(['Den Weg zeigen',()=>{endTalk();beacon(true);msg('Folge dem goldenen Licht.');}]);
   if(ri.eligible&&!ri.max)btns.push(['Zu Meister Shen',()=>{endTalk();if(W.npc){const p=W.npc.position;W.av.position.set(p.x+Math.sin(W.npc.rotation.y)*1.4,p.y,p.z+Math.cos(W.npc.rotation.y)*1.4);W.av.rotation.y=W.npc.rotation.y+Math.PI;W.yaw=W.av.rotation.y+Math.PI;}setTimeout(()=>W&&talk(5),400);},!nx]);
   if(v.ev&&!v.ok)btns.push(['Zum Dorf',()=>{endTalk();goRoom('tor');}]);
+  if(h>=18&&!DW.day('_eve'))btns.unshift(['Abendritual in der Zelle',()=>{endTalk();goRoom('zelle');setTimeout(()=>{if(W){endTalk();evening();}},700);},!nx]);
   btns.push(['Übersicht im Menü',()=>{endTalk();DW.openMenu('missions');}]);
   btns.push([first?'Ich schaue mich erst um':'Danke',()=>{endTalk();beacon();}]);
   dlgK(first?'Tagesbeginn':'Heute',t+extra+`\n\n«${spruch()}»`,btns);}
@@ -817,12 +819,23 @@ $('#gAgain').onclick=()=>{const c=G&&G.reward;finishG(true);startPoles();};
 function finishG(again){if(!G)return;cancelAnimationFrame(G.raf);g3dEnd();const chi=G.state==='end'?G.reward:0;G=null;$('#game').hidden=true;if(chi){DW.gameReward(chi,'Pflaumenblüten-Pfähle');if(W)msg('+'+chi+' Chi gutgeschrieben');}}
 window.addEventListener('resize',()=>{if(G)sizeG();});
 
+/* ---------- Training mit Bruder Tao ---------- */
+function trainForm(N){if(!W||!W.av||W.training)return;const o=N.o,av=W.av;const fx=o.position.x-1.3,fz=o.position.z+.2;av.position.set(fx,groundH(fx,fz),fz);av.rotation.y=o.rotation.y;W.training=1;
+  const cx=(o.position.x+fx)/2;W.camOv={p:new TH.Vector3(cx-2.2,1.9,o.position.z-3.4),t:new TH.Vector3(cx,1,o.position.z)};
+  if(N.A.Form){N.A.Form.reset();N.A.Form.play();}let reps=0;msg('Folge Bruder Tao. Drei Durchgänge.');
+  const one=()=>{if(!W||!W.training)return;reps++;if(N.A.Form)N.A.Form.reset();playOnce('Form',()=>{if(!W)return;if(reps<3){setTimeout(one,250);}else{W.training=0;W.camOv=null;const r=DW.trainDone();playOnce('Bow');N.bowT=2.4;msg(r.first?`Gut gemacht. +${r.chi} Chi und Kraft.`:'Gut gemacht. Die Belohnung gibt es einmal am Tag, die Übung bleibt dir.');if(r.first)checkin('kraft',r.chi);ptsHud();}});};one();}
+/* ---------- Abendritual ---------- */
+function evening(){const n=DW.name(),dt=DW.doneToday(),L=DW.todayList();const summ=!dt.n?'Heute standen keine festen Routinen an.':dt.done>=dt.n?`Du hast heute alles erfüllt. ${dt.n} von ${dt.n}.`:`${dt.done} von ${dt.n} Routinen erfüllt. ${L.filter(r=>!r.done).map(r=>r.name).join(', ')} blieb offen. Morgen ist ein neuer Tag.`;
+  const o=ovl('wEve',`<div><h3>Abendritual</h3><p>${summ}</p><p style="margin-top:10px">Wofür bist du heute dankbar?</p><textarea id="eveTx" rows="3" style="width:100%;background:#0c0d0f;color:#ecebe6;border:1px solid var(--stroke);border-radius:14px;padding:10px;font:inherit;margin-bottom:12px" placeholder="Ein Satz genügt."></textarea><div class="row"><button class="btn" data-x>Später</button><button class="btn primary" id="eveOk">Licht löschen</button></div></div>`);
+  o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};$('#eveTx').addEventListener('keydown',e=>e.stopPropagation());
+  $('#eveOk').onclick=()=>{const t=$('#eveTx').value.trim();o.hidden=true;const r=DW.eveningDone(t);const f=document.createElement('div');f.style.cssText='position:absolute;inset:0;background:#000;opacity:0;transition:opacity 1.6s;z-index:8;display:grid;place-items:center;color:#f2d48a;font-size:18px;letter-spacing:.04em';f.textContent='Gute Nacht, '+n+'.';$('#world').appendChild(f);requestAnimationFrame(()=>f.style.opacity='1');bowl(.25);
+    setTimeout(()=>{f.style.opacity='0';setTimeout(()=>f.remove(),1700);msg(r.first?`Der Tag ist abgeschlossen. +${r.chi} Chi und Ruhe.`:'Der Tag ist abgeschlossen.');if(r.first)checkin('ruhe',r.chi);ptsHud();},3200);};}
 /* ---------- Geführte Meditation ---------- */
 const MEDTXT={
  intro:['Setz dich bequem hin. Wenn du magst, schliess die Augen.','Wir beginnen mit dem Atem. Atme ein, wenn der Kreis grösser wird. Atme aus, wenn er kleiner wird.'],
  mid:['Spür, wie die Luft durch die Nase einströmt. Kühl beim Einatmen, warm beim Ausatmen.','Wenn Gedanken kommen, ist das in Ordnung. Bemerke sie, und kehr freundlich zum Atem zurück.','Lass die Schultern sinken. Lass den Kiefer locker.','Spür den Boden unter dir. Er trägt dich.','Mit jedem Ausatmen wirst du ein wenig ruhiger.','Höre auf die Geräusche um dich. Lass sie kommen und gehen.','Spür deinen Bauch, wie er sich hebt und senkt.','Du musst nichts tun. Nur atmen und da sein.','Bemerke, wie dein Herz schlägt. Ruhig und gleichmässig.','Wenn du abschweifst, beginne einfach von vorn. Einatmen. Ausatmen.'],
  end:['Langsam kommst du zurück. Beweg die Finger, die Zehen.','Nimm einen tiefen Atemzug. Und öffne die Augen, wenn du bereit bist.']};
-function say(t){try{if(!window.speechSynthesis||!DW.soundOn())return;const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';u.rate=.82;u.pitch=.9;u.volume=.95;const v=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));const pick=v.find(x=>/Anna|Markus|Helena|Google|Petra|Yannick/i.test(x.name))||v[0];if(pick)u.voice=pick;speechSynthesis.speak(u);}catch(e){}}
+const AUDK={};function say(t,key){if(key&&AUDK[key]!==false){const a=new Audio('audio/'+key+'.mp3');a.onerror=()=>{AUDK[key]=false;say(t);};a.play().then(()=>{AUDK[key]=true;}).catch(()=>{AUDK[key]=false;say(t);});return;}try{if(!window.speechSynthesis||!DW.soundOn())return;const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';u.rate=.82;u.pitch=.9;u.volume=.95;const v=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));const pick=v.find(x=>/Anna|Markus|Helena|Google|Petra|Yannick/i.test(x.name))||v[0];if(pick)u.voice=pick;speechSynthesis.speak(u);}catch(e){}}
 function bowl(vol){const ac=DW.ac();if(!ac)return;if(ac.state==='suspended')ac.resume();const t=ac.currentTime,out=ac.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(vol||.35,t+.02);out.gain.exponentialRampToValueAtTime(.0001,t+9);out.connect(ac.destination);
   [[220,1],[440*1.003,.5],[660*.998,.35],[1190,.18],[1760,.08]].forEach(([f,a],i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.value=a;const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=3+i*.7;lg.gain.value=a*.25;lfo.connect(lg);lg.connect(g.gain);o.connect(g);g.connect(out);o.start(t);lfo.start(t);o.stop(t+9.2);lfo.stop(t+9.2);});}
 function medChoose(){const o=ovl('wMed',`<div><h3>Meditation in der Halle</h3><p>Setz Kopfhörer auf und mach mit. Meister Shen führt dich mit Stimme und Atemkreis. Die erste Meditation des Tages bringt Chi und Ruhe.</p><div class="sl">${[3,5,10].map(m=>`<button class="btn" data-m="${m}">${m} Minuten <small>· ${m*3} Chi</small></button>`).join('')}</div><div class="row"><button class="btn" data-x>Abbrechen</button></div></div>`);
@@ -833,13 +846,13 @@ function medStart(min){if(!W||!W.av)return;const av=W.av;W.medBack={p:av.positio
   W.camOv={p:new TH.Vector3(x,y+1.4,z+2.7),t:new TH.Vector3(x,y+.75,z-1.2)};W.medXZ=[x,z];
   const o=ovl('wMedRun',`<div class="medbox"><div class="breath"><i></i><b id="mBr">Einatmen</b></div><div class="mt" id="mT">${min}:00</div><p id="mTx">Setz dich bequem hin.</p><div class="row"><button class="btn" id="mStop">Beenden</button></div></div>`);o.classList.add('medrun');o.onclick=null;
   $('#mStop').onclick=()=>medEnd(false);document.querySelectorAll('.w-top,.w-pts,.w-hint,#wAct').forEach(e=>e.style.visibility='hidden');
-  bowl(.4);setTimeout(()=>{MEDTXT.intro.forEach(t=>say(t));},2500);}
+  bowl(.4);setTimeout(()=>{say(MEDTXT.intro[0],'intro1');setTimeout(()=>W&&W.med&&say(MEDTXT.intro[1],'intro2'),9000);},2500);}
 function medTick(){const M=W.med;if(!M)return;const now=performance.now()/1000,el=now-M.t0,left=Math.max(0,M.dur-el);
   W.av.position.y=M.y;const a=W.camOv;if(a){const ang=Math.sin(el*.04)*.32,r=3.3;const[mx0,mz0]=W.medXZ;a.p.set(mx0+Math.sin(ang)*r,M.y+2.0,mz0+Math.cos(ang)*r);a.t.set(mx0,M.y+.35,mz0-.9);}
   const cyc=10,ph=(el%cyc)/cyc,inh=ph<.4,sc=inh?(.55+.45*Math.sin(ph/.4*Math.PI/2)):(1-.45*Math.sin((ph-.4)/.6*Math.PI/2));const br=document.querySelector('#wMedRun .breath i');if(br)br.style.transform=`scale(${sc})`;const bl=$('#mBr');if(bl)bl.textContent=inh?'Einatmen':'Ausatmen';
   const tt=$('#mT');if(tt)tt.textContent=`${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;
-  if(el>22&&left>25&&el>M.next){const t=MEDTXT.mid[Math.floor(el/40)%MEDTXT.mid.length];if(!M.said[t]){say(t);M.said[t]=1;$('#mTx').textContent=t;}M.next=el+Math.max(35,M.dur/8);}
-  if(left<20&&!M.endSaid){M.endSaid=1;MEDTXT.end.forEach(t=>say(t));$('#mTx').textContent=MEDTXT.end[0];}
+  if(el>22&&left>25&&el>M.next){const mi=Math.floor(el/40)%MEDTXT.mid.length,t=MEDTXT.mid[mi];if(!M.said[t]){say(t,'mid'+(mi+1));M.said[t]=1;$('#mTx').textContent=t;}M.next=el+Math.max(35,M.dur/8);}
+  if(left<20&&!M.endSaid){M.endSaid=1;say(MEDTXT.end[0],'end1');setTimeout(()=>say(MEDTXT.end[1],'end2'),8000);$('#mTx').textContent=MEDTXT.end[0];}
   if(left<=0)medEnd(true);}
 function medEnd(done){const M=W.med;if(!M)return;W.med=null;try{speechSynthesis.cancel();}catch(e){}const o=$('#wMedRun');if(o)o.hidden=true;document.querySelectorAll('.w-top,.w-pts,.w-hint,#wAct').forEach(e=>e.style.visibility='');
   W.camOv=null;const el=(performance.now()/1000-M.t0)/60;
@@ -1039,18 +1052,18 @@ const MONKSAY=['Guten Morgen. Der Tee ist heiss.','Shen sagt, du machst Fortschr
 function npcs(){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)return;W.npcs=[];
   const mk=(robe,skin,hair,cfg)=>{const o=MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));
     ['Idle','Walk','Stance'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(0);}});const N=Object.assign({o,mx,A,i:0,wait:0,mode:cfg.mode,pts:cfg.pts,sp:cfg.sp||1,cur:null},cfg);o.position.set(cfg.pts[0][0],groundH(cfg.pts[0][0],cfg.pts[0][1]),cfg.pts[0][1]);
-    const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:'Grüssen',act:()=>{const t=MONKSAY[Math.floor(Math.random()*MONKSAY.length)];msg(cfg.name+': «'+t+'»');DW.bell(.8);N.wait=Math.max(N.wait,3.2);N.face=true;N.bowT=2.2;playOnce('Bow');}};W.inter.push(it);N.it=it;
+    const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:cfg.mode==='train'?'Ansprechen':'Grüssen',act:()=>{if(cfg.mode==='train'){dlgK('Bruder Tao','Die Form der fünf Bewegungen: Pferdestand, Faust links, Faust rechts, Abwehr, Tritt. Mach mit, Körper und Geist werden eins.',[['Mittrainieren',()=>{endTalk();trainForm(N);},1],['Grüssen',()=>{endTalk();N.bowT=2.4;playOnce('Bow');msg('Bruder Tao: «Wer übt, wird.»');}],['Gehen',()=>endTalk()]]);return;}const t=MONKSAY[Math.floor(Math.random()*MONKSAY.length)];msg(cfg.name+': «'+t+'»');DW.bell(.8);N.wait=Math.max(N.wait,3.2);N.face=true;N.bowT=2.2;playOnce('Bow');}};W.inter.push(it);N.it=it;
     if(cfg.mode==='sweep'){const br=new TH.Group();const st=new TH.Mesh(new TH.CylinderGeometry(.02,.02,1.4,6),W.M.wood);st.position.y=.7;br.add(st);const bh=new TH.Mesh(new TH.ConeGeometry(.16,.35,8),new TH.MeshStandardMaterial({color:'#b8a06a',roughness:1}));bh.position.y=.1;br.add(bh);let hand=null;o.traverse(c=>{if(c.isBone&&c.name==='handR')hand=c;});
       if(hand){const ws=new TH.Vector3();hand.getWorldScale(ws);const g2=new TH.Group();g2.add(br);br.position.set(0,-.95,0);g2.scale.setScalar(1/ws.x);g2.position.set(0,.06,0);g2.rotation.set(3.14,0,.15);hand.add(g2);N.broomHand=g2;}
       else{br.position.set(.25,0,.45);br.rotation.x=.5;o.add(br);}N.broom=br;}
-    ['Sweep','Bow'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));
+    ['Sweep','Bow','Form'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));
     W.npcs.push(N);};
   mk('#c98a2a','#c99a72','#2a2420',{name:'Bruder Wei',mode:'sweep',pts:[[-4,9],[4,9],[4,13],[-4,13]],sp:.55});
   mk('#7a2e24','#a8784f','#1a1614',{name:'Schwester Lin',mode:'walk',pts:[[-5.8,7.2],[-5.8,18.5],[5.8,18.5],[5.8,7.2]],sp:1});
   mk('#4a4440','#e0b896','#c9c4bb',{name:'Bruder Tao',mode:'train',pts:[[RPOS.hof.c[0]-.5,RPOS.hof.c[1]+2.6]],face:[-1,0]});
   mk('#d9cfbd','#8a5a3a','#1a1614',{name:'Novize Kai',mode:'walk',pts:[[-6,11],[-3,16],[3,16],[3.2,10.5]],sp:.8});
 });}
-function setW(N,name){['Idle','Walk','Stance','Sweep','Bow'].forEach(n=>{if(N.A[n])N.A[n].setEffectiveWeight(n===name?1:0);});if(N.cur!==name&&N.A[name]){N.A[name].reset();N.A[name].play();}N.cur=name;}
+function setW(N,name){['Idle','Walk','Stance','Sweep','Bow','Form'].forEach(n=>{if(N.A[n])N.A[n].setEffectiveWeight(n===name?1:0);});if(N.cur!==name&&N.A[name]){N.A[name].reset();N.A[name].play();}N.cur=name;}
 function life(){if(W.ch)return;
   const G=RPOS.garten.c;koi(G[0]-1,G[1]);
   bamboo(-20,10,26,3.2);bamboo(19,-16,18,2.6);
@@ -1081,7 +1094,7 @@ function lifeUpdate(){const now=performance.now()/1000,dt=Math.min(.05,now-(W.lt
   if(W.bambooL)W.bambooL.rotation.y=Math.sin(t*.5)*.004;
   if(W.npcs)W.npcs.forEach(N=>{N.mx.update(dt);const o=N.o;N.it.x=o.position.x;N.it.z=o.position.z;
     if(N.face&&W.av){const tgt=Math.atan2(W.av.position.x-o.position.x,W.av.position.z-o.position.z);o.rotation.y+=(((tgt-o.rotation.y+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI)*Math.min(1,dt*5);}
-    if(N.mode==='train'){setW(N,N.A.Stance?'Stance':'Idle');if(N.A.Stance&&N.A.Stance.time>N.A.Stance.getClip().duration-.05)N.A.Stance.time=0;if(!N.face&&N.face0==null){o.rotation.y=Math.atan2(N.facev?N.facev[0]:-1,0);}if(N.wait>0){N.wait-=dt;if(N.wait<=0)N.face=false;}return;}
+    if(N.mode==='train'){if(N.bowT>0){N.bowT-=dt;setW(N,N.A.Bow?'Bow':'Idle');return;}setW(N,N.A.Form?'Form':N.A.Stance?'Stance':'Idle');if(!N.A.Form&&N.A.Stance&&N.A.Stance.time>N.A.Stance.getClip().duration-.05)N.A.Stance.time=0;if(!N.face&&N.face0==null){o.rotation.y=Math.atan2(N.facev?N.facev[0]:-1,0);}if(N.wait>0){N.wait-=dt;if(N.wait<=0)N.face=false;}return;}
     if(N.bowT>0){N.bowT-=dt;setW(N,N.A.Bow?'Bow':'Idle');if(N.wait>0)N.wait-=dt;return;}
     if(N.wait>0){N.wait-=dt;setW(N,N.mode==='sweep'&&!N.face&&N.A.Sweep?'Sweep':'Idle');if(N.wait<=0)N.face=false;return;}
     const p=N.pts[(N.i+1)%N.pts.length],dx=p[0]-o.position.x,dz=p[1]-o.position.z,d=Math.hypot(dx,dz);
