@@ -481,6 +481,9 @@ body.menuOver #hud::before{content:"";position:fixed;inset:0;background:linear-g
 .w-mkt .mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px;margin:12px 0}.w-mkt .mc{display:flex!important;flex-direction:column;align-items:center;gap:3px;padding:10px 8px!important;background:rgba(255,255,255,.04);border:1px solid var(--stroke);border-radius:16px;text-align:center;flex:none!important}.w-mkt .mc img{width:84px;height:84px;object-fit:contain}.w-mkt .mc b{font-size:13px;line-height:1.2}.w-mkt .mc small{font:500 12px 'IBM Plex Mono',monospace;color:#e0a96a}.w-mkt .mc:disabled{opacity:.4}
 .w-mkt .mf{font-size:12px!important;margin:0 0 10px!important}.w-mkt .sl{display:flex;flex-direction:column;gap:7px;margin:10px 0}.w-mkt .sl .btn{text-align:left;flex:none}.w-mkt .sl small{opacity:.6}.w-mkt .fr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--stroke);border-radius:14px}.w-mkt .fr span{display:flex;flex-direction:column;font-size:14px}.w-mkt .fr small{font-size:12px;opacity:.6}.w-mkt .fr .btn{flex:none;padding:8px 12px}
 .w-pts .cu b{color:#e0a96a}
+.w-mkt.medrun{background:linear-gradient(180deg,rgba(8,8,10,0) 40%,rgba(8,8,10,.75));place-items:end center;padding-bottom:calc(env(safe-area-inset-bottom) + 24px)}.w-mkt.medrun>div{background:rgba(14,15,18,.6)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-align:center}
+.medbox .breath{position:relative;width:86px;height:86px;margin:4px auto 8px;display:grid;place-items:center}.medbox .breath i{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(242,212,138,.45),rgba(242,212,138,.08) 70%);border:1px solid rgba(242,212,138,.55);transition:transform .15s linear}.medbox .breath b{position:relative;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#f2d48a}
+.medbox .mt{font:600 24px 'IBM Plex Mono',monospace;margin-bottom:4px}.medbox p{min-height:40px}
 .w-l{display:flex;gap:8px;align-items:center}.w-rank{display:flex;align-items:center;gap:8px;background:rgba(14,15,18,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:999px;padding:4px 14px 4px 4px;text-align:left}.w-rank b{display:block;font-size:13.5px}.w-rank small{display:block;font-size:11px;color:rgba(236,235,230,.6)}.w-por{width:34px;height:34px;border-radius:50%;overflow:hidden;background:#222;display:block}.w-por img{width:100%;height:100%;object-fit:cover}
 .w-pts{position:absolute;top:calc(env(safe-area-inset-top) + 64px);left:12px;right:12px;display:flex;flex-wrap:nowrap;overflow:hidden;gap:4px;pointer-events:none}.w-pts span{display:flex;align-items:center;gap:4px;background:rgba(14,15,18,.7);padding:3px 7px;border-radius:999px;font-size:11px;white-space:nowrap}.w-pts i{width:7px;height:7px;border-radius:50%;display:block}
 .w-dlg-b button{text-align:left}
@@ -775,7 +778,7 @@ function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
 const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
 const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
-const APPV='0.15 Beta · 17.11.2026';
+const APPV='0.16 Beta · 17.11.2026';
 const ERRLOG=[];window.addEventListener('error',e=>{ERRLOG.push((e.message||'')+' @'+((e.filename||'').split('/').pop())+':'+(e.lineno||''));if(ERRLOG.length>6)ERRLOG.shift();});window.addEventListener('unhandledrejection',e=>{ERRLOG.push('P '+String(e.reason&&e.reason.message||e.reason).slice(0,120));if(ERRLOG.length>6)ERRLOG.shift();});
 const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:7,pct:.7,win:7,slots:3},{n:'Bruder · Schwester',days:14,pct:.75,win:10,slots:4},{n:'Hüter',days:21,pct:.8,win:14,slots:5},{n:'Lehrer',days:30,pct:.85,win:21,slots:6},{n:'Meister',days:45,pct:.85,win:30,slots:7},{n:'Grossmeister',days:75,pct:.9,win:45,slots:8}];
 const EVENTS=[{id:'brunnen',n:'Der Brunnen ist versandet',cost:{nahrung:30,kraft:20},rw:'Brunnen auf dem Dorfplatz',me:'Wasserkrug für deine Zelle'},{id:'medizin',n:'Fieber im Dorf: Medizin holen',cost:{schritte:4000,ruhe:30},rw:'Eine Heilerin zieht ins Dorf',me:'Teekanne mit Kräutertee in der Küche'},{id:'bruecke',n:'Die Brücke über den Bach ist gebrochen',cost:{kraft:60,ordnung:20},rw:'Der Weg zum Markt ist offen',me:'Gefährte: ein Esel am Tor'},{id:'schule',n:'Die Kinder wollen lesen lernen',cost:{weisheit:50},rw:'Eine Dorfschule',me:'Leuchtende Schriftrollen in der Bibliothek'},{id:'ernte',n:'Erntefest vorbereiten',cost:{nahrung:50,ruhe:30,schritte:6000},rw:'Markttag einmal pro Woche',me:'Seltene Robe «Ahorn»'},{id:'dach',n:'Sturm: Dächer flicken',cost:{kraft:40,ordnung:30},rw:'Neue Dächer',me:'Gebetsfahnen über dem Hof'},{id:'laternen',n:'Laternen für das Lichterfest',cost:{ruhe:40,weisheit:20},rw:'Laternen über dem Tal',me:'Laternen entlang des Hofwegs'},{id:'pfad',n:'Den Bergpfad freiräumen',cost:{schritte:8000,kraft:30},rw:'Pilger finden den Weg',me:'Pilgerstab am Klostertor'}];
@@ -972,7 +975,7 @@ function wakeFactor(r){const[h,m]=r.cfg.start.split(':').map(Number);const now=n
 function freqLabel(r){const f=freqOf(r);if(f.mode==='days')return (f.days||[]).slice().sort().map(i=>DOW[i]).join(' ');if(f.mode==='week')return f.n+'× pro Woche';return 'Täglich';}
 function restThisWeek(){const mk=mondayKey(new Date());return Object.keys(S.days).some(k=>k>=mk&&S.days[k]._rest);}
 function recDone(r,rec){return !!(rec&&rec.d);}
-function dayChi(d){let c=0;if(!d)return 0;for(const k in d){if(k==='_n')continue;const v=d[k];c+=(typeof v==='number')?v:(v&&v.c||0);}return c;}
+function dayChi(d){let c=0;if(!d)return 0;for(const k in d){if(k==='_n'||k==='_steps'||k==='_brief')continue;const v=d[k];c+=(typeof v==='number')?v:(v&&v.c||0);}return c;}
 function dayDone(d){if(!d)return 0;let n=0;for(const k in d){if(k[0]!=='_'&&d[k]&&d[k].d)n++;}return n;}
 function dayFrac(d){if(!d)return 0;if(d._rest||d._n===0)return 1;const n=d._n||S.rituals.length;return Math.min(1,dayDone(d)/n);}
 function totalChi(){return Object.values(S.days).reduce((a,d)=>a+dayChi(d),0);}
@@ -1536,6 +1539,9 @@ window.DW={
   applyLook:()=>applyLook(S.avatar),
   tod:()=>todNow(),
   ac(){if(!S.sound)return null;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}return AC;},soundOn:()=>!!S.sound,
+  meditateDone(min){const d=today(),first=!d._m;const chi=first?Math.round(min*3):0;if(first){addBonus('_m',chi);}
+    const r=dueList().find(x=>(x.room||roomOf(x))==='halle'&&x.type==='timer'&&!recDone(x,d[x.id]));let rit=null;if(r&&min>=((r.cfg&&r.cfg.min)||1)){try{complete(r,min);rit=r.name;}catch(e){}}
+    save();renderAll();return{chi,first,rit};},
   coins:()=>S.coins||0,market:()=>mktToday().map(m=>({...m,own:m.t==='robe'?S.inv.robes.includes(m.robe):false})),
   buy(k){const m=MKT.find(x=>x.k===k);if(!m||(S.coins||0)<m.p)return false;S.coins-=m.p;if(m.t==='robe'){if(!S.inv.robes.includes(m.robe))S.inv.robes.push(m.robe);}else if(m.t==='food')S.inv.koi+=3;else S.inv.items.push(k);save();renderAll();return m;},
   items:()=>S.inv.items.slice(),decor:()=>Object.assign({},S.decor),itemName:k=>(MKT.find(m=>m.k===k)||{n:k}).n,itemType:k=>(MKT.find(m=>m.k===k)||{t:'prop'}).t,
@@ -1736,7 +1742,7 @@ function lessonIdx(){return (Math.max(1,dayN())-1+(S.cycle-1)*7)%LESSONS.length;
 function lessonToday(){return S.learn.log[dk(new Date())];}
 function weekLessons(){const mk=mondayKey(new Date());return Object.entries(S.learn.log).filter(([k])=>k>=mk).map(([k,v])=>v);}
 function practiceIdx(){return Math.floor((pk(mondayKey(new Date()))-pk(mondayKey(pk(S.cycleStart))))/(7*DAY))%PRACTICE.length;}
-const BCAT={_l:'weisheit',_x:'weisheit',_p:'weisheit',_q:'ruhe',_g:'kraft',_s7:'ordnung',_ws:'weisheit'};
+const BCAT={_m:'ruhe',_l:'weisheit',_x:'weisheit',_p:'weisheit',_q:'ruhe',_g:'kraft',_s7:'ordnung',_ws:'weisheit'};
 function addBonus(key,chi){const d=today();d[key]=(d[key]||0)+chi;const c=BCAT[key];if(c&&chi>0){addPts(c,chi);window._lastBonus={cat:c,n:chi};}save();}
 function renderDojo(){
   const L=LESSONS[lessonIdx()],lt=lessonToday(),wk=mondayKey(new Date()),wl=weekLessons(),ex=S.learn.exams[wk],pr=PRACTICE[practiceIdx()],prDone=S.learn.practice[wk];

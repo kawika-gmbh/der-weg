@@ -344,15 +344,17 @@ function kloster(){
 }
 function roomDialog(id){
   const r=DW.rooms().find(x=>x.id===id);$('#wDlgK').textContent=r.n;
-  if(!r.open&&id!=='tor'){dlgK(r.n,`Diese Tür ist verschlossen. Hier lernst du: ${r.d}. Mit jedem neuen Rang darfst du eine Tür öffnen. Sprich mit Meister Shen, wenn du bereit bist.`,[['Verstanden',()=>endTalk(),1]]);return;}
+  if(!r.open&&id!=='tor'&&id!=='halle'){dlgK(r.n,`Diese Tür ist verschlossen. Hier lernst du: ${r.d}. Mit jedem neuen Rang darfst du eine Tür öffnen. Sprich mit Meister Shen, wenn du bereit bist.`,[['Verstanden',()=>endTalk(),1]]);return;}
   const btns=[];let text=r.d+'.';
-  if(!r.open)text='Das Tor ins Tal ist noch verschlossen, Schritte-Routinen lernst du ab einem höheren Rang. Doch von hier siehst du das Dorf, und es braucht deine Hilfe.';
+  if(!r.open&&id==='halle')text='Die Halle steht allen offen, die still werden wollen. Routinen lernst du hier ab einem höheren Rang, meditieren kannst du schon heute.';
+  else if(!r.open)text='Das Tor ins Tal ist noch verschlossen, Schritte-Routinen lernst du ab einem höheren Rang. Doch von hier siehst du das Dorf, und es braucht deine Hilfe.';
   else if(!r.rit.length)text+=' Hier hast du noch keine Routine.';
   r.rit.forEach(x=>{const st=x.done?'✓ erledigt':!x.due?'heute nicht fällig':x.sub;text+=`\n${x.done?'✓':'○'} ${x.name} · ${st}`;
     if(!x.done&&x.due)btns.push([x.label+': '+x.name,()=>{endTalk();DW.doRitual(x.id);setTimeout(refreshRoom,400);},1]);});
   r.rit.forEach(x=>{if(x.editable)btns.push(['Bearbeiten: '+x.name,()=>{endTalk();DW.editRitual(x.id);}]);});
   if(r.open&&DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
   r.arch.forEach(x=>{if(r.open&&DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
+  if(id==='halle')btns.unshift(['Meditieren',()=>{endTalk();medChoose();},1]);
   if(id==='halle')btns.push(['Verneigen',()=>{endTalk();pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
   if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
@@ -489,8 +491,8 @@ function avatar(){
     W.mixer=mx;W.acts=A;['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(n==='Idle'?1:0);}});
     if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}});
 }
-function kneelLoad(){if(W.acts&&W.acts.Kneel||W.kneelLoading||!W.mixer)return;W.kneelLoading=1;const go=gl=>{if(!W||!W.mixer)return;const c=gl.animations[0];if(!c)return;c.name='Kneel';const a=W.mixer.clipAction(c);a.play();a.setEffectiveWeight(0);W.acts.Kneel=a;};
-  if(window._kneelGL)go(window._kneelGL);else new TH.GLTFLoader().load('kneel.glb',gl=>{window._kneelGL=gl;go(gl);},undefined,()=>{});}
+function kneelLoad(){if(W.kneelLoading||!W.mixer)return;W.kneelLoading=1;[['Kneel','kneel.glb'],['Meditate','meditate.glb']].forEach(([n,f])=>{const go=gl=>{if(!W||!W.mixer)return;const c=gl.animations[0];if(!c)return;c.name=n;const a=W.mixer.clipAction(c);a.play();a.setEffectiveWeight(0);W.acts[n]=a;};
+  const key='_gl_'+n;if(window[key])go(window[key]);else new TH.GLTFLoader().load(f,gl=>{window[key]=gl;go(gl);},undefined,()=>{});});}
 function kneelW(dt){const tgt=W.kneel>0?1:0;if(W.kneel>0)W.kneel-=dt;W.kk=(W.kk||0)+(tgt-(W.kk||0))*Math.min(1,dt*2.5);return W.kk*W.kk*(3-2*W.kk);}
 function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(on){a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();}else a.fadeOut(.3);}
 
@@ -630,14 +632,14 @@ function loop(){
   if(!$('#game').hidden)return;
   const dt=Math.min(.05,W.clock.getDelta()),t=W.clock.elapsedTime;
   let mx=W.mv.x,mz=W.mv.z;const K=W.keys;if(K.w||K.arrowup)mz=-1;if(K.s||K.arrowdown)mz=1;if(K.a||K.arrowleft)mx=-1;if(K.d||K.arrowright)mx=1;
-  const ml=Math.min(1,Math.hypot(mx,mz)),av=W.av;
+  const ml=W.med?0:Math.min(1,Math.hypot(mx,mz)),av=W.av;
   W.moving=ml>.08;W.run=!!K.shift;if(W.moving)W.kneel=0;
   if(ml>.08){const sy=Math.sin(W.yaw),cy=Math.cos(W.yaw);const dx=(mx*cy+mz*sy),dz=(-mx*sy+mz*cy);const sp=4.6*ml*dt*((K.shift)?1.8:1)*(W.inHut?.6:1);const nx=av.position.x+dx/ml*sp*ml,nz2=av.position.z+dz/ml*sp*ml;
     if(!blocked(nx,nz2,av.position.x,av.position.z)){av.position.x=nx;av.position.z=nz2;}else if(!blocked(nx,av.position.z,av.position.x,av.position.z))av.position.x=nx;else if(!blocked(av.position.x,nz2,av.position.x,av.position.z))av.position.z=nz2;
     const target=Math.atan2(dx,dz);let d=target-av.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;av.rotation.y+=d*Math.min(1,dt*10);W.walk+=dt*ml*9;}
   else W.walk*=.9;
   const gy=heightAt(av.position.x,av.position.z);av.position.y+=(gy+Math.abs(Math.sin(W.walk))*.06*ml-av.position.y)*Math.min(1,dt*14);
-  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;if(A.Walk){A.Walk.setEffectiveWeight(wk*(1-kw));A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*(1-kw));if(A.Kneel)A.Kneel.setEffectiveWeight(kw);W.mixer.update(dt);}
+  if(W.mixer){kneelLoad();const A=W.acts,wk=Math.min(1,ml*1.2),kw=A.Kneel?kneelW(dt):0;W.mw=(W.mw||0)+((W.med&&A.Meditate?1:0)-(W.mw||0))*Math.min(1,dt*1.5);const mw=W.mw*W.mw*(3-2*W.mw),rest=(1-kw)*(1-mw);if(A.Walk){A.Walk.setEffectiveWeight(wk*rest);A.Walk.timeScale=.6+ml*.9;}if(A.Idle)A.Idle.setEffectiveWeight((1-wk)*rest);if(A.Kneel)A.Kneel.setEffectiveWeight(kw*(1-mw));if(A.Meditate)A.Meditate.setEffectiveWeight(mw);W.mixer.update(dt);}
   if(av.userData.torso){const b=1+Math.sin(t*1.3)*.012;av.userData.torso.scale.set(b,1,b);av.rotation.z=Math.sin(W.walk)*.04*ml;}
   // Kamera
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut&&!inHut&&W.av){W.yawTo=W.av.rotation.y+Math.PI;}W.M.hid=W.M.hid||new TH.MeshBasicMaterial({colorWrite:false,depthWrite:false});if(W.inHut)W.inHut.roof.forEach(m=>{if(m.userData.mat)m.material=m.userData.mat;});if(inHut)inHut.roof.forEach(m=>{if(!m.userData.mat)m.userData.mat=m.material;m.material=W.M.hid;});W.inHut=inHut;}
@@ -664,7 +666,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
@@ -813,6 +815,35 @@ $('#gAgain').onclick=()=>{const c=G&&G.reward;finishG(true);startPoles();};
 function finishG(again){if(!G)return;cancelAnimationFrame(G.raf);g3dEnd();const chi=G.state==='end'?G.reward:0;G=null;$('#game').hidden=true;if(chi){DW.gameReward(chi,'Pflaumenblüten-Pfähle');if(W)msg('+'+chi+' Chi gutgeschrieben');}}
 window.addEventListener('resize',()=>{if(G)sizeG();});
 
+/* ---------- Geführte Meditation ---------- */
+const MEDTXT={
+ intro:['Setz dich bequem hin. Wenn du magst, schliess die Augen.','Wir beginnen mit dem Atem. Atme ein, wenn der Kreis grösser wird. Atme aus, wenn er kleiner wird.'],
+ mid:['Spür, wie die Luft durch die Nase einströmt. Kühl beim Einatmen, warm beim Ausatmen.','Wenn Gedanken kommen, ist das in Ordnung. Bemerke sie, und kehr freundlich zum Atem zurück.','Lass die Schultern sinken. Lass den Kiefer locker.','Spür den Boden unter dir. Er trägt dich.','Mit jedem Ausatmen wirst du ein wenig ruhiger.','Höre auf die Geräusche um dich. Lass sie kommen und gehen.','Spür deinen Bauch, wie er sich hebt und senkt.','Du musst nichts tun. Nur atmen und da sein.','Bemerke, wie dein Herz schlägt. Ruhig und gleichmässig.','Wenn du abschweifst, beginne einfach von vorn. Einatmen. Ausatmen.'],
+ end:['Langsam kommst du zurück. Beweg die Finger, die Zehen.','Nimm einen tiefen Atemzug. Und öffne die Augen, wenn du bereit bist.']};
+function say(t){try{if(!window.speechSynthesis||!DW.soundOn())return;const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';u.rate=.82;u.pitch=.9;u.volume=.95;const v=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));const pick=v.find(x=>/Anna|Markus|Helena|Google|Petra|Yannick/i.test(x.name))||v[0];if(pick)u.voice=pick;speechSynthesis.speak(u);}catch(e){}}
+function bowl(vol){const ac=DW.ac();if(!ac)return;if(ac.state==='suspended')ac.resume();const t=ac.currentTime,out=ac.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(vol||.35,t+.02);out.gain.exponentialRampToValueAtTime(.0001,t+9);out.connect(ac.destination);
+  [[220,1],[440*1.003,.5],[660*.998,.35],[1190,.18],[1760,.08]].forEach(([f,a],i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.value=a;const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=3+i*.7;lg.gain.value=a*.25;lfo.connect(lg);lg.connect(g.gain);o.connect(g);g.connect(out);o.start(t);lfo.start(t);o.stop(t+9.2);lfo.stop(t+9.2);});}
+function medChoose(){const o=ovl('wMed',`<div><h3>Meditation in der Halle</h3><p>Setz Kopfhörer auf und mach mit. Meister Shen führt dich mit Stimme und Atemkreis. Die erste Meditation des Tages bringt Chi und Ruhe.</p><div class="sl">${[3,5,10].map(m=>`<button class="btn" data-m="${m}">${m} Minuten <small>· ${m*3} Chi</small></button>`).join('')}</div><div class="row"><button class="btn" data-x>Abbrechen</button></div></div>`);
+  o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};o.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{o.hidden=true;medStart(+b.dataset.m);});}
+function medFloor(x,z){const rc=new TH.Raycaster(new TH.Vector3(x,6,z),new TH.Vector3(0,-1,0));rc.camera=W.cam;let hs=[];try{hs=rc.intersectObjects(W.root.children,true);}catch(e){}const h=hs.find(i=>i.object.isMesh&&i.object.visible&&!i.object.isPoints&&i.face&&i.face.normal.y>.5);return h?h.point.y:.35;}
+function medStart(min){if(!W||!W.av)return;const av=W.av;W.medBack={p:av.position.clone(),r:av.rotation.y,yaw:W.yaw};const x=0,z=-.1,y=Math.max(.35,medFloor(x,z));
+  av.position.set(x,y,z);av.rotation.y=Math.PI;W.med={t0:performance.now()/1000,dur:min*60,next:0,said:{},min,y};W.kneel=0;
+  W.camOv={p:new TH.Vector3(x,y+1.4,z+2.7),t:new TH.Vector3(x,y+.75,z-1.2)};W.medXZ=[x,z];
+  const o=ovl('wMedRun',`<div class="medbox"><div class="breath"><i></i><b id="mBr">Einatmen</b></div><div class="mt" id="mT">${min}:00</div><p id="mTx">Setz dich bequem hin.</p><div class="row"><button class="btn" id="mStop">Beenden</button></div></div>`);o.classList.add('medrun');o.onclick=null;
+  $('#mStop').onclick=()=>medEnd(false);document.querySelectorAll('.w-top,.w-pts,.w-hint,#wAct').forEach(e=>e.style.visibility='hidden');
+  bowl(.4);setTimeout(()=>{MEDTXT.intro.forEach(t=>say(t));},2500);}
+function medTick(){const M=W.med;if(!M)return;const now=performance.now()/1000,el=now-M.t0,left=Math.max(0,M.dur-el);
+  W.av.position.y=M.y;const a=W.camOv;if(a){const ang=Math.sin(el*.04)*.32,r=3.3;const[mx0,mz0]=W.medXZ;a.p.set(mx0+Math.sin(ang)*r,M.y+2.0,mz0+Math.cos(ang)*r);a.t.set(mx0,M.y+.35,mz0-.9);}
+  const cyc=10,ph=(el%cyc)/cyc,inh=ph<.4,sc=inh?(.55+.45*Math.sin(ph/.4*Math.PI/2)):(1-.45*Math.sin((ph-.4)/.6*Math.PI/2));const br=document.querySelector('#wMedRun .breath i');if(br)br.style.transform=`scale(${sc})`;const bl=$('#mBr');if(bl)bl.textContent=inh?'Einatmen':'Ausatmen';
+  const tt=$('#mT');if(tt)tt.textContent=`${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;
+  if(el>22&&left>25&&el>M.next){const t=MEDTXT.mid[Math.floor(el/40)%MEDTXT.mid.length];if(!M.said[t]){say(t);M.said[t]=1;$('#mTx').textContent=t;}M.next=el+Math.max(35,M.dur/8);}
+  if(left<20&&!M.endSaid){M.endSaid=1;MEDTXT.end.forEach(t=>say(t));$('#mTx').textContent=MEDTXT.end[0];}
+  if(left<=0)medEnd(true);}
+function medEnd(done){const M=W.med;if(!M)return;W.med=null;try{speechSynthesis.cancel();}catch(e){}const o=$('#wMedRun');if(o)o.hidden=true;document.querySelectorAll('.w-top,.w-pts,.w-hint,#wAct').forEach(e=>e.style.visibility='');
+  W.camOv=null;const el=(performance.now()/1000-M.t0)/60;
+  setTimeout(()=>{if(!W)return;if(W.medBack){W.av.position.y=W.medBack.p.y;}},1200);
+  if(done||el>=1){bowl(.3);const r=DW.meditateDone(done?M.min:Math.floor(el));const parts=[];if(r.chi)parts.push(`+${r.chi} Chi und Ruhe`);if(r.rit)parts.push(`Routine «${r.rit}» erfüllt`);msg(parts.length?'Meditation beendet. '+parts.join(' · ')+'.':'Meditation beendet. Chi gibt es einmal pro Tag, die Ruhe bleibt dir.');if(r.chi)checkin('ruhe',r.chi);ptsHud();}
+  else msg('Meditation abgebrochen. Ab einer Minute zählt sie.');}
 /* ---------- Klangkulisse (prozedural) ---------- */
 function noiseBuf(ac,brown){const n=ac.sampleRate*2,b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.5;}else d[i]=w;}return b;}
 ['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{try{const a=DW.ac();if(a&&a.state==='suspended')a.resume();}catch(e){}},{passive:true}));
