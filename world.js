@@ -411,7 +411,7 @@ function village(){
   for(let i=0;i<2+lvl*2;i++){const c=new TH.Group(),wm=new TH.MeshStandardMaterial({color:i%3?'#f2efe6':'#a8642a',roughness:.9});const b=new TH.Mesh(new TH.SphereGeometry(.16,10,8),wm);b.scale.set(.8,.85,1.15);b.position.y=.2;c.add(b);
     const hd=new TH.Mesh(new TH.SphereGeometry(.08,8,6),wm);hd.position.set(0,.36,.14);c.add(hd);const cm=new TH.Mesh(new TH.BoxGeometry(.02,.06,.07),new TH.MeshStandardMaterial({color:'#d22a2a'}));cm.position.set(0,.44,.14);c.add(cm);const bk=new TH.Mesh(new TH.ConeGeometry(.025,.06,5),new TH.MeshStandardMaterial({color:'#e8a02a'}));bk.rotation.x=Math.PI/2;bk.position.set(0,.36,.23);c.add(bk);
     const tl=new TH.Mesh(new TH.ConeGeometry(.08,.18,6),wm);tl.rotation.x=-.9;tl.position.set(0,.3,-.18);c.add(tl);const hx=(i%2?-1:1)*(4+i*1.3),hz=44+(i*3.7)%14;c.position.set(hx,gh(hx,hz),hz);g.add(c);W.vU.chick.push({c,hd,home:[hx,hz],tgt:[hx,hz],wait:Math.random()*3,peck:0});}
-  villageMore({lvl,has,night,beam,strip,pathM,nH});
+  villageMore({lvl,has,night,beam,strip,pathM,nH});try{villageNature(lvl);}catch(e){console.warn('nature',e);}
   // ---- Abstieg/Aufstieg
   W.inter.push({x:0,z:38.6,r:1.6,label:'Pfad zum Kloster',btn:'Hinaufsteigen',act:()=>leaveVillage()});
   if(night){[[0,52],[0,44],[0,58]].forEach(([x,z])=>{const L=new TH.PointLight(0xffa860,1.3,12,2);L.position.set(x,gh(x,z)+3,z);g.add(L);W.flick.push(L);});}
@@ -775,6 +775,23 @@ function villageGrass(){if(!W.grassT||!W.grassT.length)return;const g1=new TH.Pl
   for(let i=0;i<N*5&&c<N;i++){const x=(r()-.5)*58,z=38.5+r()*40;if(Math.abs(x)<2&&z<62.5)continue;if(Math.abs(z-52)<1.7&&Math.abs(x)<25)continue;if(Math.hypot(x,z-52)<7.4)continue;if(z>62.2&&z<65.8)continue;if(z>66.5&&z<77&&Math.abs(x)<24.5&&Math.abs(x)>1.5)continue;
     if((W.vbox||[]).some(b=>Math.abs(x-b[0])<b[2]+.3&&Math.abs(z-b[1])<b[3]+.3))continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<s[2]+.2))continue;if(W.vDeck&&x>W.vDeck.x0-.5&&x<W.vDeck.x1+.5&&z>W.vDeck.z0-.5)continue;if(stairDist(x,z)<1.5)continue;
     const s=.7+r()*.9;p.set(x,groundH(x,z)-.03,z);q.setFromAxisAngle(Y,r()*6.28);sc.set(s,s*(.8+r()*.5),s);m.compose(p,q,sc);inst.setMatrixAt(c++,m);}inst.count=c;W.root.add(inst);}
+
+
+function villageNature(lvl){const R=rng(303),gh=groundH;
+  // Steine und Schilf am Bach
+  const rm=new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#8a8478',roughness:.95}),moss=new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#6a7a52',roughness:1}),rocks=[];
+  for(let x=-29;x<=29;x+=1.1+R()*1.2){if(Math.abs(x)<1.8||(x>-27.6&&x<-20.4)||Math.abs(x-11)<1.6||Math.abs(x+9)<1.2||Math.abs(x+6.8)<1.8)continue;[62.55,65.45].forEach(bz=>{if(R()<.35)return;const s=.18+R()*.32,z=bz+(R()-.5)*.35,g=new TH.DodecahedronGeometry(s,0);g.scale(1,.55,1);g.translate(x,gh(x,z)-.06,z);rocks.push(g);});}
+  rocks.forEach((g,i)=>{g.computeVertexNormals();const m=new TH.Mesh(g,i%3?rm:moss);m.receiveShadow=true;W.root.add(m);});
+  const cv=document.createElement('canvas');cv.width=64;cv.height=128;const c=cv.getContext('2d');for(let i=0;i<10;i++){c.strokeStyle=['#5a7a32','#7a8a3a','#4a6a2a'][i%3];c.lineWidth=2.2;c.beginPath();const x0=10+i*4.6;c.moveTo(32+(x0-32)*.3,128);c.quadraticCurveTo(x0,60,x0+(i%2?8:-8),4+R()*20);c.stroke();if(i%3===0){c.fillStyle='#6a4a2a';c.fillRect(x0+(i%2?6:-9),10+R()*20,4,16);}}
+  const rt=new TH.CanvasTexture(cv),g1=new TH.PlaneGeometry(.6,1.1);g1.translate(0,.5,0);const g2=g1.clone();g2.rotateY(Math.PI/2);const rg=mergeGeos([g1,g2]),rmat=new TH.MeshStandardMaterial({map:rt,alphaTest:.4,side:TH.DoubleSide,roughness:.9}),N=260,inst=new TH.InstancedMesh(rg,rmat,N),m4=new TH.Matrix4(),q=new TH.Quaternion(),sc=new TH.Vector3(),p=new TH.Vector3(),Y=new TH.Vector3(0,1,0);let n=0;
+  for(let i=0;i<N*3&&n<N;i++){const x=(R()-.5)*58,z=R()<.5?62.3+R()*.5:65.2+R()*.5;if(Math.abs(x)<2||(x>-28&&x<-20)||Math.abs(x-11)<2||Math.abs(x+9)<1.4||Math.abs(x+6.8)<2)continue;const s=.7+R()*.6;p.set(x,gh(x,z)-.05,z);q.setFromAxisAngle(Y,R()*6.28);sc.set(s,s,s);m4.compose(p,q,sc);inst.setMatrixAt(n++,m4);}inst.count=n;W.root.add(inst);
+  // Reisterrassen am Hang hinter den Feldern
+  const wall=new TH.MeshStandardMaterial({map:W.tex.stoneD,color:'#8e877a',roughness:1}),wet=new TH.MeshStandardMaterial({color:'#5a7a4a',roughness:.35,metalness:.15}),dry=new TH.MeshStandardMaterial({color:'#7a8a4a',roughness:.9});
+  for(let k=0;k<7;k++){const z0=80+k*3.2,z1=z0+3.2;let top=-1e9;for(let x=-34;x<=34;x+=4){top=Math.max(top,gh(x,z0+.2),gh(x,z1-.2));}top+=.15;const lo=Math.min(gh(0,z0-.5),gh(-30,z0-.5),gh(30,z0-.5))-.5;
+    const b=new TH.Mesh(uvBox(new TH.BoxGeometry(70,top-lo,3.2),70,top-lo,3.2,2),wall);b.position.set(0,(top+lo)/2,(z0+z1)/2);b.receiveShadow=true;W.root.add(b);
+    const f=new TH.Mesh(new TH.PlaneGeometry(68,2.8),k%3===1?dry:wet);f.rotation.x=-Math.PI/2;f.position.set(0,top+.02,(z0+z1)/2);W.root.add(f);
+    if(lvl>=1){const ri=new TH.InstancedMesh(rg,rmat,220);let c2=0;for(let a=0;a<220;a++){p.set(-33+R()*66,top,z0+.3+R()*2.6);q.setFromAxisAngle(Y,R()*6.28);const s=.45+R()*.25;sc.set(s,s*.8,s);m4.compose(p,q,sc);ri.setMatrixAt(c2++,m4);}ri.count=c2;W.root.add(ri);}}
+}
 
 /* ---------- Drachentreppe: Kloster ↔ Dorf ---------- */
 let _SD=null;
