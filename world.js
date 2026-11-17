@@ -662,7 +662,7 @@ function open(opts){opts=opts||{};
   $('#wDlgX').onclick=()=>endTalk();
   if(W.spawnAt){const sp=W.spawnAt;W.cam.position.set(sp[0]+Math.sin(W.yaw)*2.6,sp[1]+2.7,sp[2]+Math.cos(W.yaw)*2.6);}else{W.cam.position.set(0,6,22);W.yaw=0;}
   W.onResize=()=>{R.setSize(window.innerWidth,window.innerHeight,false);W.cam.aspect=window.innerWidth/window.innerHeight;W.cam.fov=window.innerWidth<window.innerHeight?62:50;W.cam.updateProjectionMatrix();};window.addEventListener('resize',W.onResize);
-  $('#wHint').textContent=matchMedia('(pointer:fine)').matches?'WASD laufen · Shift rennen · Maus ziehen umsehen · Rad zoomen · E benutzen · 1–9 im Dialog · Esc Menü':'Links ziehen zum Laufen · rechts wischen zum Umsehen';$('#wHint').classList.remove('gone');clearTimeout(window._hintT);window._hintT=setTimeout(()=>{const h=$('#wHint');if(h)h.classList.add('gone');},9000);msg(st===0?'Die Ruinen deines Tempels. Baue sie mit deinen Ritualen auf.':'Willkommen in deiner Welt');
+  $('#wHint').textContent=matchMedia('(pointer:fine)').matches?'WASD laufen · Shift rennen · Maus ziehen umsehen · Rad zoomen · E benutzen · 1–9 im Dialog · Esc Menü':'Links ziehen zum Laufen · rechts wischen zum Umsehen';$('#wHint').classList.remove('gone');clearTimeout(window._hintT);window._hintT=setTimeout(()=>{const h=$('#wHint');if(h)h.classList.add('gone');},9000);if(DW.flag('tut'))msg(ch?'Pilgerreise':'Willkommen zurück im Kloster');
   loop();
 }
 function close(){

@@ -1,0 +1,1 @@
+{"name": "Der Weg", "short_name": "Der Weg", "start_url": "./", "display": "standalone", "background_color": "#0a0b0c", "theme_color": "#0a0b0c", "orientation": "portrait", "icons": [{"src": "img/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}
