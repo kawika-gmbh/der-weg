@@ -340,28 +340,70 @@ function kloster(){
   noGo(0,1,15);
   Object.keys(RPOS).forEach(id=>{const r=R[id];if(id==='halle')return;const ins=r.open&&W.roomSpot[id];const sp=ins?[W.roomSpot[id][0],0,W.roomSpot[id][1]]:spotOf(id);
     const what={zelle:'Bett',kueche:'Herd',bibliothek:'Lesepult',bad:'Zuber',garten:'Gartenbank',hof:'Hantelbank',tor:'Klostertor'}[id];
-    W.inter.push({x:sp[0],z:sp[2],r:ins?1.3:1.8,label:r.open?what+' · '+r.n:r.n+' · verschlossen',btn:r.open?'Benutzen':'Ansehen',act:()=>roomDialog(id)});});
+    W.inter.push({x:sp[0],z:sp[2],r:ins?1.3:1.8,label:r.open?what+' · '+r.n:id==='tor'?'Klostertor · Blick ins Tal':r.n+' · verschlossen',btn:r.open?'Benutzen':id==='tor'?'Dorf':'Ansehen',act:()=>roomDialog(id)});});
 }
 function roomDialog(id){
   const r=DW.rooms().find(x=>x.id===id);$('#wDlgK').textContent=r.n;
-  if(!r.open){dlgK(r.n,`Diese Tür ist verschlossen. Hier lernst du: ${r.d}. Mit jedem neuen Rang darfst du eine Tür öffnen. Sprich mit Meister Shen, wenn du bereit bist.`,[['Verstanden',()=>endTalk(),1]]);return;}
+  if(!r.open&&id!=='tor'){dlgK(r.n,`Diese Tür ist verschlossen. Hier lernst du: ${r.d}. Mit jedem neuen Rang darfst du eine Tür öffnen. Sprich mit Meister Shen, wenn du bereit bist.`,[['Verstanden',()=>endTalk(),1]]);return;}
   const btns=[];let text=r.d+'.';
-  if(!r.rit.length)text+=' Hier hast du noch keine Routine.';
+  if(!r.open)text='Das Tor ins Tal ist noch verschlossen, Schritte-Routinen lernst du ab einem höheren Rang. Doch von hier siehst du das Dorf, und es braucht deine Hilfe.';
+  else if(!r.rit.length)text+=' Hier hast du noch keine Routine.';
   r.rit.forEach(x=>{const st=x.done?'✓ erledigt':!x.due?'heute nicht fällig':x.sub;text+=`\n${x.done?'✓':'○'} ${x.name} · ${st}`;
     if(!x.done&&x.due)btns.push([x.label+': '+x.name,()=>{endTalk();DW.doRitual(x.id);setTimeout(refreshRoom,400);},1]);});
   r.rit.forEach(x=>{if(x.editable)btns.push(['Bearbeiten: '+x.name,()=>{endTalk();DW.editRitual(x.id);}]);});
-  if(DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
-  r.arch.forEach(x=>{if(DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
+  if(r.open&&DW.slotsFree()>0)btns.push(['Neue Routine hier',()=>{endTalk();DW.newRitual(id);}]);
+  r.arch.forEach(x=>{if(r.open&&DW.slotsFree()>0)btns.push(['Zurückholen: '+x.name,()=>{DW.unarchive(x.id);roomDialog(id);}]);});
   if(id==='halle')btns.push(['Verneigen',()=>{endTalk();pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1800);DW.bell(1.1);DW.day('_qa',1);DW.day('_qb2',0);msg('Ein Moment der Stille.');}]);
-  if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(3,4,27),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-14,W.villageAt[2]-4)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
+  if(id==='tor'&&W.villageAt){W.camOv={p:new TH.Vector3(2.5,6.5,29),t:new TH.Vector3(W.villageAt[0],W.villageAt[1]-4,W.villageAt[2]-12)};W.fogSave=W.fogSave||W.scene.fog.density;W.scene.fog.density=W.fogSave*.35;}
   if(id==='tor'){const v=DW.village(),cost=Object.entries(v.ev.cost).map(([k,c])=>`${v.paid[k]||0}/${c} ${DW.pts().find(p=>p.k===k).n}`).join(' · ');text+=`\n\nDas Dorf im Tal (${v.stufe}, ${v.done} Hilfen): ${v.ev.n}. ${v.ok?'Diese Woche bereits erledigt.':'Benötigt: '+cost+'.'}`;
     if(!v.ok)btns.push(['Punkte investieren',()=>{const res=DW.invest();endTalk();msg(res.full?'Das Dorf dankt dir! '+v.ev.rw:res.any?'Investiert. Es fehlt noch etwas.':'Dir fehlen die passenden Punkte.');if(res.full){DW.bell(1.4);}}]);}
-  if(id==='tor')DW.pilgrims().forEach(p=>{if(p.open)btns.push(['Pilgerreise: '+p.n+(p.visited?' (diese Woche besucht)':''),()=>{endTalk();close();open({pilgrim:p.ch});}]);else text+=`\n· ${p.n}: ab Rang ${p.rankName}`;});
+  if(id==='tor'){const st=DW.stepsToday();btns.splice(Math.max(0,btns.length),0,[st?`Schritte heute: ${st} (anpassen)`:'Schritte von heute eintragen',()=>{endTalk();stepsDlg();},!st]);}
+  if(id==='tor')DW.pilgrims().forEach(p=>{if(p.open&&r.open)btns.push(['Pilgerreise: '+p.n+(p.visited?' (diese Woche besucht)':''),()=>{endTalk();close();open({pilgrim:p.ch});}]);else text+=`\n· ${p.n}: ab Rang ${p.rankName}`;});
   btns.push(['Gehen',()=>endTalk()]);
   dlgK(r.n,text,btns);
 }
 function dlgK(k,text,btns){dlg(text,btns);$('#wDlgK').textContent=k;}
-function refreshRoom(){if(W)ptsHud();}
+function refreshRoom(){if(W){ptsHud();dayGlow(false);}}
+/* ---------- Check-in Feedback ---------- */
+function checkin(cat,n){if(!W||!W.av){if(W)setTimeout(()=>checkin(cat,n),600);return;}const c=(DW.pts().find(p=>p.k===cat)||{}).c||'#f2d48a',nm=(DW.pts().find(p=>p.k===cat)||{}).n||'';
+  const el=document.createElement('div');el.className='w-float';el.style.color=c;el.textContent='+'+n+' '+nm;$('#world').appendChild(el);W.floats=W.floats||[];W.floats.push({el,t0:W.clock.elapsedTime});
+  pose('Stance',true);setTimeout(()=>W&&pose('Stance',false),1400);
+  const N=26,g=new TH.BufferGeometry(),pos=new Float32Array(N*3),vel=[];const P=W.av.position;
+  for(let i=0;i<N;i++){pos[i*3]=P.x;pos[i*3+1]=P.y+1.2;pos[i*3+2]=P.z;const a=Math.random()*6.28,u=.6+Math.random()*1.4;vel.push([Math.cos(a)*u*.6,1.2+Math.random()*1.6,Math.sin(a)*u*.6]);}
+  g.setAttribute('position',new TH.BufferAttribute(pos,3));const m=new TH.PointsMaterial({color:c,size:.09,transparent:true,opacity:1,depthWrite:false,blending:TH.AdditiveBlending});const pts=new TH.Points(g,m);W.scene.add(pts);W.floats.push({pts,vel,t0:W.clock.elapsedTime});}
+function floatUpdate(t){if(!W.av)return;if(W.dayL){W.dayL.intensity+=(1.5+Math.sin(t*2.3)*.15-W.dayL.intensity)*.03;W.embers.rotation.y=t*.05;W.embers.position.y=Math.sin(t*.4)*.3;}if(W.steam){W.steam.position.y=1.5+Math.sin(t*1.7)*.05;W.steam.material.opacity=.12+Math.sin(t*2.1)*.06;W.steam.lookAt(W.cam.position);}if(W.donkey)W.donkey.children[5]&&(W.donkey.children[5].rotation.x=-.6+Math.sin(t*.9)*.08);
+  if(!W.floats||!W.floats.length)return;const v=new TH.Vector3(),cv=W.R.domElement,dt=.016;
+  W.floats=W.floats.filter(f=>{const a=t-f.t0;
+    if(f.el){if(a>1.8){f.el.remove();return false;}v.copy(W.av.position);v.y+=(W.inHut?1.55:2.0)+a*.6;v.project(W.cam);f.el.style.transform=`translate(${(v.x*.5+.5)*cv.clientWidth}px,${(-v.y*.5+.5)*cv.clientHeight}px) translate(-50%,-50%) scale(${1+Math.max(0,.25-a)})`;f.el.style.opacity=String(Math.min(1,(1.8-a)*2));return true;}
+    if(a>1.4){W.scene.remove(f.pts);f.pts.geometry.dispose();return false;}const p=f.pts.geometry.attributes.position;for(let i=0;i<f.vel.length;i++){f.vel[i][1]-=2.4*dt;p.setXYZ(i,p.getX(i)+f.vel[i][0]*dt,p.getY(i)+f.vel[i][1]*dt,p.getZ(i)+f.vel[i][2]*dt);}p.needsUpdate=true;f.pts.material.opacity=1-a/1.4;return true;});}
+/* ---------- Schritte am Tor ---------- */
+function stepsDlg(){let o=$('#wSteps');if(!o){o=document.createElement('div');o.id='wSteps';o.className='w-steps';o.innerHTML='<div><h3>Schritte von heute</h3><p>Trag die Zahl aus deiner Uhr oder deinem Handy ein. Du kannst sie im Laufe des Tages erhöhen. Ehrlichkeit zählt.</p><input id="wStepsIn" type="number" inputmode="numeric" min="0" max="40000" placeholder="z.B. 6500"><div class="row"><button class="btn" id="wStepsX">Abbrechen</button><button class="btn primary" id="wStepsOk">Eintragen</button></div></div>';$('#world').appendChild(o);
+    $('#wStepsX').onclick=()=>{o.hidden=true;};$('#wStepsOk').onclick=()=>{const v=+$('#wStepsIn').value;o.hidden=true;const add=DW.logSteps(v);msg(add?`+${add} Schritte für das Dorf`:'Keine neuen Schritte.');if(add)DW.bell(1);ptsHud();};
+    $('#wStepsIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')$('#wStepsOk').click();if(e.key==='Escape')o.hidden=true;});}
+  o.hidden=false;const inp=$('#wStepsIn');inp.value=DW.stepsToday()||'';setTimeout(()=>inp.focus(),50);}
+/* ---------- Vollendeter Tag ---------- */
+function dayGlow(init){if(!W||W.pilgrim||W.ch)return;const dt=DW.doneToday(),full=dt.n>0&&dt.done>=dt.n;if(!full||W.dayLit)return;W.dayLit=true;
+  const L=new TH.PointLight(0xffc870,0,14,2);L.position.set(0,2.2,1.5);W.root.add(L);W.dayL=L;
+  const N=60,g=new TH.BufferGeometry(),pos=new Float32Array(N*3);for(let i=0;i<N;i++){pos[i*3]=(Math.random()-.5)*9;pos[i*3+1]=.5+Math.random()*4;pos[i*3+2]=-2+Math.random()*8;}g.setAttribute('position',new TH.BufferAttribute(pos,3));
+  const em=new TH.Points(g,new TH.PointsMaterial({color:0xffd27a,size:.07,transparent:true,opacity:.85,depthWrite:false,blending:TH.AdditiveBlending}));W.root.add(em);W.embers=em;
+  if(!init)setTimeout(()=>{if(W)msg('Alle Routinen erfüllt. Das Kloster leuchtet für dich.');},1600);}
+/* ---------- Geschenke des Dorfes ---------- */
+function rewards(){const got=DW.village().got||[],M=W.M,y=.35;if(!got.length)return;const has=k=>got.includes(k);
+  const clay=new TH.MeshStandardMaterial({color:'#9a5b3a',roughness:.75}),hut=k=>{const P=RPOS[k],ew=P.f[0]?5.2:6.4,ed=P.f[0]?6.4:5.2;return{...P,ew,ed};};
+  if(has('brunnen')){const h=hut('zelle'),x=h.c[0]-h.f[0]*(h.ew/2-.45),z=h.c[1]+h.ed/2-.55;cyl(.13,.38,clay,x,y,z,16,.17);cyl(.07,.14,clay,x,y+.38,z,12,.09);}
+  if(has('medizin')){const h=hut('kueche'),x=h.c[0]+h.f[0]*.3,z=h.c[1]+1.15;const tp=new TH.Mesh(new TH.SphereGeometry(.13,16,12),new TH.MeshStandardMaterial({color:'#3d5a4a',roughness:.4,metalness:.2}));tp.scale.y=.8;tp.position.set(x,y+.86,z);W.root.add(tp);const sp=new TH.Mesh(new TH.CylinderGeometry(.02,.035,.16,8),tp.material);sp.position.set(x+.13,y+.9,z);sp.rotation.z=-1;W.root.add(sp);
+    const st=new TH.Mesh(new TH.PlaneGeometry(.12,.35),new TH.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.18,depthWrite:false}));st.position.set(x,y+1.15,z);W.root.add(st);W.steam=st;}
+  if(has('schule')){const h=hut('bibliothek'),x=h.c[0]+h.f[0]*.4,z=h.c[1];[-.45,.45].forEach(o=>{const sc=new TH.Mesh(new TH.CylinderGeometry(.045,.045,.42,8),new TH.MeshStandardMaterial({color:'#f2e2b8',emissive:'#ffcf6a',emissiveIntensity:.6}));sc.rotation.x=Math.PI/2;sc.position.set(x,y+.8,z+o);W.root.add(sc);});const L=new TH.PointLight(0xffcf6a,.6,3,2);L.position.set(x,y+1.3,z);W.root.add(L);}
+  if(has('bruecke')){const g=new TH.Group(),fur=new TH.MeshStandardMaterial({color:'#7d7468',roughness:1}),dk=new TH.MeshStandardMaterial({color:'#3e3a35',roughness:1});
+    const b=new TH.Mesh(new TH.SphereGeometry(.4,16,12),fur);b.scale.set(.85,.85,1.55);b.position.y=.95;g.add(b);
+    [[-.18,.38],[.18,.38],[-.18,-.38],[.18,-.38]].forEach(([lx,lz])=>{const l=new TH.Mesh(new TH.CylinderGeometry(.06,.05,.75,8),dk);l.position.set(lx,.38,lz);g.add(l);});
+    const n=new TH.Mesh(new TH.CylinderGeometry(.12,.16,.5,10),fur);n.position.set(0,1.3,.55);n.rotation.x=-.6;g.add(n);const hd=new TH.Mesh(new TH.BoxGeometry(.24,.24,.45),fur);hd.position.set(0,1.5,.8);hd.rotation.x=.3;g.add(hd);
+    [-.08,.08].forEach(ex=>{const e=new TH.Mesh(new TH.ConeGeometry(.05,.3,6),fur);e.position.set(ex,1.75,.66);g.add(e);});g.position.set(4.6,0,21.6);g.rotation.y=-2.4;g.traverse(o=>{if(o.isMesh)o.castShadow=true;});W.root.add(g);W.solids.push([4.6,21.6,.8]);W.donkey=g;
+    W.inter.push({x:4.6,z:21.6,r:1.6,label:'Dein Esel',btn:'Streicheln',act:()=>{msg('Der Esel stupst dich an. Er war ein Geschenk aus dem Dorf.');DW.bell(.9);}});}
+  if(has('pfad')){const st=cyl(.04,1.7,M.wood,2.0,0,25.0,8);st.rotation.z=.18;}
+  if(has('dach'))flags([-8,3.4,9],[8,3.4,9],24,.7);
+  if(has('laternen'))[[-1.7,12],[1.7,12],[-1.7,16],[1.7,16],[-1.7,20],[1.7,20]].forEach(([x,z],i)=>{cyl(.04,1.5,M.wood,x,0,z,6);lantern(x,1.62,z,i%2===0);});
+}
 function goRoom(id){if(!W||W.pilgrim){close();open({room:id});return;}const ins=W.roomSpot&&W.roomSpot[id],P=RPOS[id];const sp=ins?[ins[0],.35,ins[1]]:spotOf(id);const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];
   W.av.position.set(sp[0],sp[1],sp[2]);W.av.rotation.y=Math.atan2(tx-sp[0],tz-sp[2]);W.yaw=W.av.rotation.y+Math.PI;W.cam.position.set(sp[0]+Math.sin(W.yaw)*3,sp[1]+3,sp[2]+Math.cos(W.yaw)*3);endTalk();setTimeout(()=>{if(W)roomDialog(id);},350);}
 function rankHud(){const ri=DW.rankInfo(),dt=DW.doneToday();$('#wRankN').textContent=ri.name;$('#wRankS').textContent=`Heute ${dt.done}/${dt.n} · Rang ${ri.rank+1}`;const u=DW.portrait(),im=$('#wPor').firstChild;if(u&&(!im||im.getAttribute('src')!==u))$('#wPor').innerHTML=`<img src="${u}" alt="">`;}
@@ -573,7 +615,7 @@ function loop(){
   const inHut=W.huts&&Object.values(W.huts).find(h=>av.position.x>h.x0-.2&&av.position.x<h.x1+.2&&av.position.z>h.z0-.2&&av.position.z<h.z1+.2);if(inHut!==W.inHut){if(W.inHut)W.inHut.roof.forEach(m=>m.visible=true);if(inHut)inHut.roof.forEach(m=>m.visible=false);W.inHut=inHut;}
   const dist=inHut?3.4:(W.zoom||6.5),cx=av.position.x+Math.sin(W.yaw)*dist*Math.cos(W.pitch),cz=av.position.z+Math.cos(W.yaw)*dist*Math.cos(W.pitch),cyy=av.position.y+1.4+Math.sin(W.pitch)*dist;
   const sh=W.shake>0?(Math.random()-.5)*W.shake*.15:0;W.shake=Math.max(0,(W.shake||0)-dt);
-  if(W.camOv){W.cam.position.lerp(W.camOv.p,Math.min(1,dt*2.5));W.cam.lookAt(W.camOv.t);}
+  if(W.camOv){W.cam.position.lerp(W.camOv.p,Math.min(1,dt*4));W.cam.lookAt(W.camOv.t);}
   else if(inHut){const d=2.6,sy=Math.sin(W.yaw),cy=Math.cos(W.yaw),so=.55,tx=Math.max(inHut.x0+.3,Math.min(inHut.x1-.3,av.position.x+sy*d+cy*so)),tz=Math.max(inHut.z0+.3,Math.min(inHut.z1-.3,av.position.z+cy*d-sy*so));W.cam.position.lerp(new TH.Vector3(tx,av.position.y+2.75,tz),Math.min(1,dt*8));W.cam.lookAt(av.position.x-sy*1.3,av.position.y+.75,av.position.z-cy*1.3);}
   else W.cam.position.lerp(new TH.Vector3(cx+sh,Math.max(cyy,groundH(cx,cz)+.6),cz),Math.min(1,dt*6));if(!W.camOv&&!inHut)W.cam.lookAt(av.position.x,av.position.y+1.5,av.position.z);
   W.dir.position.set(av.position.x+W.SUN.x*60,W.SUN.y*60,av.position.z+W.SUN.z*60);W.dir.target.position.set(av.position.x,0,av.position.z);
@@ -592,7 +634,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
@@ -605,7 +647,7 @@ function open(opts){opts=opts||{};
   W.scene=new TH.Scene();W.cam=new TH.PerspectiveCamera(window.innerWidth<window.innerHeight?62:50,window.innerWidth/window.innerHeight,.1,700);W.root=new TH.Group();W.scene.add(W.root);
   W.tod=TOD[DW.tod()]||TOD.dusk;W.M=mats();W.pilgrim=opts.pilgrim||0;W.ch=W.pilgrim;window._worldCh=W.ch;const se=W.ch===3?Object.assign({},DW.season(),DW.seasonData('winter')||{},{winter:true}):DW.season();W.se=se;env(se);
   const st=5,ch=W.pilgrim;W.ch=ch;W.noGo=[];W.rects=[];W.flagsArr=[];
-  if(ch>0){BUILD[ch](5);W.meisterPos=W.meisterPos||[-3,0,4];}else{W.ch=0;W.rects=[];temple(5);path();poles();kloster();}
+  if(ch>0){BUILD[ch](5);W.meisterPos=W.meisterPos||[-3,0,4];}else{W.ch=0;W.rects=[];temple(5);path();poles();kloster();rewards();dayGlow(true);}
   W.noGo.push([ch===2?3.6:0,12,5],[ch===2?3.6:0,18,4]);
   const ng=(x,z,m)=>W.noGo.some(n=>Math.hypot(x-n[0],z-n[1])<n[2]+(m||0))||(W.edgeZ&&z>W.edgeZ-3);
   const r=rng(21);let c=0,tries=0;while(c<(ch===3?0:ch===1?6:14)&&tries<500){tries++;const a=r()*6.28,d=11+r()*20,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ng(x,z,3))continue;if(Math.abs(x)<3.2&&z>3)continue;if(Math.hypot(x-9,z-7)<8)continue;if(W.solids.some(s=>Math.hypot(x-s[0],z-s[1])<4))continue;maple(x,z,.8+r()*.5,r()*6);c++;}
@@ -613,14 +655,14 @@ function open(opts){opts=opts||{};
   if(ch!==3)grassField();
   {let room=opts.room;const h=new Date().getHours();if(!room&&h>=4&&h<12){const z=DW.rooms().find(r=>r.id==='zelle');if(z&&z.rit.some(x=>x.type==='window'&&x.due&&!x.done))room='zelle';}
    if(room){W.autoRoom=room;W.spawnRoom=room;}}
-  if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];}applyTod();avatar();interactables(5);meister(5);if(!ch)shadowFoe();controls();ptsHud();
+  if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];if(!ch&&id==='zelle'&&!DW.flag('tut')){const P2=RPOS.zelle;W.meisterPos=[P2.c[0]+P2.f[0]*1.5,.35,P2.c[1]+1.3];W.spawnAt[3]=W.meisterPos[0]-sp[0];W.spawnAt[4]=W.meisterPos[2]-sp[2];W.tutZelle=1;}}applyTod();avatar();interactables(5);meister(5);if(W.tutZelle&&W.npc){W.npc.rotation.y=Math.atan2(W.spawnAt[0]-W.meisterPos[0],W.spawnAt[2]-W.meisterPos[2]);}if(!ch)shadowFoe();controls();ptsHud();
   if(ch){const sp=[W.ch===2?3.6:0,12];W.inter.push({x:sp[0],z:sp[1]+1.5,r:1.4,label:'Heimweg ins Kloster',btn:'Zurück',act:()=>{close();open({room:'tor'});}});if(DW.pilgrimVisit(ch))setTimeout(()=>W&&msg('Pilgerreise: +20 Punkte'),1200);}
   if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen. Hier hat jede Routine ihren Ort: Aufstehen am Bett, Essen am Herd.`,`Die Schlafzelle und die Küche stehen dir offen. Alle anderen Türen sind verschlossen. Mit jedem neuen Rang darfst du eine davon öffnen.`,`Trage deine Routinen dort ein, wo sie passieren. Jede bringt Punkte. Mit ihnen hilfst du dem Dorf unten im Tal.`,`Und nun geh. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);endTalk();if(W&&W.autoRoom)roomDialog(W.autoRoom);return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
   else if(W.autoRoom)setTimeout(()=>{if(W)roomDialog(W.autoRoom);},900);
   $('#wDlgX').onclick=()=>endTalk();
-  W.cam.position.set(0,6,22);W.yaw=0;
+  if(W.spawnAt){const sp=W.spawnAt;W.cam.position.set(sp[0]+Math.sin(W.yaw)*2.6,sp[1]+2.7,sp[2]+Math.cos(W.yaw)*2.6);}else{W.cam.position.set(0,6,22);W.yaw=0;}
   W.onResize=()=>{R.setSize(window.innerWidth,window.innerHeight,false);W.cam.aspect=window.innerWidth/window.innerHeight;W.cam.fov=window.innerWidth<window.innerHeight?62:50;W.cam.updateProjectionMatrix();};window.addEventListener('resize',W.onResize);
-  $('#wHint').textContent=matchMedia('(pointer:fine)').matches?'WASD laufen · Shift rennen · Maus ziehen umsehen · Rad zoomen · E benutzen · 1–9 im Dialog · Esc Menü':'Links ziehen zum Laufen · rechts wischen zum Umsehen';$('#wHint').classList.remove('gone');msg(st===0?'Die Ruinen deines Tempels. Baue sie mit deinen Ritualen auf.':'Willkommen in deiner Welt');
+  $('#wHint').textContent=matchMedia('(pointer:fine)').matches?'WASD laufen · Shift rennen · Maus ziehen umsehen · Rad zoomen · E benutzen · 1–9 im Dialog · Esc Menü':'Links ziehen zum Laufen · rechts wischen zum Umsehen';$('#wHint').classList.remove('gone');clearTimeout(window._hintT);window._hintT=setTimeout(()=>{const h=$('#wHint');if(h)h.classList.add('gone');},9000);msg(st===0?'Die Ruinen deines Tempels. Baue sie mit deinen Ritualen auf.':'Willkommen in deiner Welt');
   loop();
 }
 function close(){
@@ -740,5 +782,5 @@ $('#gAgain').onclick=()=>{const c=G&&G.reward;finishG(true);startPoles();};
 function finishG(again){if(!G)return;cancelAnimationFrame(G.raf);g3dEnd();const chi=G.state==='end'?G.reward:0;G=null;$('#game').hidden=true;if(chi){DW.gameReward(chi,'Pflaumenblüten-Pfähle');if(W)msg('+'+chi+' Chi gutgeschrieben');}}
 window.addEventListener('resize',()=>{if(G)sizeG();});
 
-window.DWWorld={open,close,refreshRoom,goRoom};
+window.DWWorld={open,close,refreshRoom,goRoom,checkin};
 })();

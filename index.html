@@ -467,10 +467,12 @@ body.menuOver #world{filter:brightness(.42) saturate(.8);pointer-events:none}
 body.menuOver .loc,body.menuOver #handle{display:none}
 body.menuOver #world .w-top,body.menuOver #world .w-pts,body.menuOver #world .w-hint,body.menuOver #world .w-dlg{visibility:hidden}
 body.menuOver #hud::before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(8,8,10,.35),rgba(8,8,10,.7));pointer-events:none;z-index:-1}
-.w-hint{white-space:normal!important;max-width:calc(100% - 32px);text-align:center;line-height:1.4}
+.w-hint{bottom:calc(env(safe-area-inset-bottom) + 96px)!important;white-space:normal!important;max-width:calc(100% - 32px);text-align:center;line-height:1.4}
 .w-prompt{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(14,15,18,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--stroke);padding:8px 8px 8px 16px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap;animation:spIn .3s}
 .w-msg{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translate(-50%,-10px);opacity:0;background:rgba(14,15,18,.82);padding:10px 16px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
 .w-msg.show{opacity:1;transform:translate(-50%,0)}
+.w-float{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font-weight:800;font-size:20px;letter-spacing:.02em;pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,.6);white-space:nowrap;z-index:3}
+.w-steps{position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,8,10,.55);z-index:6}.w-steps[hidden]{display:none}.w-steps>div{background:#141518;border:1px solid var(--stroke);border-radius:22px;padding:20px;width:min(340px,88vw)}.w-steps h3{margin:0 0 4px;font-size:18px}.w-steps p{margin:0 0 14px;color:rgba(236,235,230,.65);font-size:13.5px;line-height:1.45}.w-steps input{width:100%;font:600 28px 'IBM Plex Mono',ui-monospace,monospace;background:#0c0d0f;color:#ecebe6;border:1px solid var(--stroke);border-radius:14px;padding:12px 14px;margin-bottom:12px}.w-steps .row{display:flex;gap:8px}.w-steps button{flex:1;padding:13px;border-radius:14px;font-weight:700}
 .w-l{display:flex;gap:8px;align-items:center}.w-rank{display:flex;align-items:center;gap:8px;background:rgba(14,15,18,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:999px;padding:4px 14px 4px 4px;text-align:left}.w-rank b{display:block;font-size:13.5px}.w-rank small{display:block;font-size:11px;color:rgba(236,235,230,.6)}.w-por{width:34px;height:34px;border-radius:50%;overflow:hidden;background:#222;display:block}.w-por img{width:100%;height:100%;object-fit:cover}
 .w-pts{position:absolute;top:calc(env(safe-area-inset-top) + 64px);left:12px;right:12px;display:flex;flex-wrap:nowrap;overflow:hidden;gap:4px;pointer-events:none}.w-pts span{display:flex;align-items:center;gap:4px;background:rgba(14,15,18,.7);padding:3px 7px;border-radius:999px;font-size:11px;white-space:nowrap}.w-pts i{width:7px;height:7px;border-radius:50%;display:block}
 .w-dlg-b button{text-align:left}
@@ -764,7 +766,7 @@ const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters,
 const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
 const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
 const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:10,pct:.8,win:7,slots:3},{n:'Bruder · Schwester',days:21,pct:.8,win:14,slots:4},{n:'Hüter',days:30,pct:.85,win:21,slots:5},{n:'Lehrer',days:45,pct:.85,win:30,slots:6},{n:'Meister',days:60,pct:.9,win:30,slots:7},{n:'Grossmeister',days:90,pct:.9,win:60,slots:8}];
-const EVENTS=[{id:'brunnen',n:'Der Brunnen ist versandet',cost:{nahrung:30,kraft:20},rw:'Brunnen auf dem Dorfplatz'},{id:'medizin',n:'Fieber im Dorf: Medizin holen',cost:{schritte:4000,ruhe:30},rw:'Eine Heilerin zieht ins Dorf'},{id:'bruecke',n:'Die Brücke über den Bach ist gebrochen',cost:{kraft:60,ordnung:20},rw:'Der Weg zum Markt ist offen'},{id:'schule',n:'Die Kinder wollen lesen lernen',cost:{weisheit:50},rw:'Eine Dorfschule'},{id:'ernte',n:'Erntefest vorbereiten',cost:{nahrung:50,ruhe:30,schritte:6000},rw:'Markttag einmal pro Woche'},{id:'dach',n:'Sturm: Dächer flicken',cost:{kraft:40,ordnung:30},rw:'Neue Dächer'},{id:'laternen',n:'Laternen für das Lichterfest',cost:{ruhe:40,weisheit:20},rw:'Laternen über dem Tal'},{id:'pfad',n:'Den Bergpfad freiräumen',cost:{schritte:8000,kraft:30},rw:'Pilger finden den Weg'}];
+const EVENTS=[{id:'brunnen',n:'Der Brunnen ist versandet',cost:{nahrung:30,kraft:20},rw:'Brunnen auf dem Dorfplatz',me:'Wasserkrug für deine Zelle'},{id:'medizin',n:'Fieber im Dorf: Medizin holen',cost:{schritte:4000,ruhe:30},rw:'Eine Heilerin zieht ins Dorf',me:'Teekanne mit Kräutertee in der Küche'},{id:'bruecke',n:'Die Brücke über den Bach ist gebrochen',cost:{kraft:60,ordnung:20},rw:'Der Weg zum Markt ist offen',me:'Gefährte: ein Esel am Tor'},{id:'schule',n:'Die Kinder wollen lesen lernen',cost:{weisheit:50},rw:'Eine Dorfschule',me:'Leuchtende Schriftrollen in der Bibliothek'},{id:'ernte',n:'Erntefest vorbereiten',cost:{nahrung:50,ruhe:30,schritte:6000},rw:'Markttag einmal pro Woche',me:'Seltene Robe «Ahorn»'},{id:'dach',n:'Sturm: Dächer flicken',cost:{kraft:40,ordnung:30},rw:'Neue Dächer',me:'Gebetsfahnen über dem Hof'},{id:'laternen',n:'Laternen für das Lichterfest',cost:{ruhe:40,weisheit:20},rw:'Laternen über dem Tal',me:'Laternen entlang des Hofwegs'},{id:'pfad',n:'Den Bergpfad freiräumen',cost:{schritte:8000,kraft:30},rw:'Pilger finden den Weg',me:'Pilgerstab am Klostertor'}];
 const VSTUFE=[{n:'Weiler',at:0},{n:'Dorf',at:4},{n:'Marktflecken',at:12},{n:'Kleinstadt',at:25}];
 function catOf(r){const n=(r.name||'').toLowerCase();if(r.cat)return r.cat;if(/schritt|wander|gehen/.test(n))return 'schritte';if(/aufsteh|tagwache|wach|schlaf|licht aus|bildschirm|handy|kalt|dusch/.test(n))return 'ordnung';if(/wasser|essen|früh|tee|trink|ernähr|koch/.test(n))return 'nahrung';if(/medit|atem|stille|achtsam|dankbar|spazier|natur/.test(n))return 'ruhe';if(/lauf|kraft|train|mobil|dehn|beweg|sport|yoga/.test(n))return 'kraft';if(/lies|lese|lern|lektion|tagebuch|journal|buch/.test(n))return 'weisheit';return r.type==='timer'?'ruhe':'ordnung';}
 function roomOf(r){if(r.room)return r.room;const n=(r.name||'').toLowerCase(),c=catOf(r);if(/kalt|dusch/.test(n))return 'bad';if(/spazier|dankbar|natur|garten/.test(n))return 'garten';return {ordnung:'zelle',nahrung:'kueche',ruhe:'halle',kraft:'hof',weisheit:'bibliothek',schritte:'tor'}[c];}
@@ -1530,9 +1532,11 @@ window.DW={
   pilgrims:()=>PILGER.map(p=>Object.assign({open:(S.rank||0)>=p.rank,rankName:KRANG[p.rank].n,visited:(S.pilgrim||{})[p.ch]===weekId()},p)),
   pilgrimVisit(ch){S.pilgrim=S.pilgrim||{};if(S.pilgrim[ch]===weekId())return false;S.pilgrim[ch]=weekId();const p=PILGER.find(x=>x.ch===ch);addPts(p.cat,20);save();renderAll();return true;},
   pts:()=>Object.entries(CATS).map(([k,c])=>({k,n:c.n,c:c.c,v:S.pts[k]||0})),
-  village:()=>{const ev=curEvent(),V=S.village;return{ev,paid:V.paid,ok:V.ok,done:V.done,lvl:vLevel(),stufe:VSTUFE[vLevel()].n};},
+  village:()=>{const ev=curEvent(),V=S.village;return{ev,paid:V.paid,ok:V.ok,done:V.done,lvl:vLevel(),stufe:VSTUFE[vLevel()].n,got:V.got||[]};},
+  stepsToday:()=>today()._steps||0,
+  logSteps(n){n=Math.max(0,Math.min(40000,Math.round(+n||0)));const d=today(),old=d._steps||0;if(n<=old)return 0;const add=n-old;d._steps=n;addPts('schritte',add);save();renderAll();if(window.DWWorld)DWWorld.checkin('schritte',add);return add;},
   invest(){const ev=curEvent(),V=S.village;if(V.ok)return{ok:true};let any=false;for(const [k,v] of Object.entries(ev.cost)){const need=v-(V.paid[k]||0),give=Math.min(need,S.pts[k]||0);if(give>0){V.paid[k]=(V.paid[k]||0)+give;S.pts[k]-=give;any=true;}}
-    const full=Object.entries(ev.cost).every(([k,v])=>(V.paid[k]||0)>=v);if(full){V.ok=true;V.done++;}save();renderAll();return{any,full};},
+    const full=Object.entries(ev.cost).every(([k,v])=>(V.paid[k]||0)>=v);if(full){V.ok=true;V.done++;V.got=V.got||[];if(!V.got.includes(ev.id))V.got.push(ev.id);if(ev.id==='ernte'&&!S.inv.robes.includes('ahorn'))S.inv.robes.push('ahorn');}save();renderAll();if(full)playSplashes([{k:'Das Dorf dankt dir',t:ev.rw,s:'DORF: '+VSTUFE[vLevel()].n.toUpperCase()},{k:'Dein Geschenk',t:ev.me,s:'IM KLOSTER SICHTBAR'}],()=>{});return{any,full,ev};},
   name:()=>S.name||'Novize',
   day(k,v){const d=today();if(v!==undefined){d[k]=v;save();}return d[k];},
   lesson:()=>{const L=LESSONS[lessonIdx()];return{t:L.t,m:L.m,cat:L.cat,done:!!lessonToday()};},
@@ -1652,21 +1656,21 @@ function complete(r,val){
   if(r.type==='amount'){rec.v=Math.round(((rec.v||0)+val)*10)/10;rec.c=Math.round(sh*Math.min(1,rec.v/r.cfg.goal));rec.d=rec.v>=r.cfg.goal;}
   else if(r.type==='window'){const f=wakeFactor(r);rec.v=true;rec.c=Math.round(sh*f);rec.d=true;rec.t=Date.now();rec.f=f;}
   else{rec.v=true;rec.c=sh;rec.d=true;}
-  if(rec.d&&!rec.p){rec.p=1;const cat=r.cat||catOf(r);if(cat==='schritte'&&r.type==='amount')addPts('schritte',Math.round(rec.v));else addPts(cat,Math.round(10*(rec.f!=null?rec.f:1)));}
+  let gain=null;if(rec.d&&!rec.p){rec.p=1;const cat=r.cat||catOf(r);const n=(cat==='schritte'&&r.type==='amount')?Math.round(rec.v):Math.round(10*(rec.f!=null?rec.f:1));addPts(cat,n);gain={cat,n};}
   if(r.type==='amount'&&(r.cat||catOf(r))==='schritte'&&rec.p){rec.ps=rec.ps||0;}
   d[r.id]=rec;const dl=dueList();d._n=dl.length;
   const perfect=!d._b&&dl.length>0&&dl.every(x=>recDone(x,d[x.id]));if(perfect){d._b=15;if(!d._chest)d._chest='ready';}
   if(rec.d&&!rec.e){rec.e=1;S.energy=Math.min(6,(S.energy||0)+1);}if(perfect)S.energy=Math.min(6,S.energy+1);
   let firstChest=false;if(!S.inv.first&&rec.d){S.inv.first=true;if(!d._chest){d._chest='ready';firstChest=true;}}
-  save();if(window.DWWorld&&DWWorld.refreshRoom)DWWorld.refreshRoom();afterGain(before,pB,lvB,rB,seB,{title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
+  save();if(window.DWWorld&&DWWorld.refreshRoom){DWWorld.refreshRoom();if(gain&&DWWorld.checkin)DWWorld.checkin(gain.cat,gain.n);}afterGain(before,pB,lvB,rB,seB,{gain,title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
 }
 function afterGain(before,pB,lvB,rB,seB,o){
   duelState();const after=totalChi(),pA=prog(after),lvA=lvOf(after),rA=rankIdx(after);updateBest();
   renderTop(before);renderPane();
   const el=o.elId&&document.getElementById(o.elId);if(el){const f=document.createElement('span');f.className='float';f.textContent='+'+(after-before)+' CHI';el.appendChild(f);setTimeout(()=>f.remove(),1400);}
   const q=[];
-  q.push({k:o.kicker,t:o.title,s:'+'+(after-before)+' CHI'});
-  if(o.perfect)q.push({k:'Alle Missionen',t:'Perfekter Tag',s:'+15 CHI BONUS'});
+  q.push({k:o.kicker,t:o.title,s:o.gain?('+'+o.gain.n+' '+CATS[o.gain.cat].n).toUpperCase():(o.title==='Fortschritt'?'WEITER SO':'+'+(after-before)+' CHI')});
+  if(o.perfect)q.push({k:'Alle Routinen erfüllt',t:'Der Tag ist vollendet',s:'DAS KLOSTER LEUCHTET'});
   if(o.chest)q.push({k:o.first?'Willkommensgeschenk':'Belohnung',t:'Truhe erhalten',s:'IN DEN MISSIONEN ÖFFNEN'});
   if(pB.duel&&pA.ch>pB.ch)q.push({k:'Schattenduell',t:'Schatten besiegt',s:'SIEBEN PERFEKTE TAGE'});
   if(lvA>lvB)q.push({k:'Level up',t:'Level '+lvA,s:RANKS[rA][1].toUpperCase()});
