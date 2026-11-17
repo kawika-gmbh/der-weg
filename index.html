@@ -534,7 +534,7 @@ body.shadowed .kbw{filter:saturate(.55) brightness(.78) contrast(1.05)}
       </span>
     </button>
     <div class="topr">
-      <div class="chi cut-s"><small>CHI</small><b id="chiVal">0</b></div><div class="chi en" title="Energie für den Spielmodus"><i class="bolt"></i><b id="enVal">3</b></div>
+      <div class="chi cut-s" title="Punkte für das Dorf"><small>PUNKTE</small><b id="chiVal">0</b></div><div class="chi en" title="Energie für den Spielmodus"><i class="bolt"></i><b id="enVal">3</b></div>
       <button class="icon cut-s" id="setBtn" aria-label="Einstellungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
     </div>
   </header>
@@ -771,7 +771,7 @@ function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
 const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
 const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
-const APPV='0.9 Beta · 17.11.2026';
+const APPV='0.10 Beta · 17.11.2026';
 const ERRLOG=[];window.addEventListener('error',e=>{ERRLOG.push((e.message||'')+' @'+((e.filename||'').split('/').pop())+':'+(e.lineno||''));if(ERRLOG.length>6)ERRLOG.shift();});window.addEventListener('unhandledrejection',e=>{ERRLOG.push('P '+String(e.reason&&e.reason.message||e.reason).slice(0,120));if(ERRLOG.length>6)ERRLOG.shift();});
 const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:7,pct:.7,win:7,slots:3},{n:'Bruder · Schwester',days:14,pct:.75,win:10,slots:4},{n:'Hüter',days:21,pct:.8,win:14,slots:5},{n:'Lehrer',days:30,pct:.85,win:21,slots:6},{n:'Meister',days:45,pct:.85,win:30,slots:7},{n:'Grossmeister',days:75,pct:.9,win:45,slots:8}];
 const EVENTS=[{id:'brunnen',n:'Der Brunnen ist versandet',cost:{nahrung:30,kraft:20},rw:'Brunnen auf dem Dorfplatz',me:'Wasserkrug für deine Zelle'},{id:'medizin',n:'Fieber im Dorf: Medizin holen',cost:{schritte:4000,ruhe:30},rw:'Eine Heilerin zieht ins Dorf',me:'Teekanne mit Kräutertee in der Küche'},{id:'bruecke',n:'Die Brücke über den Bach ist gebrochen',cost:{kraft:60,ordnung:20},rw:'Der Weg zum Markt ist offen',me:'Gefährte: ein Esel am Tor'},{id:'schule',n:'Die Kinder wollen lesen lernen',cost:{weisheit:50},rw:'Eine Dorfschule',me:'Leuchtende Schriftrollen in der Bibliothek'},{id:'ernte',n:'Erntefest vorbereiten',cost:{nahrung:50,ruhe:30,schritte:6000},rw:'Markttag einmal pro Woche',me:'Seltene Robe «Ahorn»'},{id:'dach',n:'Sturm: Dächer flicken',cost:{kraft:40,ordnung:30},rw:'Neue Dächer',me:'Gebetsfahnen über dem Hof'},{id:'laternen',n:'Laternen für das Lichterfest',cost:{ruhe:40,weisheit:20},rw:'Laternen über dem Tal',me:'Laternen entlang des Hofwegs'},{id:'pfad',n:'Den Bergpfad freiräumen',cost:{schritte:8000,kraft:30},rw:'Pilger finden den Weg',me:'Pilgerstab am Klostertor'}];
@@ -1469,10 +1469,10 @@ function scrollQuiz(id){
 function keepScroll(id){
   const ch=+id.split('-')[0];S.inv.ws.push(id);
   const yd=dk(new Date(Date.now()-864e5)),td=dk(new Date()),st=S.inv.wsStreak;st.n=st.d===yd?st.n+1:st.d===td?st.n:1;st.d=td;
-  let bonus=`Bestanden · +3 Chi${st.n>1?` · Serie: ${st.n} Tage`:''}`;
+  let bonus=`Bestanden · +3 Weisheit${st.n>1?` · Serie: ${st.n} Tage`:''}`;
   if(st.n>0&&st.n%7===0){const pool=[...ANIMALS.filter(a=>!S.inv.animals.includes(a.id)).map(a=>({t:'animal',id:a.id,n:a.n})),...CROBES.filter(c=>!S.inv.robes.includes(c.id)).map(c=>({t:'robe',id:c.id,n:c.n}))];
     if(pool.length){const it=pool[Math.floor(Math.random()*pool.length)];if(it.t==='animal')S.inv.animals.push(it.id);else S.inv.robes.push(it.id);bonus+=`<br>7 Tage in Folge! Neu: ${esc(it.n)}`;}
-    else{addBonus('_s7',30);bonus+='<br>7 Tage in Folge! +30 Chi';}}
+    else{addBonus('_s7',30);bonus+='<br>7 Tage in Folge! +30 Ordnung';}}
   if(!wsLeft(ch).length&&!S.inv.story.includes(ch)){S.inv.story.push(ch);bonus+=`<br>Kapitel vollständig: Meister Shen erzählt dir ein Stück seiner Geschichte.`;}
   const before=totalChi(),pB=prog(before),lvB=lvOf(before),rB=rankIdx(before),seB=curSeason();today()._scroll=3;save();
   scPending=()=>afterGain(before,pB,lvB,rB,seB,{kicker:'Welt',title:'Schriftrolle behalten'});showScroll(id,bonus);
@@ -1518,6 +1518,7 @@ window.DW={
   avatarGroup:()=>avatarGroup(),
   applyLook:()=>applyLook(S.avatar),
   tod:()=>todNow(),
+  todayList:()=>{const d=today();return dueList().map(r=>{const rm=r.room||roomOf(r);return{id:r.id,name:r.name,room:rm,roomN:ROOMS[rm].n,type:r.type,cfg:r.cfg,done:!!recDone(r,d[r.id])};});},
   portrait:()=>portraitURL,doneToday:()=>{const d=today(),l=dueList();return{done:l.filter(r=>recDone(r,d[r.id])).length,n:l.length};},
   openMenu:t=>openMenu(t),closeMenu:()=>closeMenu(),
   flag(k,v){S.flags=S.flags||{};if(v!==undefined){S.flags[k]=v;save();}return S.flags[k];},
@@ -1573,13 +1574,13 @@ $('#player').onclick=()=>setTab('op');
 
 function renderTop(from){
   const chi=totalChi(),ri=rankIdx(chi),lv=lvOf(chi),vp=viewProg(),se=curSeason();
-  $('#pName').textContent=S.name||'Novize';$('#enVal').textContent=S.energy||0;$('#pIns').innerHTML=insignia(ri);$('#pLv').textContent='LV '+String(lv).padStart(2,'0');$('#pRank').textContent=RANKS[ri][1];
+  $('#pName').textContent=S.name||'Novize';$('#enVal').textContent=S.energy||0;$('#pIns').innerHTML=insignia(ri);$('#pLv').textContent='LV '+String(lv).padStart(2,'0');$('#pRank').textContent=KRANG[S.rank||0].n;
   $('#emblem').innerHTML=portraitURL?`<img src="${portraitURL}" alt="">`:avatarSVG(S.avatar,'26 10 68 68');
   {const a0=chiForLv(lv),b0=chiForLv(lv+1);$('#emblem').style.setProperty('--xp',lv>=LVMAX?100:Math.round((chi-a0)/(b0-a0)*100));}
   const a=chiForLv(lv),b=chiForLv(lv+1);$('#xpFill').style.width=(lv>=LVMAX?100:((chi-a)/(b-a))*100)+'%';
   $('#xpTxt').textContent=lv>=LVMAX?'MAX LEVEL':`${n0(chi-a)} / ${n0(b-a)} XP`;
-  const el=$('#chiVal');
-  if(from!=null&&!RM){const t0=performance.now();const st=n=>{const p=Math.min(1,(n-t0)/700);el.textContent=n0(Math.round(from+(chi-from)*(1-Math.pow(1-p,3))));if(p<1)requestAnimationFrame(st);};requestAnimationFrame(st);}else el.textContent=n0(chi);
+  const el=$('#chiVal');{const tp=Object.values(S.pts||{}).reduce((a,b)=>a+b,0);el.textContent=n0(tp);from=null;}
+  if(false){const t0=performance.now();const st=n=>{const p=Math.min(1,(n-t0)/700);el.textContent=n0(Math.round(from+(chi-from)*(1-Math.pow(1-p,3))));if(p<1)requestAnimationFrame(st);};requestAnimationFrame(st);}
   const pv=pvCh!=null||pvSt!=null||pvSe;
   $('#loc1').textContent=`Kapitel ${String(vp.ch+1).padStart(2,'0')} // ${CH[vp.ch].n}`;
   $('#loc2').textContent=`STUFE ${vp.st}/5: ${STAGES[vp.ch][vp.st].toUpperCase()} · ${SEASONS[se].n.toUpperCase()} · TAG ${String(Math.min(365,dayN())).padStart(3,'0')}/365${(()=>{const du=duelState();return du&&!du.won?' · SCHATTENDUELL '+du.n+'/7':dmgNow()?' · BESCHÄDIGT':'';})()}${pv?' · VORSCHAU':''}`;
@@ -1614,7 +1615,7 @@ function renderMissions(){
   if(n)h+=`<div class="segs">${list.map(r=>`<i class="${recDone(r,d[r.id])?'on':''}"></i>`).join('')}</div>`;
   h+=shadowCard()+klosterCards();
   if(d._chest==='ready')h+=`<button class="chestcard" id="openChest"><span class="chest-mini">${CHEST_SVG}</span><span><b>Truhe bereit</b><span>Tippen zum Öffnen</span></span><span class="act">Öffnen</span></button>`;
-  if(!lessonToday())h+=`<button class="teaser" data-go="dojo"><span class="mi" style="width:36px;height:36px">${icon('book')}</span><span><b>Tageslektion offen</b><span>${LESSONS[lessonIdx()].t} · +10 Chi</span></span></button>`;
+  if(!lessonToday())h+=`<button class="teaser" data-go="dojo"><span class="mi" style="width:36px;height:36px">${icon('book')}</span><span><b>Tageslektion offen</b><span>${LESSONS[lessonIdx()].t} · +10 Weisheit</span></span></button>`;
   if(d._rest)h+=`<div class="card"><h3>Heute ist Ruhetag</h3><p>Erholung ist Teil des Trainings. Der Tag zählt nicht als verpasst, und deine Jahreszeit bleibt stabil.</p>${Object.keys(d).some(k=>k[0]!=='_')?'':'<button class="act ghost" style="align-self:flex-start" id="restOff">Ruhetag aufheben</button>'}</div>`;
   else if(!n)h+=`<div class="card"><h3>Heute ist nichts fällig</h3><p>Deine Wochenziele sind erreicht und heute stehen keine festen Routinen an. Geniess den Tag.</p></div>`;
   h+='<ul class="list">';
@@ -1674,7 +1675,7 @@ function complete(r,val){
   let firstChest=false;if(!S.inv.first&&rec.d){S.inv.first=true;if(!d._chest){d._chest='ready';firstChest=true;}}
   save();if(window.DWWorld&&DWWorld.refreshRoom){DWWorld.refreshRoom();if(gain&&gain.n&&DWWorld.checkin)DWWorld.checkin(gain.cat,gain.n);}afterGain(before,pB,lvB,rB,seB,{gain,title:rec.d?'Ritual erfüllt':'Fortschritt',kicker:r.name,perfect,elId:'ms-'+r.id,chest:perfect||firstChest,first:firstChest});
 }
-function afterGain(before,pB,lvB,rB,seB,o){
+function afterGain(before,pB,lvB,rB,seB,o){if(!o.gain&&window._lastBonus){o.gain=window._lastBonus;}window._lastBonus=null;
   duelState();const after=totalChi(),pA=prog(after),lvA=lvOf(after),rA=rankIdx(after);updateBest();
   renderTop(before);renderPane();
   const el=o.elId&&document.getElementById(o.elId);if(el){const f=document.createElement('span');f.className='float';f.textContent='+'+(after-before)+' CHI';el.appendChild(f);setTimeout(()=>f.remove(),1400);}
@@ -1711,7 +1712,8 @@ function lessonIdx(){return (Math.max(1,dayN())-1+(S.cycle-1)*7)%LESSONS.length;
 function lessonToday(){return S.learn.log[dk(new Date())];}
 function weekLessons(){const mk=mondayKey(new Date());return Object.entries(S.learn.log).filter(([k])=>k>=mk).map(([k,v])=>v);}
 function practiceIdx(){return Math.floor((pk(mondayKey(new Date()))-pk(mondayKey(pk(S.cycleStart))))/(7*DAY))%PRACTICE.length;}
-function addBonus(key,chi){const d=today();d[key]=(d[key]||0)+chi;save();}
+const BCAT={_l:'weisheit',_x:'weisheit',_p:'weisheit',_q:'ruhe',_g:'kraft',_s7:'ordnung',_ws:'weisheit'};
+function addBonus(key,chi){const d=today();d[key]=(d[key]||0)+chi;const c=BCAT[key];if(c&&chi>0){addPts(c,chi);window._lastBonus={cat:c,n:chi};}save();}
 function renderDojo(){
   const L=LESSONS[lessonIdx()],lt=lessonToday(),wk=mondayKey(new Date()),wl=weekLessons(),ex=S.learn.exams[wk],pr=PRACTICE[practiceIdx()],prDone=S.learn.practice[wk];
   let h=`<div class="ph"><div><span class="lbl">Dojo</span><h2>Lernen fürs Leben</h2></div><span class="num">${Object.keys(S.learn.log).length} LEKTIONEN</span></div>`;
