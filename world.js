@@ -581,6 +581,21 @@ function moodReply(k,cb){const next=()=>{endTalk();cb&&cb();};
 function freeDlg(){const F=DW.FREE;dlgK('Freie Einheit','Spontan trainiert oder etwas für dich getan? Was war es?',F.map(([n,c,e])=>[e+' '+n,()=>freeDur(n)]).concat([['Abbrechen',()=>endTalk()]]));}
 function freeDur(n){dlgK('Freie Einheit · '+n,'Wie lange ungefähr?',[15,30,45,60,90].map(m=>[m+' Min',()=>{const r=DW.freeLog(n,m);endTalk();msg(r.cap?`${n} eingetragen. Das Tageslimit für freie Einheiten ist erreicht.`:`${n} · ${m} Min eingetragen · +${r.chi} ${(DW.pts().find(p=>p.k===r.cat)||{}).n||''}`);DW.bell(.8);ptsHud();}]).concat([['Zurück',()=>freeDlg()]]));}
 
+
+/* ---------- Dorfbewohner sehen verschieden aus ---------- */
+function dressUp(N,seed,name){const o=N.o,r=rng(seed*97+13),nm=name||'';const hs=.93+r()*.12,gs=.95+r()*.15;if(!/^Kind/.test(nm)){o.scale.x*=gs;o.scale.z*=gs;o.scale.y*=hs;}
+  let head=null;o.traverse(c=>{if(c.isBone&&c.name==='spine006')head=c;});const acc=[];const M=(c,op)=>new TH.MeshStandardMaterial(Object.assign({color:c,roughness:.9},op||{}));
+  const hat=/Bauer|Fischer|Zimmermann/.test(nm)||(!/Kind|Älteste|Wirtin|Händlerin|Weberin|Schmied/.test(nm)&&r()<.5);
+  if(hat&&head){const h=new TH.Group();const c=new TH.Mesh(new TH.ConeGeometry(.33,.17,18,1,true),M('#c8a868',{side:TH.DoubleSide}));c.position.y=.06;h.add(c);const tip=new TH.Mesh(new TH.SphereGeometry(.035,8,6),M('#8a6a3a'));tip.position.y=.15;h.add(tip);W.root.add(h);acc.push({m:h,b:head,off:.27});}
+  if(/Zimmermann/.test(nm)&&head){const hb=new TH.Mesh(new TH.TorusGeometry(.105,.018,6,16),M('#e8e2d0'));hb.rotation.x=Math.PI/2;W.root.add(hb);acc.push({m:hb,b:head,off:.19});}
+  if(/Händlerin|Weberin|Wirtin|Schmied|Zimmermann|Bauer/.test(nm)){const ap=new TH.Mesh(new TH.PlaneGeometry(.36,.6),M(/Schmied/.test(nm)?'#4a3426':['#2a3a5a','#e8e0cc','#7a2a22'][seed%3],{side:TH.DoubleSide}));ap.position.set(0,.72,.17);o.add(ap);}
+  if(/Bauer|Weberin/.test(nm)||(!/Kind|Älteste/.test(nm)&&r()<.25)){const bk=new TH.Mesh(new TH.CylinderGeometry(.17,.13,.42,10,1,true),M('#9a7a48',{side:TH.DoubleSide}));bk.position.set(0,1.18,-.24);bk.rotation.x=.15;o.add(bk);}
+  if(/Älteste|Fischer|Schmied/.test(nm)||(!/Kind|in\b|Händlerin|Weberin|Wirtin|Älteste Mei/.test(nm)&&r()<.3)){if(head&&!/Mei|Händlerin|Weberin|Wirtin/.test(nm)){const bd=new TH.Mesh(new TH.ConeGeometry(.05,.16,8),M(/Älteste|Fischer/.test(nm)?'#d8d4cc':'#2a2420'));bd.rotation.x=Math.PI;W.root.add(bd);acc.push({m:bd,b:head,off:0,fwd:.11});}}
+  if(/Älteste/.test(nm)){const cane=new TH.Mesh(new TH.CylinderGeometry(.018,.022,1.1,6),M('#5a3e28'));cane.position.set(.28,.55,.12);cane.rotation.z=-.08;o.add(cane);}
+  if(acc.length){N.acc=acc;(W.accs=W.accs||[]).push(N);}}
+const _hv=new TH.Vector3();
+function accUpdate(){(W.accs||[]).forEach(N=>{if(!N.o.parent)return;N.acc.forEach(a=>{a.b.getWorldPosition(_hv);const ry=N.o.rotation.y;a.m.position.set(_hv.x+Math.sin(ry)*(a.fwd||0),_hv.y+a.off,_hv.z+Math.cos(ry)*(a.fwd||0));a.m.rotation.y=ry;});});}
+
 /* ---------- Begehbare Dorfhäuser ---------- */
 const VLORE=['Vor hundert Jahren stand das Kloster leer. Ein einziger Mönch fegte jeden Morgen den Hof – bis andere kamen, um zu sehen, warum.','Der Bach heisst «Stiller Bach», weil er im Winter unter dem Eis weiterfliesst. Man hört ihn nur, wenn man still ist.','Die Drachen an der Treppe wurden von Steinmetzen aus dem Tal gehauen. Für jede Stufe ein Tag Arbeit.','Wer im Dorf geboren wird, pflanzt einen Kirschbaum. Die ältesten stehen schon lange nicht mehr – aber die Wurzeln sind noch da.','Mei sagt: «Ein Dorf ist wie ein Körper. Wenn eine Hand hilft, wird das ganze Dorf stärker.»','Früher kamen die Mönche jeden Markttag herunter. Dann kam der lange Winter, und niemand stieg mehr hinab. Bis jetzt.'];
 function vInterior(o){const{x,z,face,s,kind,g,M,plast,beam,night,lvl,roofOk}=o,rot=face===1?Math.PI/2:face===-1?-Math.PI/2:face===2?Math.PI:0,w=4.2*s,d=3.4*s,H=2.3*s,y=groundH(x,z),fy=.3;
@@ -924,7 +939,7 @@ function vnpcs(lvl){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)retu
   const mk=(robe,skin,hair,cfg)=>{const o=MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});if(cfg.sc)o.scale.multiplyScalar(cfg.sc);W.root.add(o);const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(0);}});
     const N={o,mx,A,i:0,wait:Math.random()*3,mode:'walk',pts:cfg.pts,sp:cfg.sp||.8,cur:null,name:cfg.name};o.position.set(cfg.pts[0][0],groundH(cfg.pts[0][0],cfg.pts[0][1]),cfg.pts[0][1]);
     const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:cfg.elder?'Sprechen':'Grüssen',act:()=>{N.wait=Math.max(N.wait,3);N.face=true;if(cfg.elder){roomDialog('tor');return;}const ev=DW.village();const line=Math.random()<.4&&ev.ev&&!ev.ok?`Hast du gehört? ${ev.ev.n}. Die Älteste Mei sammelt Hilfe.`:VSAY[Math.floor(Math.random()*VSAY.length)];msg(cfg.name+': «'+line+'»');DW.bell(.7);}};W.inter.push(it);N.it=it;
-    ['Bow'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));W.npcs.push(N);};
+    ['Bow'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));W.npcs.push(N);try{dressUp(N,W.npcs.length,cfg.name);}catch(e){}};
   mk('#5a4a6a','#c99a72','#d8d4cc',{name:'Älteste Mei',elder:1,pts:[[1.8,50.2]],sp:.3});
   const V=[['#4a5a6a','#c9926a','#2a2420','Bauer Jun',(has=>has?[[-3,44],[-1.2,58],[0,61],[0,67.4],[-13,67.4],[-13,67.6],[0,67.6],[0,61],[1.2,58],[4,44]]:[[-3,44],[-3,58],[4,58],[4,44]])((DW.village().got||[]).includes('bruecke')),.8],['#7a4a3a','#a8784f','#1a1614','Händlerin Yu',[[-8,53],[8,53],[8,51],[-8,51]],.7],['#3a4a3a','#e0b896','#3a2a20','Fischer Bo',[[-20,61],[20,61]],.6],
     ['#6a5a3a','#8a5a3a','#1a1614','Weberin Sun',[[-14,44],[-14,56],[-8,56]],.7],['#4a3a5a','#c99a72','#2a2420','Kind Ling',[[-4,48],[4,48],[4,55],[-4,55]],1.2,.7],['#3a5a6a','#a8784f','#1a1614','Kind Pei',[[10,48],[3,54],[10,58]],1.3,.68]];
@@ -1310,7 +1325,7 @@ function loop(){
   if(W.talking&&W.talkPos&&Math.hypot(av.position.x-W.talkPos.x,av.position.z-W.talkPos.z)>2.5)endTalk();
   if(W.fallTex)W.fallTex.offset.y+=dt*1.6;
   if(W.flagsArr.length&&!RM)W.flagsArr.forEach((f,i)=>{f.rotation.x=Math.sin(t*3+i*.7)*.25;});
-  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);tensionUpdate(.016,W.clock.elapsedTime);seekerUpdate(.016);fwUpdate(.016,W.clock.elapsedTime);sitUpdate(.016);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
+  impUpdate();floatUpdate(W.clock.elapsedTime);lifeUpdate();vUpdate(.016,W.clock.elapsedTime);vUpdate2(.016,W.clock.elapsedTime);questUpdate();marksAnim(W.clock.elapsedTime);tensionUpdate(.016,W.clock.elapsedTime);seekerUpdate(.016);fwUpdate(.016,W.clock.elapsedTime);accUpdate();sitUpdate(.016);if(!W.pilgrim&&W.av){const iv=W.av.position.z>37.6?1:0;if(iv!==(W.inVillage|0)){W.inVillage=iv;if(iv){const v=DW.village();msg(`Das Dorf im Tal · ${v.stufe}`);}else if(W.av.position.z<26)msg('Zurück im Kloster');}}if(W.tc)tcTick();weatherUpdate(.016);if(W.med)medTick();try{sndUpdate(.016,W.moving);}catch(e){}W.R.render(W.scene,W.cam);
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
