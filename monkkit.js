@@ -43,15 +43,16 @@ function rig(){
   const f=new TH.DirectionalLight(0x9fb4ff,.5);f.position.set(-3,1,3);sc.add(f);
   const cam=new TH.PerspectiveCamera(28,1,.1,50);R={r,sc,cam,cv};return R;
 }
-function borrow(){const m=gltf.scene;const st={par:m.parent,pos:m.position.clone(),rot:m.rotation.clone()};rig().sc.add(m);m.position.set(0,0,0);m.rotation.set(0,0,0);return st;}
-function giveBack(st){const m=gltf.scene;if(st.par&&st.par!==R.sc){st.par.add(m);m.position.copy(st.pos);m.rotation.copy(st.rot);}else{R.sc.remove(m);}}
+let KIT=null;function setKit(g){KIT=g;}const SCN=()=>KIT?KIT.scene:gltf.scene,ANI=()=>KIT?KIT.animations:gltf.animations;
+function borrow(){const m=SCN();const st={par:m.parent,pos:m.position.clone(),rot:m.rotation.clone()};rig().sc.add(m);m.position.set(0,0,0);m.rotation.set(0,0,0);return st;}
+function giveBack(st){const m=SCN();if(st.par&&st.par!==R.sc){st.par.add(m);m.position.copy(st.pos);m.rotation.copy(st.rot);}else{R.sc.remove(m);}}
 function idlePose(mx,A){Object.values(A).forEach(a=>a.stop());if(A.Idle){A.Idle.play();A.Idle.setEffectiveWeight(1);}mx.update(0);}
 /* Porträt (Kopf & Schultern) als Bild */
 function portrait(size){
   if(!gltf)return null;const g=rig(),st=borrow();g.r.setSize(size,size,false);g.cam.aspect=1;g.cam.fov=22;g.cam.updateProjectionMatrix();
   g.cam.position.set(.22,1.66,1.3);g.cam.lookAt(0,1.6,0);
-  const mx=new TH.AnimationMixer(gltf.scene),A={};gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));idlePose(mx,A);
-  g.r.render(g.sc,g.cam);const url=g.cv.toDataURL('image/png');mx.stopAllAction();mx.uncacheRoot(gltf.scene);giveBack(st);return url;
+  const mx=new TH.AnimationMixer(SCN()),A={};ANI().forEach(c=>A[c.name]=mx.clipAction(c));idlePose(mx,A);
+  g.r.render(g.sc,g.cam);const url=g.cv.toDataURL('image/png');mx.stopAllAction();mx.uncacheRoot(SCN());giveBack(st);return url;
 }
 /* Live-Vorschau im Editor: drehbar */
 let PV=null;
@@ -60,14 +61,14 @@ function preview(box){
   const g=rig(),st=borrow();box.innerHTML='';box.appendChild(g.cv);g.cv.style.cssText='width:100%;height:100%;display:block;touch-action:none;cursor:grab';
   const sz=()=>{const w=box.clientWidth||220,h=box.clientHeight||260;g.r.setSize(w,h,false);g.cam.aspect=w/h;g.cam.fov=26;g.cam.updateProjectionMatrix();};sz();
   g.cam.position.set(0,1.05,4.3);g.cam.lookAt(0,.95,0);
-  const mx=new TH.AnimationMixer(gltf.scene),A={};gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));idlePose(mx,A);
+  const mx=new TH.AnimationMixer(SCN()),A={};ANI().forEach(c=>A[c.name]=mx.clipAction(c));idlePose(mx,A);
   let yaw=.35,vy=0,drag=null;const clock=new TH.Clock();
   const dn=e=>{drag=e.clientX;g.cv.setPointerCapture&&g.cv.setPointerCapture(e.pointerId);},mv=e=>{if(drag==null)return;vy=(e.clientX-drag)*.012;yaw+=vy;drag=e.clientX;},up=()=>{drag=null;};
   g.cv.addEventListener('pointerdown',dn);g.cv.addEventListener('pointermove',mv);g.cv.addEventListener('pointerup',up);g.cv.addEventListener('pointercancel',up);
   PV={st,mx,box,raf:0,off:()=>{g.cv.removeEventListener('pointerdown',dn);g.cv.removeEventListener('pointermove',mv);g.cv.removeEventListener('pointerup',up);g.cv.removeEventListener('pointercancel',up);}};
   const loop=()=>{if(!PV)return;if(!box.isConnected||box.closest('[hidden]')){stopPreview();return;}PV.raf=requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta());
-    if(drag==null){vy*=.92;yaw+=vy+dt*.25;}gltf.scene.rotation.y=yaw;mx.update(dt);g.r.render(g.sc,g.cam);};loop();
+    if(drag==null){vy*=.92;yaw+=vy+dt*.25;}SCN().rotation.y=yaw;mx.update(dt);g.r.render(g.sc,g.cam);};loop();
 }
-function stopPreview(){if(!PV)return;cancelAnimationFrame(PV.raf);PV.off();PV.mx.stopAllAction();PV.mx.uncacheRoot(gltf.scene);giveBack(PV.st);if(R&&R.cv.parentNode)R.cv.parentNode.removeChild(R.cv);PV=null;}
-window.MonkKit={load,setLook,npc,portrait,preview,stopPreview,get gltf(){return gltf;}};
+function stopPreview(){if(!PV)return;cancelAnimationFrame(PV.raf);PV.off();PV.mx.stopAllAction();PV.mx.uncacheRoot(SCN());giveBack(PV.st);if(R&&R.cv.parentNode)R.cv.parentNode.removeChild(R.cv);PV=null;}
+window.MonkKit={load,setLook,npc,portrait,preview,stopPreview,setKit,get gltf(){return gltf;}};
 })();
