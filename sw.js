@@ -1,4 +1,4 @@
-const C='derweg-v19';
+const C='derweg-v20';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
 self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET'||!r.url.startsWith(self.location.origin))return;
