@@ -516,7 +516,7 @@ function sealedGate(){if(W.ch)return;const M=W.M,x=0,z=-13.4,mp=DW.mapState(),g=
     if(m.n>=4){dlgK('Versiegeltes Tor','Vier Kartenstücke glühen im Stein. Langsam rollt die Scheibe zur Seite…',[['Eintreten',()=>{DW.mapOpen();endTalk();DW.bell(1.5);W.shake=.8;msg('Das Tor ist offen! Robe «Mitternacht» und 100 Kupfer erhalten.');setTimeout(()=>{if(W){const k={room:null};close();open(k);}},2200);},1]]);return;}
     dlgK('Versiegeltes Tor',`Eine runde Steinscheibe mit vier Mulden. ${m.n} von 4 glühen.\n\nMeister Shen sagt: «Für jede Woche ohne Lücke, sieben perfekte Tage in Folge, findest du ein Kartenstück. Mit allen vier öffnet sich der Weg.»`,[['Verstanden',()=>endTalk(),1]]);}});}
 function rivalNpc(){if(!window.MonkKit||W.ch)return;MonkKit.load(()=>{if(!W||W.ch)return;const o=MonkKit.npc('#2a3a5a','#c99a72','#1a1614');if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});const x=10.6,z=14.4;o.position.set(x,groundH(x,z),z);o.rotation.y=-2.3;W.root.add(o);
-  const mx=new TH.AnimationMixer(o);let ac=null;xclip('Form',c=>{ac=mx.clipAction(c);ac.play();});W.renMix=mx;W.inter.push({x,z,r:1.7,label:'Bruder Ren · dein Rivale',btn:'Herausfordern',act:()=>rivalDialog()});});}
+  const mx=new TH.AnimationMixer(o);let ac=null;nclip(o,'Form',c=>{ac=mx.clipAction(c);ac.play();});W.renMix=mx;W.inter.push({x,z,r:1.7,label:'Bruder Ren · dein Rivale',btn:'Herausfordern',act:()=>rivalDialog()});});}
 function rareMoments(){if(W.ch)return;const h=new Date().getHours();
   if(h>=5&&h<7&&!DW.day('_fox')){const f=new TH.Group(),wm=new TH.MeshStandardMaterial({color:'#f6f3ec',roughness:.8,emissive:'#fff2d8',emissiveIntensity:.25});const b=new TH.Mesh(new TH.SphereGeometry(.22,14,10),wm);b.scale.set(.75,.8,1.6);b.position.y=.42;f.add(b);
     const hd=new TH.Mesh(new TH.SphereGeometry(.15,12,10),wm);hd.position.set(0,.62,.36);f.add(hd);const sn=new TH.Mesh(new TH.ConeGeometry(.07,.22,10),wm);sn.rotation.x=Math.PI/2;sn.position.set(0,.58,.53);f.add(sn);[-1,1].forEach(s=>{const e=new TH.Mesh(new TH.ConeGeometry(.06,.17,6),wm);e.position.set(s*.08,.8,.32);f.add(e);});
@@ -584,8 +584,8 @@ function sitUpdate(dt){const S=W.sit;if(!S)return;S.t+=dt;if(W.av){W.av.position
   const V=S.vis;if(V&&V.o){V.mx.update(dt);const o=V.o,tx=S.x+Math.sin(S.ry)*1.5,tz=S.z+Math.cos(S.ry)*1.5,dx=tx-o.position.x,dz=tz-o.position.z,d=Math.hypot(dx,dz);
     if(d>.1&&!V.arrived){o.position.x+=dx/d*Math.min(d,dt*1.1);o.position.z+=dz/d*Math.min(d,dt*1.1);o.position.y=heightAt(o.position.x,o.position.z);o.rotation.y=Math.atan2(dx,dz);V.w.setEffectiveWeight(1);V.i.setEffectiveWeight(0);}
     else if(!V.arrived){V.arrived=1;V.w.setEffectiveWeight(0);V.i.setEffectiveWeight(1);o.rotation.y=S.ry+Math.PI;setTimeout(()=>W&&W.sit===S&&tipDialog(S,V),300);}}}
-function spawnVisitor(S){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.sit!==S)return;const cols=[['#6a4a3a','#c9926a','#2a2420'],['#3a4a5a','#e0b896','#c9c4bb'],['#7a6a3a','#a8784f','#1a1614'],['#5a3a4a','#c99a72','#d8d4cc']];const c=cols[Math.floor(Math.random()*cols.length)];const ks=['v_scholar','v_jpLord','v_farmer'].filter(k=>VK[k]),kk=ks.length&&Math.random()<.6?ks[Math.floor(Math.random()*ks.length)]:null;const o=kk?vkNpc(kk):MonkKit.npc(c[0],c[1],c[2]);if(!o)return;if(kk)o.scale.multiplyScalar(o.userData.hs);
-  const a=S.ry+(Math.random()<.5?1.2:-1.2),sx=S.x+Math.sin(a)*9,sz=S.z+Math.cos(a)*9;o.position.set(sx,heightAt(sx,sz),sz);o.traverse(m=>{if(m.isMesh)m.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};(kk?VK[kk].animations:MonkKit.gltf.animations).forEach(cl=>A[cl.name]=mx.clipAction(cl));A.Walk.play();A.Idle.play();A.Idle.setEffectiveWeight(0);
+function spawnVisitor(S){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.sit!==S)return;const cols=[['#6a4a3a','#c9926a','#2a2420'],['#3a4a5a','#e0b896','#c9c4bb'],['#7a6a3a','#a8784f','#1a1614'],['#5a3a4a','#c99a72','#d8d4cc']];const c=cols[Math.floor(Math.random()*cols.length)];const ks=['v_avatar','v_jpLord','v_farmer'].filter(k=>VK[k]),kk=ks.length&&Math.random()<.6?ks[Math.floor(Math.random()*ks.length)]:null;const o=kk?vkNpc(kk):MonkKit.npc(c[0],c[1],c[2]);if(!o)return;if(kk)o.scale.multiplyScalar(o.userData.hs);
+  const a=S.ry+(Math.random()<.5?1.2:-1.2),sx=S.x+Math.sin(a)*9,sz=S.z+Math.cos(a)*9;o.position.set(sx,heightAt(sx,sz),sz);o.traverse(m=>{if(m.isMesh)m.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};(kk?VK[kk].animations:clipsOf(o)).forEach(cl=>A[cl.name]=mx.clipAction(cl));A.Walk.play();A.Idle.play();A.Idle.setEffectiveWeight(0);
   S.vis={o,mx,w:A.Walk,i:A.Idle,tip:BTIPS[Math.floor(Math.random()*BTIPS.length)]};});}
 function tipDialog(S,V){const T=V.tip;DW.day('_benchv',1);const bye=()=>{endTalk();V.leave=1;setTimeout(()=>{if(W&&V.o){W.root.remove(V.o);V.o=null;}},6000);};
   if(T.t){const ok=DW.vact('_bench',1,'Rast auf der Bank');dlgK(T.w+' setzt sich kurz zu dir',T.t+(ok?'\n\n+1 Ruhe':''),[['Danke für den Tipp',bye,1]]);return;}
@@ -1013,12 +1013,12 @@ const VK={},VKQ={},BENCHRY=0;function vkit(list,cb){let n=list.length;if(!n){cb(
 const VKHEAD=1.63;function vkNpc(k){const g=VK[k];if(!g||!TH.SkeletonUtils)return null;const o=TH.SkeletonUtils.clone(g.scene);o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.frustumCulled=false;}});
   if(g.userData.hs==null){g.scene.updateMatrixWorld(true);let hb=null;g.scene.traverse(c=>{if(!hb&&c.isBone&&/Head$/.test(c.name))hb=c;});const v=new TH.Vector3();if(hb){hb.getWorldPosition(v);g.userData.hs=v.y>.5?VKHEAD/v.y:0;}else g.userData.hs=0;}
   o.userData.hs=(g.userData.hs||VKSC[k]||.9)*(.97+Math.random()*.06);return o;}
-const VKITS={'Bauer Jun':'v_farmer2','Fischer Bo':'v_farmer','Schmied Gang':'v_jpA','Zimmermann Tie':'v_jpA','Gelehrter Wen':'v_scholar','Herr Daichi':'v_jpLord','Reisbauer Ko':'v_jpB','Reisbauer Taro':'v_jpC','Träger Lu':'v_hamal'},VKSC={v_jpB:.86,v_jpC:.86,v_hamal:.93,v_farmer:.93,v_farmer2:.94,v_jpA:.86,v_scholar:.9,v_jpLord:.84};
+const VKITS={'Bauer Jun':'v_farmer2','Fischer Bo':'v_farmer','Schmied Gang':'v_jpA','Zimmermann Tie':'v_jpA','Gelehrter Wen':'v_avatar','Herr Daichi':'v_jpLord','Reisbauer Ko':'v_jpB','Reisbauer Taro':'v_jpC','Träger Lu':'v_hamal'},VKSC={v_avatar:.9,v_jpB:.86,v_jpC:.86,v_hamal:.93,v_farmer:.93,v_farmer2:.94,v_jpA:.86,v_scholar:.9,v_jpLord:.84};
 function vnpcs(lvl){if(!window.MonkKit)return;const W0=W;MonkKit.load(()=>vkit([...new Set(Object.values(VKITS))].filter(k=>k!=='v_jpB'&&k!=='v_jpC'),()=>{if(!W||W!==W0||W.ch)return;W.npcs=W.npcs||[];
-  const mk=(robe,skin,hair,cfg)=>{const kk=VKITS[cfg.name],kit=kk&&VK[kk];const o=kit?vkNpc(kk):MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});if(kit)o.scale.multiplyScalar(o.userData.hs);if(cfg.sc)o.scale.multiplyScalar(cfg.sc);W.root.add(o);const mx=new TH.AnimationMixer(o),A={};(kit?kit.animations:MonkKit.gltf.animations).forEach(c=>A[c.name]=mx.clipAction(c));['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(0);}});
+  const mk=(robe,skin,hair,cfg)=>{const kk=VKITS[cfg.name],kit=kk&&VK[kk];const o=kit?vkNpc(kk):MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});if(kit)o.scale.multiplyScalar(o.userData.hs);if(cfg.sc)o.scale.multiplyScalar(cfg.sc);W.root.add(o);const mx=new TH.AnimationMixer(o),A={};(kit?kit.animations:clipsOf(o)).forEach(c=>A[c.name]=mx.clipAction(c));['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(0);}});
     const N={o,mx,A,i:0,wait:Math.random()*3,mode:'walk',pts:cfg.pts,sp:cfg.sp||.8,cur:null,name:cfg.name};o.position.set(cfg.pts[0][0],groundH(cfg.pts[0][0],cfg.pts[0][1]),cfg.pts[0][1]);
     const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:cfg.elder?'Sprechen':'Grüssen',act:()=>{N.wait=Math.max(N.wait,3);N.face=true;if(cfg.elder){roomDialog('tor');return;}const ev=DW.village();const line=Math.random()<.4&&ev.ev&&!ev.ok?`Hast du gehört? ${ev.ev.n}. Die Älteste Mei sammelt Hilfe.`:VSAY[Math.floor(Math.random()*VSAY.length)];msg(cfg.name+': «'+line+'»');DW.bell(.7);}};W.inter.push(it);N.it=it;
-    if(!kit)['Bow'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));N.kit=!!kit;W.npcs.push(N);if(!kit){try{dressUp(N,W.npcs.length,cfg.name);}catch(e){}}};
+    if(!kit)['Bow'].forEach(n=>nclip(o,n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));N.kit=!!kit;W.npcs.push(N);if(!kit){try{dressUp(N,W.npcs.length,cfg.name);}catch(e){}}};
   mk('#5a4a6a','#c99a72','#d8d4cc',{name:'Älteste Mei',elder:1,pts:[[1.8,50.2]],sp:.3});
   const V=[['#4a5a6a','#c9926a','#2a2420','Bauer Jun',(has=>has?[[-3,44],[-1.2,58],[0,61],[0,67.4],[-13,67.4],[-13,67.6],[0,67.6],[0,61],[1.2,58],[4,44]]:[[-3,44],[-3,58],[4,58],[4,44]])((DW.village().got||[]).includes('bruecke')),.8],['#7a4a3a','#a8784f','#1a1614','Händlerin Yu',[[-8,53],[8,53],[8,51],[-8,51]],.7],['#3a4a3a','#e0b896','#3a2a20','Fischer Bo',[[-20,61],[20,61]],.6],
     ['#6a5a3a','#8a5a3a','#1a1614','Weberin Sun',[[-14,44],[-14,56],[-8,56]],.7],['#4a3a5a','#c99a72','#2a2420','Kind Ling',[[-4,48],[4,48],[4,55],[-4,55]],1.2,.7],['#3a5a6a','#a8784f','#1a1614','Kind Pei',[[10,48],[3,54],[10,58]],1.3,.68]];
@@ -1228,15 +1228,27 @@ function env(se){
 function avatar(){
   const g=new TH.Group();W.scene.add(g);W.av=g;{const sp=W.spawnAt;if(sp){g.position.set(sp[0],sp[1],sp[2]);g.rotation.y=Math.atan2(sp[3],sp[4]);W.yaw=g.rotation.y+Math.PI;}else{g.position.set(0,0,12);g.rotation.y=Math.PI;}}
   const fb=DW.avatarGroup();fb.traverse(o=>{if(o.isMesh)o.castShadow=true;});g.add(fb);
+  const W0=W;vkit(['v_avatar'],()=>{if(!W||W!==W0||W.av!==g)return;const K=VK.v_avatar;if(K){const m=vkNpc('v_avatar');if(m){g.remove(fb);m.scale.multiplyScalar(m.userData.hs);W.modelS=m.scale.x;g.add(m);W.model=m;W.avKit=K;
+    const mx=new TH.AnimationMixer(m),A={};K.animations.forEach(c=>A[c.name]=mx.clipAction(c));W.mixer=mx;W.acts=A;['Idle','Walk','Kneel','Meditate'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(n==='Idle'?1:0);}});
+    if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}return;}}
   if(!window.MonkKit)return;DW.applyLook();
-  MonkKit.load(gl=>{if(!W||W.av!==g)return;g.remove(fb);const m=gl.scene;m.position.set(0,0,0);m.rotation.set(0,0,0);g.add(m);W.model=m;
+  MonkKit.load(gl=>{if(!W||W.av!==g)return;g.remove(fb);const m=gl.scene;m.position.set(0,0,0);m.rotation.set(0,0,0);g.add(m);W.model=m;W.modelS=1;
     const mx=new TH.AnimationMixer(m),A={};gl.animations.forEach(c=>A[c.name]=mx.clipAction(c));
     W.mixer=mx;W.acts=A;['Idle','Walk'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(n==='Idle'?1:0);}});
-    if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}});
+    if(A.Stance){A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}});});
 }
+/* ---------- Neue Figuren für alle: MonkKit-Aufrufe liefern Varianten des Gelehrten-Modells ---------- */
+function kitPatch(){if(!window.MonkKit||MonkKit._kp)return;MonkKit._kp=1;const L=MonkKit.load.bind(MonkKit),N=MonkKit.npc.bind(MonkKit);
+  MonkKit.load=cb=>L(gl=>vkit(['v_avatar'],()=>cb(gl)));MonkKit.npc=(r,s,h)=>VK.v_avatar?kitMonk(r,h):N(r,s,h);}
+function kitMonk(robe,hair){const o=vkNpc('v_avatar');if(!o)return null;o.scale.multiplyScalar(o.userData.hs);o.userData.clips=VK.v_avatar.animations;o.userData.kit=1;
+  o.traverse(m=>{if(!m.isMesh||!m.material)return;const n=m.material.name||'';if(/coat/.test(n)){const ma=m.material.clone();ma.color=new TH.Color(robe).convertSRGBToLinear().multiplyScalar(2.2);ma.needsUpdate=true;m.material=ma;}
+    else if(/hair/.test(n)&&hair){const ma=m.material.clone();ma.color=new TH.Color(hair).convertSRGBToLinear();m.material=ma;}});return o;}
+function clipsOf(o){return (o&&o.userData&&o.userData.clips)||(window.MonkKit&&MonkKit.gltf?MonkKit.gltf.animations:[]);}
+function nclip(o,n,cb){const cl=o&&o.userData&&o.userData.clips;if(cl){const c=cl.find(a=>a.name===n);if(c)cb(c);return;}xclip(n,cb);}
 const XCLIP={};function xclip(n,cb){if(XCLIP[n]){cb(XCLIP[n]);return;}const f=n.toLowerCase()+'.glb';(xclip.q=xclip.q||{})[n]=(xclip.q[n]||[]).concat(cb);if(xclip.q[n].length>1)return;new TH.GLTFLoader().load(f,gl=>{const c=gl.animations[0];if(!c)return;c.name=n;XCLIP[n]=c;xclip.q[n].forEach(f=>f(c));xclip.q[n]=[];},undefined,()=>{});}
-function playOnce(n,after){if(!W||!W.mixer)return;xclip(n,c=>{if(!W||!W.mixer)return;const a=W.acts[n]||(W.acts[n]=W.mixer.clipAction(c));a.setLoop(TH.LoopOnce);a.clampWhenFinished=false;a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();W.onceN=n;W.onceT=c.duration;setTimeout(()=>{if(W&&W.acts[n])W.acts[n].fadeOut(.35);W&&(W.onceN=null);after&&after();},c.duration*1000-300);});}
-function kneelLoad(){if(W.kneelLoading||!W.mixer)return;W.kneelLoading=1;xclip('Bow',()=>{});[['Kneel','kneel.glb'],['Meditate','meditate.glb']].forEach(([n,f])=>{const go=gl=>{if(!W||!W.mixer)return;const c=gl.animations[0];if(!c)return;c.name=n;const a=W.mixer.clipAction(c);a.play();a.setEffectiveWeight(0);W.acts[n]=a;};
+function avClip(n,cb){const K=W&&W.avKit;const c=K&&K.animations.find(a=>a.name===n);if(c){cb(c);return;}if(K){return;}xclip(n,cb);}
+function playOnce(n,after){if(!W||!W.mixer)return;avClip(n,c=>{if(!W||!W.mixer)return;const a=W.acts[n]||(W.acts[n]=W.mixer.clipAction(c));a.setLoop(TH.LoopOnce);a.clampWhenFinished=false;a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();W.onceN=n;W.onceT=c.duration;setTimeout(()=>{if(W&&W.acts[n])W.acts[n].fadeOut(.35);W&&(W.onceN=null);after&&after();},c.duration*1000-300);});}
+function kneelLoad(){if(W.kneelLoading||!W.mixer)return;W.kneelLoading=1;if(W.avKit)return;xclip('Bow',()=>{});[['Kneel','kneel.glb'],['Meditate','meditate.glb']].forEach(([n,f])=>{const go=gl=>{if(!W||!W.mixer)return;const c=gl.animations[0];if(!c)return;c.name=n;const a=W.mixer.clipAction(c);a.play();a.setEffectiveWeight(0);W.acts[n]=a;};
   const key='_gl_'+n;if(window[key])go(window[key]);else new TH.GLTFLoader().load(f,gl=>{window[key]=gl;go(gl);},undefined,()=>{});});}
 function kneelW(dt){const tgt=W.kneel>0?1:0;if(W.kneel>0)W.kneel-=dt;W.kk=(W.kk||0)+(tgt-(W.kk||0))*Math.min(1,dt*2.5);return W.kk*W.kk*(3-2*W.kk);}
 function pose(name,on){const A=W.acts;if(!A||!A[name])return;const a=A[name];if(on){a.reset();a.setEffectiveWeight(1);a.fadeIn(.25);a.play();}else a.fadeOut(.3);}
@@ -1257,7 +1269,7 @@ function meister(st){
   if(!window.MonkKit)return;
   MonkKit.load(()=>{if(!W)return;const o=MonkKit.npc('#3a3633','#d6a37c','#c9c4bb');if(!o)return;
     const inside=st>=3,p=W.meisterPos||(inside?[-1.7,.7,-.9]:[-3.4,0,2.6]);o.position.set(p[0],p[1],p[2]);o.rotation.y=inside?.35:.6;W.root.add(o);W.npc=o;
-    const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));if(A.Idle){A.Idle.play();A.Idle.time=1.3;}W.npcMix=mx;W.npcA=A;
+    const mx=new TH.AnimationMixer(o),A={};clipsOf(o).forEach(c=>A[c.name]=mx.clipAction(c));if(A.Idle){A.Idle.play();A.Idle.time=1.3;}W.npcMix=mx;W.npcA=A;
     W.solids.push([p[0],p[2],.45]);
     W.inter.push({x:p[0],z:p[2],r:2.3,label:'Meister Shen',btn:'Sprechen',act:()=>talk(st)});
     const L=new TH.PointLight(0xffc890,.6,4,2);L.position.set(p[0],p[1]+2.2,p[2]+.8);W.root.add(L);});
@@ -1304,7 +1316,7 @@ function shadowFoe(){
     o.traverse(m=>{if(m.material){m.material.roughness=1;m.material.metalness=0;m.material.coloro.traverse(m=>{if(m.material){m.material.transparent=true;m.material.opacity=.88;m.material.roughness=1;}});o.traverse(m=>{if(m.material){m.material.transparent=true;m.material.opacity=.88;m.material.roughness=1;}});m.material.color.multiplyScalar(.35);}});
     const eyeM=new TH.MeshBasicMaterial({color:new TH.Color(3,.25,.1)});[-.045,.045].forEach(dx=>{const e=new TH.Mesh(new TH.SphereGeometry(.018,8,6),eyeM);e.position.set(dx,1.72,.12);o.add(e);});
     const L=new TH.PointLight(0xff3010,.9,4,2);L.position.set(0,1.6,.4);o.add(L);W.flick.push(L);
-    const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));if(A.Stance){A.Stance.play();A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}W.foeMix=mx;
+    const mx=new TH.AnimationMixer(o),A={};clipsOf(o).forEach(c=>A[c.name]=mx.clipAction(c));if(A.Stance){A.Stance.play();A.Stance.setLoop(TH.LoopOnce);A.Stance.clampWhenFinished=true;}W.foeMix=mx;
     // Rauch
     const n=60,pp=new Float32Array(n*3);for(let i=0;i<n;i++){pp[i*3]=(Math.random()-.5)*1.2;pp[i*3+1]=Math.random()*2.2;pp[i*3+2]=(Math.random()-.5)*1.2;}
     const g=new TH.BufferGeometry();g.setAttribute('position',new TH.BufferAttribute(pp,3));W.smoke=new TH.Points(g,new TH.PointsMaterial({color:0x08060a,size:.55,transparent:true,opacity:.7,depthWrite:false}));W.smoke.position.copy(o.position);W.root.add(W.smoke);
@@ -1420,7 +1432,7 @@ function loop(){
 }
 
 /* ---------- Öffnen / Schliessen ---------- */
-function open(opts){opts=opts||{};
+function open(opts){opts=opts||{};kitPatch();
   if(!TH){DW.toast('3D ist auf diesem Gerät nicht verfügbar');return;}
   $('#world').hidden=false;document.body.classList.add('inworld');clearInterval(window._rkI);window._rkI=setInterval(()=>{if(W)rankHud();},2500);
   const cv=$('#wgl');W={noGo:[],rects:[],flagsArr:[],imps:[],solids:[],flick:[],inter:[],yaw:0,pitch:.32,walk:0,clock:new TH.Clock()};
@@ -1500,7 +1512,7 @@ function render3D(){
   T.r.render(T.sc,T.cam);
 }
 function g3dEnd(){
-  if(!G||!G.m3||!W||!W.model)return;const M=W.model;M.position.set(0,0,0);M.rotation.set(0,G.m3.rot,0);G.m3.par.add(M);M.scale.setScalar(.92);
+  if(!G||!G.m3||!W||!W.model)return;const M=W.model;M.position.set(0,0,0);M.rotation.set(0,G.m3.rot,0);G.m3.par.add(M);M.scale.setScalar(W.avKit?W.modelS:.92);
   if(W.acts.Stance)W.acts.Stance.stop();if(W.acts.Idle)W.acts.Idle.setEffectiveWeight(1);
   const T=G.t3;if(T){T.sc.traverse(o=>{if(o.geometry&&o!==M)o.geometry.dispose();});T.r.dispose();G.t3=null;}G.m3=null;
 }
@@ -1624,7 +1636,7 @@ function trainForm(N){if(!W||!W.av||W.training)return;const o=N.o,av=W.av;const 
 const TCQ=[[0,'Beginn','Füsse schulterbreit. Die Arme heben sich langsam bis auf Schulterhöhe und sinken wieder, die Knie beugen sich leicht.'],[7.5,'Affe abwehren','Eine Hand schiebt nach vorn, die andere zieht zurück zur Hüfte. Dann wechseln.'],[20,'Knie streifen','Schritt nach vorn. Die untere Hand streift am Knie vorbei, die obere schiebt nach vorn.'],[27,'Mähne des Wildpferds teilen','Die vordere Hand hebt sich schräg nach oben, die hintere sinkt zur Hüfte.'],[34,'Wolkenhände','Die Hände ziehen wie Wolken vor dem Gesicht vorbei. Die Hüfte dreht mit.'],[46.5,'Goldener Hahn','Ein Knie hebt sich, die Hand steigt mit. Halte das Gleichgewicht.'],[53.5,'Fersenstoss','Die Arme öffnen sich weit. Die Ferse stösst langsam nach vorn.'],[62,'Spatzenschwanz greifen','Abwehren, zurückrollen, drücken, stossen.'],[74.5,'Hände kreuzen','Die Hände kreuzen sich vor der Brust.'],[77.5,'Abschluss','Die Arme sinken. Atme aus. Steh still.']];
 function tcChoose(N){const o=ovl('wTc',`<div><h3>Tai Chi mit Bruder Tao</h3><p>Die 8er-Form im Yang-Stil, ein Durchgang dauert etwa 80 Sekunden. Stell dich hin, mit etwas Platz um dich, und mach mit. Mit Kopfhörern hörst du die Ansagen.</p><div class="sl">${[3,5,10].map(m=>`<button class="btn" data-m="${m}">${m} Minuten <small>· ${Math.round(m*60/81)} Durchgänge</small></button>`).join('')}</div><div class="row"><button class="btn" data-x>Abbrechen</button></div></div>`);
   o.querySelector('[data-x]').onclick=()=>{o.hidden=true;};o.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{o.hidden=true;tcStart(N,+b.dataset.m);});}
-function tcStart(N,min){if(!W||!W.av)return;xclip('TaiChi',c=>{if(!W||!W.mixer)return;const a=W.acts.TaiChi||(W.acts.TaiChi=W.mixer.clipAction(c));a.setLoop(TH.LoopRepeat);a.reset();a.play();a.setEffectiveWeight(0);if(N.A.TaiChi){N.A.TaiChi.reset();N.A.TaiChi.play();}
+function tcStart(N,min){if(!W||!W.av)return;avClip('TaiChi',c=>{if(!W||!W.mixer)return;const a=W.acts.TaiChi||(W.acts.TaiChi=W.mixer.clipAction(c));a.setLoop(TH.LoopRepeat);a.reset();a.play();a.setEffectiveWeight(0);if(N.A.TaiChi){N.A.TaiChi.reset();N.A.TaiChi.play();}
   const o=N.o,av=W.av,fx=o.position.x-1.6,fz=o.position.z+.3;av.position.set(fx,groundH(fx,fz),fz);av.rotation.y=o.rotation.y;
   W.tc={t0:performance.now()/1000,dur:min*60,min,q:-1,N,len:c.duration};const cx=(o.position.x+fx)/2;W.camOv={p:new TH.Vector3(cx-3.4,1.8,o.position.z+3.4),t:new TH.Vector3(cx,.95,o.position.z)};
   const ov=ovl('wTcRun',`<div class="medbox"><div class="mt" id="tcT">${min}:00</div><b id="tcN" style="display:block;font-size:20px;color:#f2d48a;margin-bottom:4px">Beginn</b><p id="tcX">Füsse schulterbreit.</p><div class="row"><button class="btn" id="tcStop">Beenden</button></div></div>`);ov.classList.add('medrun');ov.onclick=null;
@@ -1872,23 +1884,23 @@ function fireflies(){if(!W.tod.night||W.se.winter)return;const n=60,p=new Float3
   W.ffly=new TH.Points(g,new TH.PointsMaterial({size:.16,map:softTex(),color:0xd8ff8a,transparent:true,depthWrite:false,blending:TH.AdditiveBlending}));W.ffly.userData.base=p.slice();W.root.add(W.ffly);}
 const MONKSAY=['Guten Morgen. Der Tee ist heiss.','Shen sagt, du machst Fortschritte.','Der Hof wird nie ganz sauber. Darum fegen wir.','Langsam gehen ist auch gehen.','Hast du heute schon geatmet? Ich meine richtig.','Das Dorf spricht von dir.','Wer früh fegt, fegt in Ruhe.','Die Koi sind heute hungrig.'];
 function npcs(){if(!window.MonkKit)return;MonkKit.load(()=>{if(!W||W.ch)return;W.npcs=W.npcs||[];
-  const mk=(robe,skin,hair,cfg)=>{const o=MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};MonkKit.gltf.animations.forEach(c=>A[c.name]=mx.clipAction(c));
+  const mk=(robe,skin,hair,cfg)=>{const o=MonkKit.npc(robe,skin,hair);if(!o)return;o.traverse(c=>{if(c.isMesh)c.castShadow=true;});W.root.add(o);const mx=new TH.AnimationMixer(o),A={};clipsOf(o).forEach(c=>A[c.name]=mx.clipAction(c));
     ['Idle','Walk','Stance'].forEach(n=>{if(A[n]){A[n].play();A[n].setEffectiveWeight(0);}});const N=Object.assign({o,mx,A,i:0,wait:0,mode:cfg.mode,pts:cfg.pts,sp:cfg.sp||1,cur:null},cfg);o.position.set(cfg.pts[0][0],groundH(cfg.pts[0][0],cfg.pts[0][1]),cfg.pts[0][1]);
     const it={x:o.position.x,z:o.position.z,r:1.6,label:cfg.name,btn:cfg.mode==='train'?'Ansprechen':'Grüssen',act:()=>{if(cfg.mode!=='train'&&nqDialog(N,cfg.name))return;if(cfg.mode==='train'){dlgK('Bruder Tao','Tai Chi ist Meditation in Bewegung. Ich zeige dir die 8er-Form im Yang-Stil. Stell dich hin, Füsse schulterbreit, und mach mit. Oder wir üben die kurze Kung-Fu-Form.',[['Tai Chi · 8er-Form',()=>{endTalk();tcChoose(N);},1],['Kurze Kung-Fu-Form',()=>{endTalk();trainForm(N);}],['Grüssen',()=>{endTalk();N.bowT=2.4;playOnce('Bow');msg('Bruder Tao: «Wer übt, wird.»');}],['Gehen',()=>endTalk()]]);return;}const t=MONKSAY[Math.floor(Math.random()*MONKSAY.length)];msg(cfg.name+': «'+t+'»');DW.bell(.8);N.wait=Math.max(N.wait,3.2);N.face=true;N.bowT=2.2;playOnce('Bow');}};W.inter.push(it);N.it=it;
-    if(cfg.mode==='sweep'){const br=new TH.Group();const st=new TH.Mesh(new TH.CylinderGeometry(.02,.02,1.4,6),W.M.wood);st.position.y=.7;br.add(st);const bh=new TH.Mesh(new TH.ConeGeometry(.16,.35,8),new TH.MeshStandardMaterial({color:'#b8a06a',roughness:1}));bh.position.y=.1;br.add(bh);let hand=null;o.traverse(c=>{if(c.isBone&&c.name==='handR')hand=c;});
+    if(cfg.mode==='sweep'){const br=new TH.Group();const st=new TH.Mesh(new TH.CylinderGeometry(.02,.02,1.4,6),W.M.wood);st.position.y=.7;br.add(st);const bh=new TH.Mesh(new TH.ConeGeometry(.16,.35,8),new TH.MeshStandardMaterial({color:'#b8a06a',roughness:1}));bh.position.y=.1;br.add(bh);let hand=null;o.traverse(c=>{if(c.isBone&&(c.name==='handR'||c.name==='mixamorigRightHand'))hand=c;});
       if(hand){const ws=new TH.Vector3();hand.getWorldScale(ws);const g2=new TH.Group();g2.add(br);br.position.set(0,-.95,0);g2.scale.setScalar(1/ws.x);g2.position.set(0,.06,0);g2.rotation.set(3.14,0,.15);hand.add(g2);N.broomHand=g2;}
       else{br.position.set(.25,0,.45);br.rotation.x=.5;o.add(br);}N.broom=br;}
-    ['Sweep','Bow','Form','TaiChi'].forEach(n=>xclip(n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));
+    ['Sweep','Bow','Form','TaiChi'].forEach(n=>nclip(o,n,c=>{const a=mx.clipAction(c);a.play();a.setEffectiveWeight(0);A[n]=a;}));
     W.npcs.push(N);};
   mk('#c98a2a','#c99a72','#2a2420',{name:'Bruder Wei',mode:'sweep',pts:[[-4,9],[4,9],[4,13],[-4,13]],sp:.55});
   mk('#7a2e24','#a8784f','#1a1614',{name:'Schwester Lin',mode:'walk',pts:[[-5.8,7.2],[-5.8,18.5],[5.8,18.5],[5.8,7.2]],sp:1});
   mk('#4a4440','#e0b896','#c9c4bb',{name:'Bruder Tao',mode:'train',pts:[[RPOS.hof.c[0]-.5,RPOS.hof.c[1]+2.6]],face:[-1,0]});
   mk('#d9cfbd','#8a5a3a','#1a1614',{name:'Novize Kai',mode:'walk',pts:[[-6,11],[-3,16],[3,16],[3.2,10.5]],sp:.8});
-  const W0=W;vkit(['v_scholar','v_farmer2','v_jpLord'],()=>{if(!W||W!==W0||W.ch)return;
+  const W0=W;vkit(['v_avatar','v_farmer2','v_jpLord'],()=>{if(!W||W!==W0||W.ch)return;
     const kw=(kk,name,pts,sp,say)=>{if(!VK[kk])return;const o=vkNpc(kk);if(!o)return;o.scale.multiplyScalar(o.userData.hs);W.root.add(o);const mx=new TH.AnimationMixer(o),A={};VK[kk].animations.forEach(c=>{A[c.name]=mx.clipAction(c);A[c.name].play();A[c.name].setEffectiveWeight(0);});
       const N={o,mx,A,i:0,wait:Math.random()*2,mode:'walk',pts,sp,cur:null,name,kit:1};o.position.set(pts[0][0],groundH(pts[0][0],pts[0][1]),pts[0][1]);
       const it={x:o.position.x,z:o.position.z,r:1.6,label:name,btn:'Grüssen',act:()=>{msg(name+': «'+say[Math.floor(Math.random()*say.length)]+'»');DW.bell(.7);N.wait=Math.max(N.wait,3.2);N.face=true;}};W.inter.push(it);N.it=it;W.npcs.push(N);};
-    kw('v_scholar','Pilger Wen',[[-2.2,20],[-2.2,14.5],[-8,14.5],[-8,19.5]],.5,['Ich bin drei Tage gewandert, um hier zu sitzen.','Man sagt, hinter dem Tor liege die alte Haupthalle.','Stille ist lauter, als man denkt.']);
+    kw('v_avatar','Pilger Wen',[[-2.2,20],[-2.2,14.5],[-8,14.5],[-8,19.5]],.5,['Ich bin drei Tage gewandert, um hier zu sitzen.','Man sagt, hinter dem Tor liege die alte Haupthalle.','Stille ist lauter, als man denkt.']);
     kw('v_farmer2','Bauer Jun',[[3,21.5],[3,15],[9,15],[9,20]],.6,['Ich bringe Reis aus dem Dorf. Für eure Küche.','Seit du hier übst, wächst unser Dorf.','Der Weg hinauf ist steil, aber er lohnt sich.']);
     kw('v_jpLord','Herr Daichi',[[6.6,-6.5],[6.6,5],[-6.6,5],[-6.6,-6.5]],.45,['Ich habe Schwerter geführt. Jetzt lerne ich, sie liegen zu lassen.','Disziplin ist keine Strafe. Sie ist ein Geschenk an dich selbst.','Ein guter Morgen beginnt am Abend davor.']);
   });
