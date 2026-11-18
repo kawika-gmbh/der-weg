@@ -71,9 +71,10 @@ function cardsGeo(n,rad,yMin,yMax,size,seed,down){
 }
 const IMP={maple:[512,320],fir_a:[256,736],fir_b:[256,592],fir_c:[256,584],bush_a:[512,480],bush_b:[512,576],bush_c:[384,464],gtree:[512,320],btree:[448,448]};
 function impTex(k){W.impT=W.impT||{};if(!W.impT[k]){const t=new TH.TextureLoader().load('tex/imp_'+k+'.webp',()=>{if(!W)return;W.imps.forEach(it=>{if(it.k===k){it.t.image=t.image;it.t.needsUpdate=true;}});});t.encoding=TH.sRGBEncoding;t.anisotropy=4;W.impT[k]=t;}return W.impT[k];}
+function texClone(t){const c=t.clone();if(t.image)c.needsUpdate=true;else{const iv=setInterval(()=>{if(t.image){c.image=t.image;c.needsUpdate=true;clearInterval(iv);}},250);}return c;}
 function imp(k,x,z,h,seed,solidR){
   if(!W.pilgrim&&stairDist(x,z)<1.6+h*.12)return;
-  const [tw,th]=IMP[k],w=h*tw/th,base=impTex(k),t=base.clone();t.needsUpdate=true;t.repeat.set(.25,.5);
+  const [tw,th]=IMP[k],w=h*tw/th,base=impTex(k),t=base.clone();if(base.image)t.needsUpdate=true;t.repeat.set(.25,.5);
   const tint=new TH.Color(W.se.light).lerp(new TH.Color('#ffffff'),.45).multiplyScalar(.82*W.tod.imp);if(W.tod.night)tint.lerp(new TH.Color('#6f86c8'),.35).multiplyScalar(.9);
   const m=new TH.Mesh(new TH.PlaneGeometry(w,h),new TH.MeshBasicMaterial({map:t,alphaTest:.45,side:TH.DoubleSide,color:tint,toneMapped:false}));
   m.geometry.translate(0,h/2,0);m.position.set(x,groundH(x,z)-.05,z);m.castShadow=true;
@@ -1409,7 +1410,7 @@ function g3dStart(){
   const d=new TH.DirectionalLight(0xffd2a0,2.6);d.position.set(-4,8,6);d.castShadow=true;d.shadow.mapSize.set(2048,2048);const c=d.shadow.camera;c.left=-14;c.right=14;c.top=10;c.bottom=-4;c.far=40;d.shadow.normalBias=.03;sc.add(d,d.target);
   const rim=new TH.DirectionalLight(0xffa060,1.2);rim.position.set(6,3,-6);sc.add(rim);
   // Boden mit Textur
-  const gt=W.tex.groundD.clone();gt.needsUpdate=true;gt.repeat.set(20,6);const gn=W.tex.groundN.clone();gn.needsUpdate=true;gn.repeat.set(20,6);
+  const gt=texClone(W.tex.groundD);gt.repeat.set(20,6);const gn=texClone(W.tex.groundN);gn.repeat.set(20,6);
   const ground=new TH.Mesh(new TH.PlaneGeometry(60,14),new TH.MeshStandardMaterial({map:gt,normalMap:gn,roughness:.95,color:'#c7b9a3'}));ground.rotation.x=-Math.PI/2;ground.position.set(G.N*.7,0,-2);ground.receiveShadow=true;sc.add(ground);
   // Pfähle aus Holz
   const GAP=1.35,tops=[];G.poles.forEach((ph,k)=>{const hgt=1.1+ph*2.6;tops.push(hgt);const m=new TH.Mesh(new TH.CylinderGeometry(.14,.17,hgt,18),W.M.wood);m.position.set(k*GAP,hgt/2,0);m.castShadow=m.receiveShadow=true;sc.add(m);
@@ -1563,7 +1564,7 @@ function tcStart(N,min){if(!W||!W.av)return;xclip('TaiChi',c=>{if(!W||!W.mixer)r
   $('#tcStop').onclick=()=>tcEnd(false);document.querySelectorAll('.w-top,.w-pts,.w-hint').forEach(e=>e.style.visibility='hidden');bowl(.3);});}
 function tcTick(){const T=W.tc;if(!T)return;const el=performance.now()/1000-T.t0,left=Math.max(0,T.dur-el),lt=el%T.len;
   const tt=$('#tcT');if(tt)tt.textContent=`${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;
-  let qi=0;for(let i=0;i<TCQ.length;i++)if(lt>=TCQ[i][0])qi=i;const key=Math.floor(el/T.len)*100+qi;if(key!==T.q){T.q=key;$('#tcN').textContent=TCQ[qi][1];$('#tcX').textContent=TCQ[qi][2];say(TCQ[qi][1]+'. '+TCQ[qi][2]);}
+  let qi=0;for(let i=0;i<TCQ.length;i++)if(lt>=TCQ[i][0])qi=i;const key=Math.floor(el/T.len)*100+qi;if(key!==T.q){T.q=key;{const a1=$('#tcN'),a2=$('#tcX');if(a1)a1.textContent=TCQ[qi][1];if(a2)a2.textContent=TCQ[qi][2];}say(TCQ[qi][1]+'. '+TCQ[qi][2]);}
   const a=W.camOv;if(a){const ang=Math.sin(el*.03)*.5;const cx=a.t.x,cz=a.t.z;a.p.set(cx-Math.cos(ang+.8)*4.6,1.8,cz+Math.sin(ang+.8)*4.6);}
   if(left<=0)tcEnd(true);}
 function tcEnd(done){const T=W.tc;if(!T)return;W.tc=null;try{speechSynthesis.cancel();}catch(e){}const o=$('#wTcRun');if(o)o.hidden=true;document.querySelectorAll('.w-top,.w-pts,.w-hint').forEach(e=>e.style.visibility='');W.camOv=null;
