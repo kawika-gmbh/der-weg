@@ -396,7 +396,7 @@ function village(){
       if(kind==='schule'){cyl(.08,2.6,beam,w/2+.9,.3,d/2,6);cyl(.08,2.6,beam,w/2+1.9,.3,d/2,6);box(1.2,.12,.12,beam,w/2+1.4,2.85,d/2,1);const bl=new TH.Mesh(new TH.CylinderGeometry(.14,.26,.4,12,1,true),new TH.MeshStandardMaterial({color:'#b8862a',metalness:.7,roughness:.35,side:TH.DoubleSide}));bl.position.set(w/2+1.4,2.55,d/2);hg.add(bl);}
     }finally{W.root=R0;}
     const vb=[x,z,(face===1||face===-1?d:w)/2+.25,(face===1||face===-1?w:d)/2+.25];W.vbox.push(vb);
-    if(hi>=2&&!aband.has(hi)&&(hi%3===0||hi%4===1)&&!(!roofOk&&hi%3===1)){const pick=['House5','House4','House2'][hi%3],file=pick==='House4'?'kit':'houses',ks=pick==='House4'?.6:.44;
+    if(hi>=2&&!aband.has(hi)&&(hi%3===0||hi%4===1||hi%5===2)&&!(!roofOk&&hi%3===1)){const pick=hi%5===2?'Minka':['House5','House4','House2'][hi%3],file=pick==='House4'?'kit':pick==='Minka'?'vb':'houses',ks=pick==='House4'?.6:pick==='Minka'?.72:.44;
       propGlb(file,sc=>{const H=sc.getObjectByName(pick);if(!W||!H||!hg.parent)return;hg.children.slice().forEach(c=>hg.remove(c));const k=H.clone();k.scale.setScalar(ks);k.rotation.y=-Math.PI/2;k.position.y=-.05;k.updateMatrixWorld(true);const bb=new TH.Box3().setFromObject(k),cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;k.position.x-=cx;k.position.z-=cz;hg.add(k);
         const hw=(bb.max.x-bb.min.x)/2-.15,hd=(bb.max.z-bb.min.z)/2-.25;vb[2]=(face===1||face===-1?hd:hw);vb[3]=(face===1||face===-1?hw:hd);});}
     hi++;return hg;};
@@ -766,11 +766,12 @@ function villageMore(C){const{lvl,has,night,beam,strip,pathM}=C,M=W.M,gh=groundH
      ['Blasebalg treten und Holz tragen',()=>vWork('_work',2,3,'In der Schmiede geholfen','Du schwitzt. Gang drückt dir drei Kupfer in die Hand.')],['Zuschauen',()=>{endTalk();msg('Funken tanzen über dem Amboss.');},1]])});}
 
   // ---- Dorfschrein mit Torii
-  {const x=-26.4,z=44.6,q=grp(x,z,Math.PI/2);inG(q,()=>{const st=W.M.stone;box(2.6,.5,2.2,st,0,0,0,1);box(1.4,1.3,1.1,mat('#7a4a2a',{map:W.tex.woodD}),0,.5,-.2,1);roof(2.4,2,.6,0,1.8,-.2);
+  {const x=-26.4,z=44.6,shc0=W.root.children.length,q=grp(x,z,Math.PI/2);inG(q,()=>{const st=W.M.stone;box(2.6,.5,2.2,st,0,0,0,1);box(1.4,1.3,1.1,mat('#7a4a2a',{map:W.tex.woodD}),0,.5,-.2,1);roof(2.4,2,.6,0,1.8,-.2);
      const ro=new TH.Mesh(new TH.TorusGeometry(.18,.03,6,16),mat('#e8e0cc'));ro.position.set(0,1.5,.38);q.add(ro);const bl=new TH.Mesh(new TH.CylinderGeometry(.08,.14,.22,10),M.gold);bl.position.set(0,1.62,.42);q.add(bl);
      box(.5,.3,.3,dark,0,.5,.55,1);[[-.3,.6],[.3,.6]].forEach(([a,b])=>{const c=new TH.Mesh(new TH.CylinderGeometry(.03,.03,.16,8),mat('#f2ead8',{emissive:'#ffb860',emissiveIntensity:night?1.2:.2}));c.position.set(a,.88,b);q.add(c);});
      [-1.1,1.1].forEach(s=>cyl(.1,2.6,red,s,0,2.4,10));box(3.2,.16,.2,red,0,2.55,2.4,1);box(2.6,.12,.16,red,0,2.15,2.4,1);
      const bx=new TH.Mesh(new TH.BoxGeometry(.5,.3,.35),mat('#6a3a1e',{map:W.tex.woodD}));bx.position.set(0,.65,1.2);q.add(bx);});
+   {const RR=W.root,shp=RR.children.slice(shc0);propGlb('vb',sc=>{if(!W||!RR.parent)return;const S=sc.getObjectByName('Shrine'),T=sc.getObjectByName('Torii');if(!S||!T)return;shp.forEach(o=>o.visible=false);const a=S.clone();a.scale.setScalar(.62);a.position.set(-27.3,gh(-27.3,44.6)-.05,44.6);a.rotation.y=Math.PI/2;RR.add(a);const t=T.clone();t.scale.setScalar(.6);t.position.set(-23.6,gh(-23.6,44.6),44.6);t.rotation.y=Math.PI/2;RR.add(t);});}
    solidBox(x,z,1.3,1.4);W.solids.push([-24,43.5,.18],[-24,45.7,.18]);[[-24.4,42.2],[-24.4,47]].forEach(([a,b])=>{const q2=new TH.Group();q2.position.y=gh(a,b);W.root.add(q2);inG(q2,()=>stoneLantern(a,b,true));});
    W.inter.push({x:-24.2,z:44.6,r:1.8,label:'Dorfschrein',btn:'Verneigen',act:()=>dlgK('Dorfschrein','Ein kleiner Schrein für den Berggeist. Die Dorfleute legen hier Reis und Münzen ab.',[
      ['Opfergabe · 1 Kupfer',()=>vBuy(1,'_shr',2,'Opfergabe am Schrein','Die Glocke klingt lange nach. Du fühlst dich leicht.')],['Still verneigen',()=>{endTalk();if(W.av)playOnce&&playOnce('Bow');DW.bell(.6);msg('Du verneigst dich vor dem Schrein.');},1]])});}
@@ -1046,12 +1047,19 @@ function mainHall(){if(W.ch)return;const z0=-17.5,sc=.45,y=groundH(0,-26);
   const g=new TH.Group();g.position.set(0,y-.05,z0);W.root.add(g);
   propGlb('temple',sc0=>{if(!W||!g.parent)return;const o=sc0.clone();o.position.set(-70.35*sc,0,-21.76*sc);o.scale.setScalar(sc);g.add(o);});
   W.inter.push({x:0,z:-15.6,r:2,label:'Haupthalle',btn:'Ansehen',act:()=>{const mp=DW.mapState();msg(mp.open?'Die Haupthalle. Hier sassen die alten Meister. Ihr Weg ist jetzt auch deiner.':'Hinter dem versiegelten Tor liegt die alte Haupthalle. Sammle die Kartenstücke, dann öffnet sich der Weg.');DW.bell(.6);}});}
+/* ---------- Kloster: Torii, Steinlaternen, Glockenturm aus dem Village Bundle ---------- */
+function klosterDeko(){if(W.ch)return;const R0=W.root;
+  W.solids.push([-2.1,22.6,.35],[2.1,22.6,.35],[-3.3,11,.4],[3.3,11,.4],[-3.3,19.5,.4],[3.3,19.5,.4],[-9,21,2.1]);
+  propGlb('vb',sc=>{if(!W||!R0.parent)return;const put=(n,x,z,ry,s0)=>{const o0=sc.getObjectByName(n);if(!o0)return;const o=o0.clone();o.scale.setScalar(s0);o.position.set(x,groundH(x,z),z);o.rotation.y=ry;R0.add(o);return o;};
+    put('Torii',0,22.6,0,.76);[[-3.3,11],[3.3,11],[-3.3,19.5],[3.3,19.5]].forEach(([x,z])=>put('Lamp',x,z,0,.8));
+    put('Bell',-9,21,Math.PI/2,.72);});
+  W.inter.push({x:-9,z:21,r:2.6,label:'Glockenturm',btn:'Läuten',act:()=>{DW.bell(1.4);setTimeout(()=>W&&DW.bell(1.1),900);msg('Der Ton der Glocke rollt über das Tal hinunter.');}});}
 function kloster(){
   const rs=DW.rooms(),R={};rs.forEach(r=>R[r.id]=r);
   W.huts={};W.roomSpot={};const dusty=DW.dustyDoor();W.M.dust=new TH.MeshStandardMaterial({color:'#8f877c',roughness:1});
   ['zelle','kueche','bibliothek','bad'].forEach(id=>hut(id,R[id].open,R[id].n,dusty===id));
   W.roomSpot.garten=[RPOS.garten.c[0]+1.4,RPOS.garten.c[1]+.6];W.roomSpot.hof=[RPOS.hof.c[0]-1.4,RPOS.hof.c[1]];
-  gardenArea(R.garten.open);hofArea(R.hof.open);gate(R.tor.open);village();stairway();
+  gardenArea(R.garten.open);hofArea(R.hof.open);gate(R.tor.open);village();stairway();try{klosterDeko();}catch(e){console.warn('deko',e);}
   // Hof-Pflaster
   const pv=new TH.Mesh(new TH.PlaneGeometry(30,26),new TH.MeshStandardMaterial({map:W.tex.stoneD,normalMap:W.tex.stoneN,color:'#a49c90',roughness:.95}));pv.rotation.x=-Math.PI/2;pv.position.set(0,.02,1);pv.receiveShadow=true;W.root.add(pv);
   noGo(0,1,15);
