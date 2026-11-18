@@ -365,8 +365,9 @@ function village(){
   // ---- Brücke
   W.vBridge=has('bruecke');
   {const wd=new TH.MeshStandardMaterial({map:W.tex.woodD,color:'#7a5232',roughness:.85}),b0=Math.max(gh(0,61.8),gh(0,66.2));
-   if(W.vBridge){for(let i=0;i<=12;i++){const z=61.8+i*4.4/12,y=b0+.5*Math.sin(i/12*Math.PI);const pl=box(2.4,.08,.42,wd,0,y,z,1);pl.rotation.x=Math.cos(i/12*Math.PI)*.35;}
-     [-1.15,1.15].forEach(sx=>{for(let i=0;i<=4;i++){const z=61.8+i*1.1,y=b0+.5*Math.sin(i/4*Math.PI);cyl(.05,.75,M.red,sx,y,z,6);}for(let i=0;i<4;i++){const z=62.35+i*1.1,y=b0+.5*Math.sin((i+.5)/4*Math.PI)+.7;const r=box(.07,.07,1.15,M.red,sx,y,z,1);}});}
+   if(W.vBridge){const bc0=W.root.children.length;for(let i=0;i<=12;i++){const z=61.8+i*4.4/12,y=b0+.5*Math.sin(i/12*Math.PI);const pl=box(2.4,.08,.42,wd,0,y,z,1);pl.rotation.x=Math.cos(i/12*Math.PI)*.35;}
+     [-1.15,1.15].forEach(sx=>{for(let i=0;i<=4;i++){const z=61.8+i*1.1,y=b0+.5*Math.sin(i/4*Math.PI);cyl(.05,.75,M.red,sx,y,z,6);}for(let i=0;i<4;i++){const z=62.35+i*1.1,y=b0+.5*Math.sin((i+.5)/4*Math.PI)+.7;const r=box(.07,.07,1.15,M.red,sx,y,z,1);}});
+     const bplanks=W.root.children.slice(bc0),BR=W.root;W.vBrH=.5;propGlb('bridge',sc=>{if(!W||!BR.parent)return;bplanks.forEach(o=>o.visible=false);const o=sc.clone();o.rotation.y=Math.PI/2;o.scale.set(1.8,.95,1.6);o.position.set(0,b0-.08,64);BR.add(o);W.vBrH=.62;});}
    else{box(2.4,.1,1.2,wd,0,b0,61.9,1);box(2.4,.1,1.2,wd,0,b0,66.1,1);const br=box(2.2,.08,1.4,wd,.4,b0-.45,64,1);br.rotation.set(.3,.4,.2);}}
   W.vBr0=Math.max(gh(0,61.8),gh(0,66.2));
   // ---- Felder hinter dem Bach
@@ -1343,7 +1344,7 @@ function blocked(x,z,px,pz){
   if(W.ch===0&&W.walls){if(Math.abs(x)<4.3&&z<-2.4&&z>-2.85)return true;if(Math.abs(Math.abs(x)-4.1)<.2&&z>-2.6&&z<2.6)return true;}
   return false;
 }
-function heightAt(x,z){if(!W.pilgrim){const sy=stairY(x,z,0);if(sy!=null)return sy+.02;}if(!W.pilgrim&&z>34){if(W.vFloors)for(const q of W.vFloors){if(x>q.x0&&x<q.x1&&z>q.z0&&z<q.z1)return q.h;}const D=W.vDeck;if(D&&x>D.x0&&x<D.x1&&z>D.z0+.4&&z<D.z1)return D.y;if(W.vBridge&&Math.abs(x)<1.2&&z>61.8&&z<66.2)return W.vBr0+.5*Math.sin((z-61.8)/4.4*Math.PI)+.05;return groundH(x,z);}if(W.ch===0&&W.rects.length){for(const q of W.rects){if(x>q.x0&&x<q.x1&&z>q.z0&&z<q.z1)return q.h;}}if(W.ch>0){let h=null;for(const q of W.rects){if(x>q.x0&&x<q.x1&&z>q.z0&&z<q.z1)h=Math.max(h||0,q.h);}if(W.bridge&&x>W.bridge.x0&&x<W.bridge.x1&&z>W.bridge.z0&&z<W.bridge.z1)return .15+.9*Math.sin((x-W.bridge.x0)/(W.bridge.x1-W.bridge.x0)*Math.PI)+.1;return h!=null?h:groundH(x,z);}if(Math.abs(x)<1.15&&z>5.8&&z<26)return groundH(x,z)+.1;if(W.platform){if(Math.abs(x)<5.5&&Math.abs(z)<4)return .7;if(Math.abs(x)<2.1&&z>=4&&z<5.6)return .7*(1-(z-4)/1.5);}return groundH(x,z);}
+function heightAt(x,z){if(!W.pilgrim){const sy=stairY(x,z,0);if(sy!=null)return sy+.02;}if(!W.pilgrim&&z>34){if(W.vFloors)for(const q of W.vFloors){if(x>q.x0&&x<q.x1&&z>q.z0&&z<q.z1)return q.h;}const D=W.vDeck;if(D&&x>D.x0&&x<D.x1&&z>D.z0+.4&&z<D.z1)return D.y;if(W.vBridge&&Math.abs(x)<1.2&&z>61.8&&z<66.2)return W.vBr0+(W.vBrH||.5)*Math.sin((z-61.8)/4.4*Math.PI)+.05;return groundH(x,z);}if(W.ch===0&&W.rects.length){for(const q of W.rects){if(x>q.x0&&x<q.x1&&z>q.z0&&z<q.z1)return q.h;}}if(W.ch>0){let h=null;for(const q of W.rects){if(x>q.x0&&x<q.x1&&z>q.z0&&z<q.z1)h=Math.max(h||0,q.h);}if(W.bridge&&x>W.bridge.x0&&x<W.bridge.x1&&z>W.bridge.z0&&z<W.bridge.z1)return .15+.9*Math.sin((x-W.bridge.x0)/(W.bridge.x1-W.bridge.x0)*Math.PI)+.1;return h!=null?h:groundH(x,z);}if(Math.abs(x)<1.15&&z>5.8&&z<26)return groundH(x,z)+.1;if(W.platform){if(Math.abs(x)<5.5&&Math.abs(z)<4)return .7;if(Math.abs(x)<2.1&&z>=4&&z<5.6)return .7*(1-(z-4)/1.5);}return groundH(x,z);}
 
 /* ---------- Steuerung ---------- */
 function controls(){

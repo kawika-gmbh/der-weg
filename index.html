@@ -663,6 +663,7 @@ body.shadowed .kbw{filter:saturate(.55) brightness(.78) contrast(1.05)}
     <div class="btnrow" style="justify-content:flex-start;flex-wrap:wrap"><button class="big-ghost" id="admRank" style="padding:9px 14px">Rang +1</button><button class="big-ghost" id="admRankD" style="padding:9px 14px">Rang −1</button><button class="big-ghost" id="admDoors" style="padding:9px 14px">Alle Türen öffnen</button><button class="big-ghost" id="admPts" style="padding:9px 14px">+100 Punkte je Kategorie</button><button class="big-ghost" id="admCu" style="padding:9px 14px">+200 Kupfer</button><button class="big-ghost" id="admVil" style="padding:9px 14px">Dorf-Event erfüllen</button><button class="big-ghost" id="admDay" style="padding:9px 14px">Heute neu starten</button></div>
     <span class="lbl">Kapitel-Vorschau</span><div class="opts" id="pvCh"></div>
     <span class="lbl">Stufe</span><div class="opts" id="pvSt"></div>
+    <span class="lbl">Dorf-Vorschau</span><div class="opts" id="pvVil"></div>
     <span class="lbl">Jahreszeit</span><div class="opts" id="pvSe"></div>
     <span class="lbl">Tageszeit (Welt)</span><div class="opts" id="pvTod"></div>
     <div class="btnrow" style="justify-content:flex-start"><button class="big-ghost" id="devChest" style="padding:9px 14px">Truhe geben</button><button class="big-ghost" id="devDmg" style="padding:9px 14px">Schatten-Schaden +1</button><button class="big-ghost" id="devDuel" style="padding:9px 14px">Duell gewinnen</button><button class="big-ghost" id="dev100" style="padding:9px 14px">+100 Chi</button><button class="big-ghost" id="dev1000" style="padding:9px 14px">+1000 Chi</button><button class="big-ghost" id="devStage" style="padding:9px 14px">Nächste Stufe</button><button class="big-ghost" id="demoWeek" style="padding:9px 14px">Beispielwoche</button><button class="big-ghost" id="demoYear" style="padding:9px 14px">Prestige ansehen</button></div>
@@ -792,7 +793,7 @@ function icon(k){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const TYPES={window:{n:'Zeitfenster',h:'Zählt nur innerhalb eines Zeitfensters, zum Beispiel beim Aufstehen.'},timer:{n:'Timer',h:'Ein Timer läuft in der App. Gezählt wird, wenn er durchläuft.'},amount:{n:'Menge',h:'Du trägst eine Zahl ein. Ab dem Ziel gilt das Ritual als erfüllt.'},check:{n:'Abhaken',h:'Einfach abhaken. Ehrensache.'}};
 const CATS={ordnung:{n:'Ordnung',c:'#c9b07a'},nahrung:{n:'Nahrung',c:'#d98a4b'},ruhe:{n:'Ruhe',c:'#7fa7c9'},kraft:{n:'Kraft',c:'#d0503c'},weisheit:{n:'Weisheit',c:'#9b86c9'},schritte:{n:'Schritte',c:'#7fbf8a'}};
 const ROOMS={zelle:{n:'Schlafzelle',cat:'ordnung',d:'Aufstehen, Schlafengehen'},kueche:{n:'Küche',cat:'nahrung',d:'Essen, Wasser, Tee'},halle:{n:'Meditationshalle',cat:'ruhe',d:'Meditation, Atem'},hof:{n:'Trainingshof',cat:'kraft',d:'Kraft, Mobility, Laufen'},bibliothek:{n:'Bibliothek',cat:'weisheit',d:'Lesen, Lernen, Tagebuch'},bad:{n:'Badehaus',cat:'ordnung',d:'Kalt duschen'},garten:{n:'Garten',cat:'ruhe',d:'Spaziergang, Dankbarkeit'},tor:{n:'Klostertor',cat:'schritte',d:'Schritte, Wandern, Dorf'}};
-const APPV='0.40 Beta · 18.11.2026';
+const APPV='0.41 Beta · 18.11.2026';
 const ERRLOG=[];window.addEventListener('error',e=>{ERRLOG.push((e.message||'')+' @'+((e.filename||'').split('/').pop())+':'+(e.lineno||''));if(ERRLOG.length>6)ERRLOG.shift();});window.addEventListener('unhandledrejection',e=>{ERRLOG.push('P '+String(e.reason&&e.reason.message||e.reason).slice(0,120));if(ERRLOG.length>6)ERRLOG.shift();});
 const KRANG=[{n:'Novize',days:0,pct:0,win:0,slots:2},{n:'Schüler',days:7,pct:.7,win:7,slots:3},{n:'Bruder · Schwester',days:14,pct:.75,win:10,slots:4},{n:'Hüter',days:21,pct:.8,win:14,slots:5},{n:'Lehrer',days:30,pct:.85,win:21,slots:6},{n:'Meister',days:45,pct:.85,win:30,slots:7},{n:'Grossmeister',days:75,pct:.9,win:45,slots:8}];
 const TRIALS={med10:'Meditiere einmal mindestens 10 Minuten in der Halle',tc:'Lauf die ganze Tai-Chi-Form mit Bruder Tao im Hof',perf3:'Schaffe 3 perfekte Tage in Folge',perf5:'Schaffe 5 perfekte Tage in Folge',perf7:'Schaffe 7 perfekte Tage in Folge'};
@@ -808,7 +809,7 @@ function rankStats(){const R=KRANG[(S.rank||0)+1];const since=new Date(S.rankSin
 function addPts(cat,n){S.pts[cat]=(S.pts[cat]||0)+n;}
 function weekId(){const d=new Date(),y=new Date(d.getFullYear(),0,1);return d.getFullYear()+'-'+Math.ceil(((d-y)/DAY+y.getDay()+1)/7);}
 function curEvent(){const V=S.village;const wid=weekId();if(V.week!==wid){try{if(V.week&&V.idx!=null&&!V.ok&&(V.got||[]).length&&(dayN()>=3||(S.rank||0)>=1)){const gone=V.got.pop();const ev=EVENTS.find(e=>e.id===gone);V.lost={id:gone,n:ev?ev.rw:gone,from:EVENTS[V.idx].n,week:wid};}else V.lost=null;}catch(e){}V.week=wid;V.paid={};V.idx=((V.idx==null?-1:V.idx)+1)%EVENTS.length;V.ok=false;save();}return EVENTS[V.idx];}
-function vLevel(){let l=0;VSTUFE.forEach((v,i)=>{if(S.village.done>=v.at)l=i;});return l;}
+function vLevel(){if(pvVil!=null)return pvVil;let l=0;VSTUFE.forEach((v,i)=>{if(S.village.done>=v.at)l=i;});return l;}
 const TPL={
   frueh:{n:'Frühaufsteher',d:'Aufstehen im Zeitfenster und ein Glas Wasser',r:[
     {id:'wake',name:'Aufstehen',icon:'sun',type:'window',cfg:{start:'06:30',win:20},freq:{mode:'daily'},cat:'ordnung',room:'zelle'},
@@ -931,7 +932,7 @@ const WISDOM=['Der Berg wird nicht kleiner. Deine Schritte werden sicherer.','We
 
 /* =================== ZUSTAND =================== */
 const KEY='derweg.v1';
-let S=null,pvCh=null,pvSt=null,pvSe=null,pvTod=null,portraitURL=null;
+let pvVil=null,S=null,pvCh=null,pvSt=null,pvSe=null,pvTod=null,portraitURL=null;
 const TODS=[['dawn','Morgen'],['day','Tag'],['dusk','Abend'],['night','Nacht']];
 function todNow(){if(pvTod)return pvTod;const h=new Date().getHours()+new Date().getMinutes()/60;return h<5||h>=21?'night':h<8?'dawn':h<17.5?'day':'dusk';}
 function lookOf(a){return[(ROBE[a.robe]||ROBE[0]).c,SKIN[a.skin]||SKIN[1],HAIRC[a.hairColor]||HAIRC[0]];}
@@ -1604,7 +1605,7 @@ window.DW={
   p6Check(k,yes){const st=(S.p6||{})[k];if(!st||st.done)return null;const td=dk(new Date());if(st.last===td)return{same:true,count:st.count};st.last=td;if(yes){st.count=(st.count||0)+1;}else{st.count=0;st.start=td;}const need=k==='gaman'?7:30;let fin=false;if(st.count>=need){fin=true;this.p6Done(k);}save();return{count:st.count,need,fin};},
   shugyoCount(){const st=(S.p6||{}).shugyo;if(!st||!st.rid)return 0;const r=S.rituals.find(x=>x.id===st.rid);if(!r)return 0;let n=0;const t=new Date();if(recDone(r,(S.days[dk(t)]||{})[r.id]))n++;for(let g=1;g<120;g++){const d=new Date(t);d.setDate(d.getDate()-g);const k=dk(d);if(k<st.start)break;if(recDone(r,(S.days[k]||{})[r.id]))n++;else break;}return n;},
   ritualsAll(){return activeRituals().map(r=>({id:r.id,name:r.name}));},
-  prosperity(){const t=new Date();let sum=0,n=0;for(let i=1;i<=14;i++){const d=new Date(t);d.setDate(d.getDate()-i);const k=dk(d);if(k<S.cycleStart)break;n++;sum+=Math.min(1,dayFrac(S.days[k]));}const td=dayFrac(today());if(!n)return Math.max(.5,td);return Math.max(0,Math.min(1,(sum+td*.5)/(n+.5)));},
+  prosperity(){if(pvVil!=null)return [.4,.6,.8,.95][pvVil];const t=new Date();let sum=0,n=0;for(let i=1;i<=14;i++){const d=new Date(t);d.setDate(d.getDate()-i);const k=dk(d);if(k<S.cycleStart)break;n++;sum+=Math.min(1,dayFrac(S.days[k]));}const td=dayFrac(today());if(!n)return Math.max(.5,td);return Math.max(0,Math.min(1,(sum+td*.5)/(n+.5)));},
   pRun(){return perfectRun();},
   unlocks(){const n=dayN(),T=!!S.test;return{day:n,village:T||n>=3||(S.village.done||0)>0||(S.rank||0)>=1,market:T||n>=5||(S.rank||0)>=1,extras:T||(S.rank||0)>=1};},
   flag(k,v){S.flags=S.flags||{};if(v!==undefined){S.flags[k]=v;save();}return S.flags[k];},
@@ -1628,7 +1629,7 @@ window.DW={
   pilgrims:()=>PILGER.map(p=>Object.assign({open:(S.rank||0)>=p.rank,rankName:KRANG[p.rank].n,visited:(S.pilgrim||{})[p.ch]===weekId()},p)),
   pilgrimVisit(ch){S.pilgrim=S.pilgrim||{};if(S.pilgrim[ch]===weekId())return false;S.pilgrim[ch]=weekId();const p=PILGER.find(x=>x.ch===ch);addPts(p.cat,20);save();renderAll();return true;},
   pts:()=>Object.entries(CATS).map(([k,c])=>({k,n:c.n,c:c.c,v:S.pts[k]||0})),
-  village:()=>{const ev=curEvent(),V=S.village;return{ev,paid:V.paid,ok:V.ok,done:V.done,lvl:vLevel(),stufe:VSTUFE[vLevel()].n,got:V.got||[],daysLeft:7-isoDow(new Date()),lost:V.lost||null};},
+  village:()=>{const ev=curEvent(),V=S.village;return{ev,paid:V.paid,ok:V.ok,done:V.done,lvl:vLevel(),stufe:VSTUFE[vLevel()].n,got:pvVil!=null?(pvVil>=2?['pfad','dach','brunnen','ernte','bruecke','laternen','medizin','schule']:pvVil>=1?['pfad','dach','brunnen','bruecke']:[]):(V.got||[]),daysLeft:7-isoDow(new Date()),lost:V.lost||null};},
   trial:()=>{const T=S.trial;if(!T)return null;const to=(S.rank||0)+1;if(T.to!==to)return null;const left=7-Math.floor((pk(dk(new Date()))-pk(T.start))/DAY);if(T.type.startsWith('perf')&&!T.done){const need=+T.type.slice(4);if(perfectRun()>=need)T.done=true;}return Object.assign({left,need:TRIALS[T.type]},T);},
   trialStart:()=>{const r=S.rank||0,type=['med10','tc','perf3','perf5','perf5','perf7','perf7'][r]||'perf7';S.trial={to:r+1,type,start:dk(new Date()),done:false};save();return S.trial;},
   trialClear:()=>{S.trial=null;save();},
@@ -2027,6 +2028,7 @@ function renderSettings(){
   $('#pvCh').innerHTML=opt(pvCh==null,'Live','data-pv="ch" data-v=""')+CH.map((c,i)=>opt(pvCh===i,(i+1)+' '+c.s,`data-pv="ch" data-v="${i}"`)).join('');
   const ch=pvCh!=null?pvCh:prog(totalChi()).ch;
   $('#pvSt').innerHTML=opt(pvSt==null,'Auto','data-pv="st" data-v=""')+STAGES[ch].map((s,i)=>opt(pvSt===i,i+' '+s,`data-pv="st" data-v="${i}"`)).join('');
+  $('#pvVil').innerHTML=opt(pvVil==null,'Echt','data-pv="vil" data-v=""')+VSTUFE.map((v,i)=>opt(pvVil===i,i+' '+v.n,`data-pv="vil" data-v="${i}"`)).join('');
   $('#pvSe').innerHTML=opt(!pvSe,'Live','data-pv="se" data-v=""')+Object.entries(SEASONS).map(([k,v])=>opt(pvSe===k,v.n,`data-pv="se" data-v="${k}"`)).join('');
   $('#pvTod').innerHTML=opt(!pvTod,'Live','data-pv="tod" data-v=""')+TODS.map(([k,n])=>opt(pvTod===k,n,`data-pv="tod" data-v="${k}"`)).join('');
 }
@@ -2066,9 +2068,10 @@ $('#stAv').onclick=()=>openCreator(false);
 $('#stEd').onclick=()=>openEditor(false);
 $('#stSound').onchange=e=>{S.sound=e.target.checked;save();if(S.sound)bell(.6);};
 $('#stHQ').onchange=e=>{S.hq=e.target.checked;save();if(G.ok){if(bloom)bloom.enabled=S.hq;buildWorld(true);}};
-$('#stTest').onchange=e=>{S.test=e.target.checked;if(!S.test){pvCh=pvSt=pvSe=pvTod=null;buildWorld();}save();renderSettings();renderAll();};
+$('#stTest').onchange=e=>{S.test=e.target.checked;if(!S.test){pvCh=pvSt=pvSe=pvTod=pvVil=null;buildWorld();}save();renderSettings();renderAll();};
 $('#testBox').addEventListener('click',e=>{const b=e.target.closest('[data-pv]');if(!b)return;const v=b.dataset.v;
   if(b.dataset.pv==='tod'){pvTod=v||null;renderSettings();return;}
+  if(b.dataset.pv==='vil'){pvVil=v===''?null:+v;buildWorld();renderSettings();if(window.DWWorld&&document.body.classList.contains('inworld')){try{DWWorld.close();setTimeout(()=>DWWorld.open({}),400);}catch(e){}}return;}
   if(b.dataset.pv==='ch'){pvCh=v===''?null:+v;pvSt=null;}else if(b.dataset.pv==='st')pvSt=v===''?null:+v;else pvSe=v||null;
   buildWorld();if(G.ok){const ch=viewProg().ch;G.ch=ch;}cam.pulse=.6;renderTop();renderSettings();});
 $('#demoWeek').onclick=()=>{const now=new Date(),sh=share();
