@@ -438,6 +438,7 @@ function nextStep(){const g=DW.flag('guide'),L=DW.todayList(),open_=L.filter(r=>
   if(g===1&&open_.length)return{k:'Erster Schritt',t:`Geh zu «${open_[0].name}» (${open_[0].roomN}) und trag sie ein`,go:()=>goRoom(open_[0].room)};
   if(g===2)return{k:'Gut gemacht',t:'Sprich mit Meister Shen über dein Chi',go:()=>toMeister()};
   {const pe=p6Evening();if(pe)return{k:'Prüfung · '+pe.n,t:'Meister Shen hat eine Frage an dich',go:()=>p6Ask(pe)};}
+  {const ce=chalEvening();if(ce)return{k:`Challenge · Tag ${ce.count}/${ce.days}`,t:ce.q,go:()=>chalAsk(ce)};}
   if(open_.length)return{k:`Heute ${L.length-open_.length}/${L.length}`,t:`${open_[0].name} · ${open_[0].roomN}`,go:()=>goRoom(open_[0].room)};
   const T=DW.trial();if(T&&T.done)return{k:'Prüfung erfüllt',t:'Geh zu Meister Shen und leg die Rangprüfung ab',go:()=>toMeister()};
   if(T&&!T.done&&T.left>0)return{k:`Prüfungsaufgabe · noch ${T.left} T.`,t:T.need,go:T.type==='med10'?()=>goRoom('halle'):T.type==='tc'?()=>goRoom('hof'):null};
@@ -617,6 +618,32 @@ function p6Evening(){const L=DW.p6(),h=new Date().getHours();if(h<17)return null
 function p6Ask(p){if(p.k==='shokunin'){dlgK('Shokunin','Hast du heute eine langweilige Aufgabe mit voller Sorgfalt erledigt?',[['Ja, wirklich',()=>{DW.p6Done('shokunin');DW.bell(1.2);dlgK('Shokunin bestanden','Sorgfalt zeigt sich, wenn niemand hinsieht.\n\nSiegel «Shokunin» · +25 Kupfer',[['Danke',()=>endTalk(),1]]);},1],['Heute nicht',()=>{endTalk();msg('Morgen ist ein neuer Tag.');DW.p6Start('shokunin',{last:DW.todayKey()});}]]);return;}
   const qq=p.k==='gaman'?'Hast du dich heute bei jemandem beklagt?':'Hast du heute aufgehört zu essen, als du zu 80 % satt warst?';const yes=p.k==='gaman'?'Nein, kein Klagen':'Ja, mit Mass';const no=p.k==='gaman'?'Doch, habe geklagt':'Nein, zu viel';
   dlgK(p.n,qq,[[yes,()=>{const r=DW.p6Check(p.k,true);if(r&&r.fin){DW.bell(1.4);dlgK(p.n+' bestanden',`${r.need} Tage. Das ist Charakter.\n\nSiegel «${p.n}» · +25 Kupfer`,[['Danke',()=>endTalk(),1]]);}else{endTalk();msg(`${p.n}: Tag ${r?r.count:'?'} von ${p.k==='gaman'?7:30}.`);}},1],[no,()=>{DW.p6Check(p.k,false);endTalk();msg('Ehrlichkeit ist der erste Schritt. Wir beginnen neu.');}]]);}
+
+
+/* ---------- Fragebogen beim Start & Challenges ---------- */
+const QGOALS=[['Mehr Energie','energie'],['Mehr Ruhe, weniger Stress','ruhe'],['Fitter und stärker werden','fit'],['Besser schlafen','schlaf'],['Gesünder essen','essen'],['Weniger Handy, mehr Fokus','fokus']];
+function qStart(done){const A={};const fin=()=>{done&&done();};
+  dlgK('Meister Shen','Bevor du losgehst: Darf ich dir ein paar kurze Fragen stellen? Dann schlage ich dir passende Routinen und eine erste Challenge vor.\n\nDu kannst auch direkt mit deinen eigenen Routinen starten.',[['Gerne',()=>q1(),1],['Überspringen, ich mache meine eigenen',()=>{endTalk();fin();}]]);
+  const q1=()=>dlgK('Frage 1 von 4','Warum bist du hier? Was soll sich in deinem Leben verändern?',QGOALS.map(([n,k])=>[n,()=>{A.goal=k;q2();}]));
+  const q2=()=>dlgK('Frage 2 von 4','Wann hast du am ehesten Zeit für dich?',[['Am Morgen',()=>{A.time='morgen';q3();}],['Am Abend',()=>{A.time='abend';q3();}],['Mal so, mal so',()=>{A.time='mix';q3();}]]);
+  const q3=()=>dlgK('Frage 3 von 4','Wie viel Zeit willst du pro Tag investieren?',[['5 Minuten',()=>{A.min=5;q4();}],['15 Minuten',()=>{A.min=15;q4();}],['30 Minuten oder mehr',()=>{A.min=30;q4();}]]);
+  const q4=()=>dlgK('Frage 4 von 4','Wie willst du starten?',[['Sanft, ich will dranbleiben',()=>{A.lvl='sanft';qPlan(A,fin);}],['Fordernd, ich will es wissen',()=>{A.lvl='hart';qPlan(A,fin);}]]);}
+function qPlan(A,fin){DW.profile(A);const L=(r,n,mod)=>{const t=DW.lib(r,n);t.room=r;if(mod)mod(t);return t;};const up=A.time==='abend'?'07:30':'06:30',hard=A.lvl==='hart';
+  const P={energie:[L('zelle','Aufstehen',t=>t.cfg={start:up,win:20}),L('kueche','Wasser trinken',t=>t.cfg={unit:'Gläser',goal:hard?8:6})],
+    ruhe:[A.min>=15?L('halle','Meditation',t=>t.cfg={min:hard?15:10}):L('halle','Atemübung'),L('zelle','Kein Handy am Morgen')],
+    fit:[A.min>=30?L('hof','Krafttraining'):A.min>=15?L('hof','Mobility'):L('hof','Liegestütze',t=>t.cfg={unit:'Wdh',goal:hard?30:15}),L('tor','Schritte',t=>t.cfg={unit:'Schritte',goal:hard?8000:6000})],
+    schlaf:[L('zelle','Schlafen vor 23 Uhr',t=>t.cfg={start:A.time==='morgen'?'22:00':'22:30',win:30}),{room:'zelle',name:'Kein Bildschirm nach 22 Uhr',icon:'phone',type:'check'}],
+    essen:[L('kueche','Wasser trinken'),L('kueche','Frühstück')],
+    fokus:[L('zelle','Kein Handy am Morgen'),L('bibliothek','Lesen',t=>t.cfg={unit:'Seiten',goal:hard?20:10})]}[A.goal];
+  const CH={energie:['soft',hard?30:14],ruhe:['handy21',hard?14:7],fit:['kalt',hard?30:14],schlaf:['handy21',hard?14:7],essen:[hard?'fasten':'zucker',hard?14:7],fokus:['handy21',hard?14:7]}[A.goal];
+  const C=DW.CHALS.find(c=>c.k===CH[0]);
+  dlgK('Dein Weg',`Gut. Für den Anfang schlage ich dir vor:\n\n• ${P[0].name}\n• ${P[1].name}\n\nUnd als erste Challenge im echten Leben: «${C.n}» für ${CH[1]} Tage.${C.med?'\n\n'+MEDNOTE:''}\n\nDu kannst alles jederzeit ändern.`,[['So machen wir es',()=>{const ad=DW.plan(P);DW.chalStart(CH[0],CH[1]);endTalk();msg(`Dein Weg steht: ${ad.join(' · ')}`);DW.bell(1.1);fin();},1],['Nur die Routinen',()=>{const ad=DW.plan(P);endTalk();msg(`Routinen angelegt: ${ad.join(' · ')}`);fin();}],['Lieber selbst wählen',()=>{endTalk();fin();}]]);}
+const MEDNOTE='Hinweis: Bei Vorerkrankungen, Schwangerschaft, Diabetes, Untergewicht oder einer Essstörung in der Vergangenheit sprich vorher mit deiner Ärztin oder deinem Arzt.';
+function chalMenu(){const C=DW.chal(),D=DW.chalDone();if(C&&!C.done){dlgK('Deine Challenge',`«${C.n}» · Tag ${C.count} von ${C.days}.\n\nJeden Abend frage ich dich ehrlich. Ein Nein beginnt von vorn, ohne Strafe.`,[['Weiter so',()=>endTalk(),1],['Challenge beenden',()=>{DW.chalEnd();endTalk();msg('Challenge beendet. Du kannst jederzeit eine neue wählen.');}]]);return;}
+  dlgK('Challenges im echten Leben',(D.length?`Geschafft: ${D.map(d=>d.n+' ('+d.days+' T.)').join(', ')}\n\n`:'')+'Wähle eine Challenge. Immer nur eine gleichzeitig.',DW.CHALS.map(c=>[c.n,()=>chalPick(c)]).concat([['Zurück',()=>endTalk()]]));}
+function chalPick(c){dlgK(c.n,`Wie lange?${c.med?'\n\n'+MEDNOTE:''}`,c.d.map(d=>[d+' Tage',()=>{DW.chalStart(c.k,d);endTalk();msg(`Challenge gestartet: ${c.n} · ${d} Tage`);DW.bell(1);}]).concat([['Zurück',()=>chalMenu()]]));}
+function chalEvening(){const C=DW.chal();if(!C||C.done)return null;if(new Date().getHours()<18&&C.k!=='handy21')return null;if(C.last===DW.todayKey())return null;return C;}
+function chalAsk(C){dlgK('Challenge · '+C.n,C.q,[['Ja',()=>{const r=DW.chalCheck(true);if(r&&r.fin){DW.bell(1.5);fireworksShow&&W.villageAt&&fireworksShow(6);dlgK('Challenge geschafft!',`${C.n}: ${r.days} Tage. Das hast du im echten Leben geschafft, nicht im Spiel.\n\n+${10+r.days} Kupfer`,[['Danke',()=>endTalk(),1]]);}else{endTalk();msg(`${C.n}: Tag ${r?r.count:'?'} von ${C.days}`);}},1],['Nein',()=>{DW.chalCheck(false);endTalk();msg('Ehrlich gesagt. Morgen beginnst du neu.');}]]);}
 
 /* ---------- Begehbare Dorfhäuser ---------- */
 const VLORE=['Vor hundert Jahren stand das Kloster leer. Ein einziger Mönch fegte jeden Morgen den Hof – bis andere kamen, um zu sehen, warum.','Der Bach heisst «Stiller Bach», weil er im Winter unter dem Eis weiterfliesst. Man hört ihn nur, wenn man still ist.','Die Drachen an der Treppe wurden von Steinmetzen aus dem Tal gehauen. Für jede Stufe ein Tag Arbeit.','Wer im Dorf geboren wird, pflanzt einen Kirschbaum. Die ältesten stehen schon lange nicht mehr – aber die Wurzeln sind noch da.','Mei sagt: «Ein Dorf ist wie ein Körper. Wenn eine Hand hilft, wird das ganze Dorf stärker.»','Früher kamen die Mönche jeden Markttag herunter. Dann kam der lange Winter, und niemand stieg mehr hinab. Bis jetzt.'];
@@ -1056,6 +1083,7 @@ function briefing(first){if(!W||W.ch)return;if(first&&DW.flag('tut')&&!DW.mood()
   {const nw=unlockNews();if(nw.length)extra='\n\n✦ '+nw.join('\n✦ ')+extra;}
   {const L2=[];const v2=DW.village(),U2=DW.unlocks();if(U2.village&&v2.lost&&!DW.flag('lost_'+v2.lost.week)){DW.flag('lost_'+v2.lost.week,1);L2.push(`Das Dorf hat «${v2.lost.n}» verloren, weil «${v2.lost.from}» nicht rechtzeitig gelöst wurde. Ihr könnt es wieder aufbauen.`);}
    if(U2.village&&v2.ev&&!v2.ok&&v2.daysLeft<=3)L2.push(`⚠ Noch ${v2.daysLeft} Tag${v2.daysLeft>1?'e':''} für «${v2.ev.n}». Sonst geht im Dorf etwas verloren.`);
+   {const C2=DW.chal();if(C2&&!C2.done)L2.push(`Challenge «${C2.n}»: Tag ${C2.count} von ${C2.days}.`);}
    const T2=DW.trial();if(T2)L2.push(T2.done?'Deine Prüfungsaufgabe ist erfüllt. Meister Shen wartet.':`Prüfungsaufgabe: ${T2.need} (noch ${T2.left} Tage).`);
    const mp=DW.mapState();if(mp.fresh){mp.fresh=0;L2.push(`Ein Kartenstück gefunden! (${mp.n}/4) Es passt in das versiegelte Tor hinter dem Tempel.`);}
    const rw=DW.rivalWeek();if(rw)L2.push(rw.won?`Wochensieg gegen Bruder Ren: ${rw.mine} zu ${rw.his} perfekte Tage. +15 Kupfer.`:`Bruder Ren hat die Woche gewonnen, ${rw.his} zu ${rw.mine}. Neue Woche, neue Chance.`);
@@ -1221,6 +1249,7 @@ function talk(st){if(DW.flag('guide')===2){DW.flag('guide',9);const U=DW.unlocks
         else dlg('Nicht ganz. Lies die Lektionen im Dojo noch einmal und komm morgen wieder.',[['Verstanden',()=>endTalk()]]);}]));},ri.eligible]);}
     const sto=DW.story();if(sto.length)btns.push(['Eure Geschichte, Meister',()=>{let i=sto.length-1;const show=()=>dlg(sto[i].t,[...(i>0?[['Früher',()=>{i--;show();}]]:[]),['Danke, Meister',()=>endTalk()]]);show();}]);
     btns.push(['Die sechs Prüfungen',()=>p6Menu()]);
+    btns.push(['Challenges',()=>chalMenu()]);btns.push(['Meinen Weg neu ausrichten',()=>qStart(()=>endTalk())]);
     btns.push(['Weisheit',()=>dlg(DW.wisdom(),[['Danke',()=>endTalk()],['Zurück',()=>menu(greet(st))]])]);
     dlg(text,btns);};
   if(qs===2)menu('Dein Auftrag für heute ist erfüllt. '+greet(st));else menu(greet(st));
@@ -1372,7 +1401,7 @@ function open(opts){opts=opts||{};
    if(room){W.autoRoom=room;W.spawnRoom=room;}}
   if(!ch)W.meisterPos=[-4.2,0,8.6];if(W.spawnRoom){const id=W.spawnRoom,ins=W.roomSpot&&W.roomSpot[id],sp=ins?[ins[0],.35,ins[1]]:spotOf(id),P=RPOS[id];const tx=ins?(id==='zelle'?ins[0]-P.f[0]*1.1:P.c[0]-P.f[0]*2):P.c[0],tz=ins?ins[1]:P.c[1];W.spawnAt=[sp[0],sp[1],sp[2],tx-sp[0],tz-sp[2]];if(!ch&&id==='zelle'&&!DW.flag('tut')){const P2=RPOS.zelle;W.meisterPos=[P2.c[0]+P2.f[0]*1.5,.35,P2.c[1]+1.3];W.spawnAt[3]=W.meisterPos[0]-sp[0];W.spawnAt[4]=W.meisterPos[2]-sp[2];W.tutZelle=1;}}applyTod();avatar();interactables(5);meister(5);if(W.tutZelle&&W.npc){W.npc.rotation.y=Math.atan2(W.spawnAt[0]-W.meisterPos[0],W.spawnAt[2]-W.meisterPos[2]);}if(!ch){shadowFoe();sealedGate();rivalNpc();rareMoments();addBench(-6.6,16.8,Math.PI/2,groundH(-6.6,16.8));addBench(6.6,16.8,-Math.PI/2,groundH(6.6,16.8));}controls();ptsHud();
   if(ch){const sp=[W.ch===2?3.6:0,12];W.inter.push({x:sp[0],z:sp[1]+1.5,r:1.4,label:'Heimweg ins Kloster',btn:'Zurück',act:()=>{close();open({room:'tor'});}});if(DW.pilgrimVisit(ch))setTimeout(()=>W&&msg('Pilgerreise: +20 Punkte'),1200);}
-  if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen.\n\nSo funktioniert der Weg: Du erledigst deine Routinen im echten Leben und trägst sie hier ein. Dafür bekommst du Chi. Mit Chi wächst dein Kloster, und das Dorf im Tal blüht auf.`,`Jede Routine hat ihren Raum: Aufstehen in der Zelle, Essen in der Küche. Oben links siehst du immer deinen nächsten Schritt. Tipp ihn an, und du gehst direkt hin.`,`Die anderen Türen sind noch verschlossen. Mit jedem neuen Rang darfst du eine öffnen. Fang klein an. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);DW.flag('guide',1);endTalk();if(W)setTimeout(()=>W&&beacon(true),400);return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
+  if(!ch&&!DW.flag('tut')){setTimeout(()=>{if(!W)return;const n=DW.name();const steps=[`Willkommen im Kloster, ${n}. Ich bin Meister Shen.\n\nSo funktioniert der Weg: Du erledigst deine Routinen im echten Leben und trägst sie hier ein. Dafür bekommst du Chi. Mit Chi wächst dein Kloster, und das Dorf im Tal blüht auf.`,`Jede Routine hat ihren Raum: Aufstehen in der Zelle, Essen in der Küche. Oben links siehst du immer deinen nächsten Schritt. Tipp ihn an, und du gehst direkt hin.`,`Die anderen Türen sind noch verschlossen. Mit jedem neuen Rang darfst du eine öffnen. Fang klein an. Ein Schritt nach dem anderen.`];let i=0;const nx=()=>{if(i>=steps.length){DW.flag('tut',1);qStart(()=>{DW.flag('guide',1);endTalk();if(W)setTimeout(()=>W&&beacon(true),400);});return;}dlgK('Meister Shen',steps[i++],[[i<steps.length?'Weiter':'Los geht es',nx,1]]);};nx();},900);}
   else if(!ch&&!opts.room&&!DW.day('_brief'))setTimeout(()=>{if(!W)return;if(new Date().getDay()===0&&!DW.day('_wk')&&DW.flag('tut'))weekReview();briefing(true);},1100);
   else if(W.autoRoom)setTimeout(()=>{if(W)roomDialog(W.autoRoom);},900);
   $('#wDlgX').onclick=()=>endTalk();
